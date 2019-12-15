@@ -9,8 +9,8 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "orchid",
-	Short: "Orchi map backend",
+	Use:   "vault",
+	Short: "vault backend",
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 	},
@@ -41,7 +41,7 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("unable to read config: %v\n", err)
+		fmt.Printf("Unable to read config: %v\n", err)
 		os.Exit(1)
 	}
 }
