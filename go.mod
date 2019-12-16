@@ -30,6 +30,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
 	github.com/subosito/gotenv v1.2.0
+	github.com/theaaf/todos v0.0.0-20190402231846-ad63ef47a387
 	github.com/ugorji/go v1.1.7
 	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
 	golang.org/x/text v0.3.2

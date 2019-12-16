@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql" // needed for gorm
+	"github.com/muerwre/vault-golang/models"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -30,7 +31,7 @@ func New() (*DB, error) {
 
 	logrus.Info("Connected to db")
 
-	// db.AutoMigrate(&model.User{}, &model.Route{})
+	db.AutoMigrate(&models.User{}, &models.File{})
 
 	return &DB{db}, nil
 }
