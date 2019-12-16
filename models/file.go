@@ -23,9 +23,11 @@ type File struct {
 	Type     string       `json:"type"`
 	Mime     string       `json:"mime"`
 	Target   string       `json:"-"`
-	User     *User        `json:"-"`
+	User     *User        `json:"-" gorm:"foreignkey:UserID"`
 	UserID   uint         `gorm:"column:userId" json:"-"`
 	Metadata FileMetadata `sql:"metadata" gorm:"name:metadata;type:longtext" json:"metadata"`
+	Comments []*Comment   `gorm:"many2many:comment_files_file;association_jointable_foreignkey:fileId" json:"-"`
+	Nodes    []*Node      `gorm:"many2many:node_files_file;association_jointable_foreignkey:fileId" json:"-"`
 }
 
 func (File) TableName() string {

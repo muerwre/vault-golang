@@ -24,7 +24,7 @@ type User struct {
 	MessagesSent     []Message  `json:"-"`
 	MessagesReceived []Message  `json:"-"`
 	Tags             []Tag      `json:"-"`
-	Likes            []Node     `gorm:"many2many:node_likes;" json:"-"`
+	Likes            []Node     `gorm:"many2many:like;association_jointable_foreignkey:userId;" json:"-"`
 	Tokens           []Token    `json:"-"`
 	NodeViews        []NodeView `json:"-"`
 	Socials          []Social   `json:"-"`

@@ -5,8 +5,9 @@ type Social struct {
 
 	Provider  string `json:"-"`
 	AccountId string `gorm:"column:account_id" json:"-"`
-	User      *User  `json:"-"`
-	UserID    uint   `gorm:"column:userId" json:"-"`
+
+	User   *User `json:"-" gorm:"foreignkey:UserID"`
+	UserID uint  `gorm:"column:userId" json:"-"`
 }
 
 func (Social) TableName() string {
