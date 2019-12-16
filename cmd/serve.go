@@ -20,7 +20,7 @@ import (
 func serveAPI(ctx context.Context, api *api.API) {
 	router := gin.Default()
 	// router.LoadHTMLGlob("views/*")
-	api.Init(router.Group("/api"))
+	api.Init(router.Group("/"))
 
 	hasCerts := len(api.App.Config.TlsFiles) == 2
 

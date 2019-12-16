@@ -31,7 +31,18 @@ func New() (*DB, error) {
 
 	logrus.Info("Connected to db")
 
-	db.AutoMigrate(&models.User{}, &models.File{})
+	db.AutoMigrate(
+		&models.User{},
+		&models.File{},
+		&models.Node{},
+		&models.Tag{},
+		&models.NodeView{},
+		&models.Comment{},
+		&models.Token{},
+		&models.Social{},
+		&models.Message{},
+		&models.MessageView{},
+	)
 
 	return &DB{db}, nil
 }

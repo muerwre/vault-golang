@@ -1,7 +1,14 @@
 package models
 
-import "github.com/jinzhu/gorm"
-
 type Token struct {
-	*gorm.Model
+	*Model
+
+	Token string `json:"-"`
+
+	User   *User `json:"-"`
+	UserID uint  `gorm:"column:userId" json:"-"`
+}
+
+func (Token) TableName() string {
+	return "token"
 }

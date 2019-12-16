@@ -1,16 +1,19 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
+	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/models"
 )
 
 type API struct {
 	App *app.App
-
-	// Config *Config
+	DB  *db.DB
 }
 
 type ErrorCode struct {
@@ -19,16 +22,8 @@ type ErrorCode struct {
 	Reason string   `json:"reason"`
 }
 
-type statusCodeRecorder struct {
-	http.ResponseWriter
-	http.Hijacker
-	StatusCode int
-}
-
 func New(a *app.App) (api *API, err error) {
-	api = &API{App: a}
-
-	// api.Config, err = InitConfig()
+	api = &API{App: a, DB: a.DB}
 
 	if err != nil {
 		return nil, err
@@ -53,33 +48,35 @@ func (a *API) Init(r *gin.RouterGroup) {
 	})
 
 	r.Use(func(c *gin.Context) {
-		// c.Set("DB", a.App.DB)
+		c.Set("DB", a.App.DB)
 		c.Set("Config", a.App.Config)
 		c.Next()
 	})
 
 	r.OPTIONS("/*path", a.CorsHandler)
 
-	// AuthRouter(r.Group("/auth"), a)
-	// RouteRouter(r.Group("/route"), a)
+	UserRouter(r.Group("/user"), a)
 }
 
 func (a *API) AuthRequired(c *gin.Context) {
-	token := c.GetHeader("authorization")
+	re := regexp.MustCompile(`Bearer (.*)`)
+	token := string(re.FindSubmatch([]byte(c.GetHeader("authorization")))[1])
+
+	fmt.Printf("Token is %s", token)
 
 	if token == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Empty credentials, id and token are required"})
 		return
 	}
 
-	// user, err := a.App.DB.GetUserByToken(token)
+	user, err := a.DB.GetUserByToken(token)
 
-	// if err != nil {
-	// c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
-	// return
-	// }
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
 
-	// c.Set("User", user)
+	c.Set("User", user)
 	c.Next()
 }
 
@@ -87,18 +84,18 @@ func (a *API) AuthOptional(c *gin.Context) {
 	token := c.GetHeader("authorization")
 
 	if token == "" {
-		// c.Set("User", &model.User{})
+		c.Set("User", &models.User{})
 		c.Next()
 	}
 
-	// user, err := a.App.DB.GetUserByToken(token)
+	user, err := a.DB.GetUserByToken(token)
 
-	// if err != nil {
-		// c.Set("User", &model.User{})
-		// c.Next()
-	// }
+	if err != nil {
+		c.Set("User", &models.User{})
+		c.Next()
+	}
 
-	// c.Set("User", user)
+	c.Set("User", user)
 	c.Next()
 }
 
