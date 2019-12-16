@@ -9,11 +9,13 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/utils/codes"
 )
 
 type API struct {
-	App *app.App
-	DB  *db.DB
+	App    *app.App
+	DB     *db.DB
+	Errors map[string]string
 }
 
 type ErrorCode struct {
@@ -65,14 +67,14 @@ func (a *API) AuthRequired(c *gin.Context) {
 	fmt.Printf("Token is %s", token)
 
 	if token == "" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Empty credentials, id and token are required"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.EMPTY_REQUEST})
 		return
 	}
 
 	user, err := a.DB.GetUserByToken(token)
 
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
 		return
 	}
 
