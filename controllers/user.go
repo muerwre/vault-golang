@@ -66,7 +66,7 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 
 	// d.First(&u)
 	// fmt.Printf("UUUU: %+v", u)
-	d.Model(&models.User{}).Updates(&u)
+	// d.Model(&models.User{}).Updates(&u)
 
 	data := &struct {
 		User validation.UserPatchData `json:"user"`
@@ -85,11 +85,9 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 		return
 	}
 
-	d.Model(&models.User{}).Updates(data.User)
+	data.User.ApplyTo(u)
 
-	// // u.Password = data.User.NewPassword
-
-	// // d.Save(u)
+	d.Model(&models.User{}).Updates(u).Preload("Photo").Preload("Cover").First(&u)
 
 	c.JSON(http.StatusOK, gin.H{"data": u})
 }

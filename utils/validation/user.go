@@ -11,12 +11,14 @@ import (
 )
 
 type UserPatchData struct {
+	ID          uint
 	Username    string `json:"username" validate:"omitempty,gte=3,lte=64"`
 	Fullname    string `json:"fullname" validate:"omitempty,gte=1,lte=64"`
 	Password    string `json:"password"`
 	NewPassword string `json:"new_password" validate:"omitempty,gte=6,lte=64"`
 	Email       string `json:"email" validate:"omitempty,email"`
 	Description string `json:"description" validate:"omitempty,lte=512"`
+	PhotoID     uint   `json:"-"`
 	Photo       *models.File
 }
 
@@ -33,6 +35,7 @@ func (d *UserPatchData) GetJsonTagName(f string) string {
 func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 	err := On.Struct(d)
 	errors := map[string]string{}
+	// d.ID = u.ID
 
 	// We need password to change password or email
 	if (d.NewPassword != "" || (d.Email != "" && d.Email != u.Email)) &&
@@ -56,9 +59,7 @@ func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 			errors[d.GetJsonTagName("Photo")] = codes.IMAGE_CONVERSION_FAILED
 		}
 
-		// d.Photo = &models.File{}
-		// d.Photo = file
-		// d.PhotoID = file.ID
+		d.PhotoID = file.ID
 	}
 
 	// Minimal requirements for fields from validate tag
@@ -83,4 +84,16 @@ func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 	}
 
 	return errors
+}
+
+func (d *UserPatchData) ApplyTo(u *models.User) {
+	u.Password = d.NewPassword
+	u.Email = d.Email
+	u.Description = d.Description
+	u.Username = d.Username
+	u.Fullname = d.Fullname
+
+	if d.PhotoID != 0 {
+		u.PhotoID = d.PhotoID
+	}
 }
