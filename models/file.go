@@ -1,5 +1,10 @@
 package models
 
+var FILE_TYPES = map[string]string{
+	"IMAGE": "image",
+	"AUDIO": "audio",
+}
+
 type FileMetadata struct {
 	*SimpleJson
 

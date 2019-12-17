@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 
@@ -63,8 +62,6 @@ func (a *API) Init(r *gin.RouterGroup) {
 func (a *API) AuthRequired(c *gin.Context) {
 	re := regexp.MustCompile(`Bearer (.*)`)
 	token := string(re.FindSubmatch([]byte(c.GetHeader("authorization")))[1])
-
-	fmt.Printf("Token is %s", token)
 
 	if token == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.EMPTY_REQUEST})

@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/muerwre/vault-golang/utils/passwords"
 )
 
 type User struct {
@@ -30,8 +32,14 @@ type User struct {
 	Socials          []Social   `json:"-"`
 	LastSeen         time.Time  `json:"last_seen"`
 	LastSeenMessages time.Time  `json:"last_seen_messages"`
+
+	NewPassword string `json:"-" gorm:"-" sql:"-"`
 }
 
 func (User) TableName() string {
 	return "user"
+}
+
+func (u *User) IsValidPassword(password string) bool {
+	return password != "" && u.Password != "" && passwords.CheckPasswordHash(password, u.Password)
 }

@@ -18,4 +18,11 @@ const (
 	USER_EXIST              string = "User_Exist"
 	INCORRECT_PASSWORD      string = "Incorrect_Password"
 	CODE_IS_INVALID         string = "Code_Is_Invalid"
+	REQUIRED                string = "Required"
 )
+
+var VALIDATION_TO_CODE = map[string]string{
+	"gte":      TOO_SHIRT,
+	"email":    NOT_AN_EMAIL,
+	"required": REQUIRED,
+}
