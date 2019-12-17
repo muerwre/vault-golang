@@ -17,7 +17,7 @@ type UserPatchData struct {
 	NewPassword string `json:"new_password" validate:"omitempty,gte=6,lte=64"`
 	Email       string `json:"email" validate:"omitempty,email"`
 	Description string `json:"description" validate:"omitempty,lte=512"`
-	// Photo       *models.File
+	Photo       *models.File
 }
 
 func (d *UserPatchData) GetJsonTagName(f string) string {
@@ -30,7 +30,7 @@ func (d *UserPatchData) GetJsonTagName(f string) string {
 	return field.Tag.Get("json")
 }
 
-func (d *UserPatchData) Validate(u models.User, db *db.DB) map[string]string {
+func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 	err := On.Struct(d)
 	errors := map[string]string{}
 
@@ -46,20 +46,20 @@ func (d *UserPatchData) Validate(u models.User, db *db.DB) map[string]string {
 		errors[d.GetJsonTagName("Username")] = codes.USER_EXIST
 	}
 
-	// // Photo should be at database
-	// if d.Photo.ID != 0 {
-	// 	file := &models.File{}
+	// Photo should be at database
+	if d.Photo.ID != 0 {
+		file := &models.File{}
 
-	// 	db.First(&file, "id = ?", d.Photo.ID)
+		db.First(&file, "id = ?", d.Photo.ID)
 
-	// 	if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES["IMAGE"] {
-	// 		errors[d.GetJsonTagName("Photo")] = codes.IMAGE_CONVERSION_FAILED
-	// 	}
+		if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES["IMAGE"] {
+			errors[d.GetJsonTagName("Photo")] = codes.IMAGE_CONVERSION_FAILED
+		}
 
-	// 	// d.Photo = &models.File{}
-	// 	// d.Photo = file
-	// 	// d.PhotoID = file.ID
-	// }
+		// d.Photo = &models.File{}
+		// d.Photo = file
+		// d.PhotoID = file.ID
+	}
 
 	// Minimal requirements for fields from validate tag
 	if err != nil {

@@ -64,6 +64,10 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
 
+	// d.First(&u)
+	// fmt.Printf("UUUU: %+v", u)
+	d.Model(&models.User{}).Updates(&u)
+
 	data := &struct {
 		User validation.UserPatchData `json:"user"`
 	}{}
@@ -74,14 +78,18 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 		fmt.Printf("ERR 1 %+v", err)
 	}
 
-	validation_errors := data.User.Validate(*u, d)
+	validation_errors := data.User.Validate(u, d)
 
 	if validation_errors != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"errors": validation_errors})
 		return
 	}
 
-	d.Model(&u).Save(u)
+	d.Model(&models.User{}).Updates(data.User)
+
+	// // u.Password = data.User.NewPassword
+
+	// // d.Save(u)
 
 	c.JSON(http.StatusOK, gin.H{"data": u})
 }

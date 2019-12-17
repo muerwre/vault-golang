@@ -10,7 +10,8 @@ import (
 func (d *DB) GetUserByToken(t string) (user *models.User, err error) {
 	token := &models.Token{}
 
-	d.Preload("User").Preload("User.Photo").Preload("User.Cover").First(&token, "token = ?", t)
+	// .Preload("User.Photo").Preload("User.Cover")
+	d.Preload("User").First(&token, "token = ?", t)
 
 	if token == nil || token.User == nil {
 		return nil, errors.New(codes.USER_NOT_FOUND)
