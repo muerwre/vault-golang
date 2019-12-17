@@ -87,7 +87,10 @@ func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 }
 
 func (d *UserPatchData) ApplyTo(u *models.User) {
-	u.Password = d.NewPassword
+	if d.NewPassword != "" {
+		u.Password, _ = passwords.HashPassword(d.NewPassword)
+	}
+
 	u.Email = d.Email
 	u.Description = d.Description
 	u.Username = d.Username
