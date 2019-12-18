@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type Model struct {
 
 type SimpleJson struct{}
 type StringArray []string
+type CommaStringArray []string
 
 func (s *SimpleJson) Scan(src interface{}) error {
 	return json.Unmarshal(src.([]byte), &s)
@@ -32,4 +34,13 @@ func (s *StringArray) Scan(src interface{}) error {
 func (s StringArray) Value() (driver.Value, error) {
 	val, err := json.Marshal(s)
 	return string(val), err
+}
+
+func (s *CommaStringArray) Scan(src interface{}) error {
+	*s = strings.Split(string(src.([]byte)), ",")
+	return nil
+}
+
+func (s CommaStringArray) Value() (driver.Value, error) {
+	return strings.Join(s, ","), nil
 }

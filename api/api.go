@@ -57,6 +57,7 @@ func (a *API) Init(r *gin.RouterGroup) {
 	r.OPTIONS("/*path", a.CorsHandler)
 
 	UserRouter(r.Group("/user"), a)
+	NodeRouter(r.Group("/node"), a)
 }
 
 func (a *API) AuthRequired(c *gin.Context) {
