@@ -13,6 +13,7 @@ type NodeController struct{}
 
 var Node = &NodeController{}
 
+// GetNode /node:id returns single node
 func (a *NodeController) GetNode(c *gin.Context) {
 	id := c.Param("id")
 	uid := c.MustGet("UID").(uint)
@@ -27,15 +28,20 @@ func (a *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	files := make([]*models.File, len(node.FilesOrder))
-	d.Where("id IN (?)", []string(node.FilesOrder)).Find(&files)
-	node.Files = files
+	files_chan := make(chan []*models.File)
+
+	go func() {
+		files := make([]*models.File, len(node.FilesOrder))
+		d.Where("id IN (?)", []string(node.FilesOrder)).Find(&files)
+		files_chan <- files
+	}()
 
 	if uid != 0 {
 		node.IsLiked = d.IsNodeLikedBy(node, uid)
 	}
 
 	node.LikeCount = d.GetNodeLikeCount(node)
+	node.Files = <-files_chan
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
