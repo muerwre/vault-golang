@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/db"
@@ -9,11 +10,24 @@ import (
 	"github.com/muerwre/vault-golang/utils/codes"
 )
 
+type NodeDiffParams struct {
+	Start       time.Time `json:"start" form:"start"`
+	End         time.Time `json:"end" form:"end"`
+	Take        uint      `json:"take" form:"take"`
+	WithHeroes  bool      `json:"with_heroes" form:"with_heroes"`
+	WithUpdated bool      `json:"with_updated" form:"with_updated"`
+	WithRecent  bool      `json:"with_recent" form:"with_recent"`
+	WithValid   bool      `json:"with_valid" form:"with_valid"`
+}
+
+var FlowNodeTypes = []string{"image", "video", "text"}
+var FlowNodeCriteria = "is_promoted = 1 AND is_public = 1 AND type IN (?)"
+
 type NodeController struct{}
 
 var Node = &NodeController{}
 
-// GetNode /node:id returns single node
+// GetNode /node:id - returns single node with tags, likes count and files
 func (a *NodeController) GetNode(c *gin.Context) {
 	id := c.Param("id")
 	uid := c.MustGet("UID").(uint)
@@ -46,17 +60,48 @@ func (a *NodeController) GetNode(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
 
+// GetNodeComments /node/:id/comments - returns comments for node
 func (a *NodeController) GetNodeComments(c *gin.Context) {
 	id := c.Param("id")
 	d := c.MustGet("DB").(*db.DB)
 
 	comments := &[]*models.Comment{}
 
-	d.Preload("User").Preload("Files").Where("nodeId = ?", id).Order("created_at").Find(&comments)
+	d.Preload("User").Preload("Files").Preload("User.Photo").Where("nodeId = ?", id).Order("created_at").Find(&comments)
 
 	for _, v := range *comments {
 		v.SortFiles()
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{"comments": comments})
+}
+
+// GetAll /node/list
+func (_ *NodeController) GetDiff(c *gin.Context) {
+	params := &NodeDiffParams{}
+	err := c.Bind(&params)
+	d := c.MustGet("DB").(*db.DB)
+
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": codes.INCORRECT_DATA})
+	}
+
+	if params.Take == 0 {
+		params.Take = 40
+	}
+
+	before := &[]models.FlowNode{}
+	after := &[]models.FlowNode{}
+	heroes := &[]models.FlowNode{}
+
+	q := d.Model(&models.Node{}).Where(FlowNodeCriteria, FlowNodeTypes)
+
+	q.Where("created_at > ?", params.Start).Order("created_at DESC").Scan(&before)
+	q.Where("created_at < ?", params.End).Order("created_at DESC").Offset(0).Limit(params.Take).Scan(&after)
+
+	if params.WithHeroes {
+		d.Model(&models.Node{}).Where("type = ? AND is_heroic < ?", "image", true).Order("RAND()").Offset(0).Limit(20).Scan(&heroes)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"before": before, "after": after, "heroes": heroes})
 }

@@ -58,6 +58,7 @@ func (a *API) Init(r *gin.RouterGroup) {
 
 	UserRouter(r.Group("/user"), a)
 	NodeRouter(r.Group("/node"), a)
+	NodesRouter(r.Group("/nodes"), a)
 }
 
 func (a *API) AuthRequired(c *gin.Context) {
@@ -79,7 +80,15 @@ func (a *API) AuthRequired(c *gin.Context) {
 
 func (a *API) AuthOptional(c *gin.Context) {
 	re := regexp.MustCompile(`Bearer (.*)`)
-	t := string(re.FindSubmatch([]byte(c.GetHeader("authorization")))[1])
+	matches := re.FindSubmatch([]byte(c.GetHeader("authorization")))
+
+	if len(matches) < 1 {
+		c.Set("UID", 0)
+		c.Next()
+		return
+	}
+
+	t := string(matches[1])
 	d := c.MustGet("DB").(*db.DB)
 
 	token := &models.Token{}
