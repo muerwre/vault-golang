@@ -19,7 +19,10 @@ type UserPatchData struct {
 	Email       string `json:"email" validate:"omitempty,email"`
 	Description string `json:"description" validate:"omitempty,lte=512"`
 	PhotoID     uint   `json:"-"`
-	Photo       *models.File
+	CoverID     uint   `json:"-"`
+
+	Photo *models.File
+	Cover *models.File
 }
 
 func (d *UserPatchData) GetJsonTagName(f string) string {
@@ -35,7 +38,6 @@ func (d *UserPatchData) GetJsonTagName(f string) string {
 func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 	err := On.Struct(d)
 	errors := map[string]string{}
-	// d.ID = u.ID
 
 	// We need password to change password or email
 	if (d.NewPassword != "" || (d.Email != "" && d.Email != u.Email)) &&
@@ -60,6 +62,19 @@ func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 		}
 
 		d.PhotoID = file.ID
+	}
+
+	// Cover should be at database
+	if d.Cover.ID != 0 {
+		file := &models.File{}
+
+		db.First(&file, "id = ?", d.Photo.ID)
+
+		if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES["IMAGE"] {
+			errors[d.GetJsonTagName("Cover")] = codes.IMAGE_CONVERSION_FAILED
+		}
+
+		d.CoverID = file.ID
 	}
 
 	// Minimal requirements for fields from validate tag

@@ -8,6 +8,7 @@ import (
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/muerwre/vault-golang/utils/passwords"
 	"github.com/muerwre/vault-golang/utils/validation"
 )
 
@@ -27,7 +28,7 @@ func (u *UserController) GetUserProfile(c *gin.Context) {
 
 	user, err := d.GetUserByUsername(username)
 
-	if err != nil {
+	if err != nil || user.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.USER_NOT_FOUND})
 		return
 	}
@@ -53,8 +54,12 @@ func (u *UserController) LoginUser(c *gin.Context) {
 	}
 
 	if !user.IsValidPassword(password) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
-		return
+		md5hash := passwords.GetMD5Hash(password)
+
+		if md5hash != user.Password {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"user": user})

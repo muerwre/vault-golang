@@ -10,10 +10,9 @@ import (
 func (d *DB) GetUserByToken(t string) (user *models.User, err error) {
 	token := &models.Token{}
 
-	// .Preload("User.Photo").Preload("User.Cover")
-	d.Preload("User").First(&token, "token = ?", t)
+	d.Preload("User").Preload("User.Photo").Preload("User.Cover").First(&token, "token = ?", t)
 
-	if token == nil || token.User == nil {
+	if token.ID == 0 || token.User.ID == 0 {
 		return nil, errors.New(codes.USER_NOT_FOUND)
 	}
 
@@ -25,7 +24,7 @@ func (d *DB) GetUserByUsername(n string) (user *models.User, err error) {
 
 	d.Preload("Photo").Preload("Cover").First(&user, "username = ?", n)
 
-	if user == nil {
+	if user.ID == 0 {
 		return nil, errors.New(codes.USER_NOT_FOUND)
 	}
 

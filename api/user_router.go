@@ -7,12 +7,12 @@ import (
 
 // UserRouter for /user/*
 func UserRouter(r *gin.RouterGroup, a *API) {
-	r.GET("/:username/profile", controllers.User.GetUserProfile)
 	r.POST("/login", controllers.User.LoginUser)
+	r.GET("/:username/profile", a.AuthOptional, controllers.User.GetUserProfile)
 
 	authorized := r.Group("/").Use(a.AuthRequired)
 	{
-		authorized.GET("/", controllers.User.CheckCredentials)
-		authorized.PATCH("/", controllers.User.PatchUser)
+		authorized.GET("/", a.WithUser(true), controllers.User.CheckCredentials)
+		authorized.PATCH("/", a.WithUser(false), controllers.User.PatchUser)
 	}
 }

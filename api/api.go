@@ -61,40 +61,36 @@ func (a *API) Init(r *gin.RouterGroup) {
 
 func (a *API) AuthRequired(c *gin.Context) {
 	re := regexp.MustCompile(`Bearer (.*)`)
-	token := string(re.FindSubmatch([]byte(c.GetHeader("authorization")))[1])
+	t := string(re.FindSubmatch([]byte(c.GetHeader("authorization")))[1])
+	d := c.MustGet("DB").(*db.DB)
 
-	if token == "" {
+	token := &models.Token{}
+	d.First(&token, "token = ?", t)
+
+	if token.ID == 0 {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.EMPTY_REQUEST})
 		return
 	}
 
-	user, err := a.DB.GetUserByToken(token)
-
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
-		return
-	}
-
-	c.Set("User", user)
+	c.Set("UID", token.UserID)
 	c.Next()
 }
 
 func (a *API) AuthOptional(c *gin.Context) {
-	token := c.GetHeader("authorization")
+	re := regexp.MustCompile(`Bearer (.*)`)
+	t := string(re.FindSubmatch([]byte(c.GetHeader("authorization")))[1])
+	d := c.MustGet("DB").(*db.DB)
 
-	if token == "" {
-		c.Set("User", &models.User{})
+	token := &models.Token{}
+	d.First(&token, "token = ?", t)
+
+	if token.ID == 0 {
+		c.Set("UID", 0)
 		c.Next()
+		return
 	}
 
-	user, err := a.DB.GetUserByToken(token)
-
-	if err != nil {
-		c.Set("User", &models.User{})
-		c.Next()
-	}
-
-	c.Set("User", user)
+	c.Set("UID", token.UserID)
 	c.Next()
 }
 
@@ -105,4 +101,33 @@ func (a *API) CorsHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
 
 	c.AbortWithStatus(204)
+}
+
+func (a *API) WithUser(preload bool) func(*gin.Context) {
+	return func(c *gin.Context) {
+		uid := c.MustGet("UID").(uint)
+
+		if uid == 0 {
+			c.Set("User", nil)
+		}
+
+		d := c.MustGet("DB").(*db.DB)
+
+		user := &models.User{}
+		q := d.Model(&user)
+
+		if preload {
+			q = q.Preload("Photo").Preload("Cover")
+		}
+
+		q.First(&user, "id = ?", uid)
+
+		if user.ID == 0 {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
+			return
+		}
+
+		c.Set("User", user)
+		c.Next()
+	}
 }
