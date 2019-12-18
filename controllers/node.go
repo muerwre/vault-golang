@@ -45,3 +45,18 @@ func (a *NodeController) GetNode(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
+
+func (a *NodeController) GetNodeComments(c *gin.Context) {
+	id := c.Param("id")
+	d := c.MustGet("DB").(*db.DB)
+
+	comments := &[]*models.Comment{}
+
+	d.Preload("User").Preload("Files").Where("nodeId = ?", id).Order("created_at").Find(&comments)
+
+	for _, v := range *comments {
+		v.SortFiles()
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{"comments": comments})
+}

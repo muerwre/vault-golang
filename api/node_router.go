@@ -7,7 +7,16 @@ import (
 
 // UserRouter for /node/*
 func NodeRouter(r *gin.RouterGroup, a *API) {
-	r.GET("/:id", a.AuthOptional, a.WithUser(false), controllers.Node.GetNode)
+
+	node := r.Group("/:id")
+	{
+		node.GET("/", a.AuthOptional, a.WithUser(false), controllers.Node.GetNode)
+	}
+
+	comment := r.Group("/:id/comment")
+	{
+		comment.GET("/", controllers.Node.GetNodeComments)
+	}
 
 	// r.POST("/login", controllers.User.LoginUser)
 	// r.GET("/:username/profile", a.AuthOptional, controllers.User.GetUserProfile)
