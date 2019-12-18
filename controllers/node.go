@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -81,6 +82,7 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 	params := &NodeDiffParams{}
 	err := c.Bind(&params)
 	d := c.MustGet("DB").(*db.DB)
+	uid := c.MustGet("UID").(uint)
 
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": codes.INCORRECT_DATA})
@@ -93,15 +95,31 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 	before := &[]models.FlowNode{}
 	after := &[]models.FlowNode{}
 	heroes := &[]models.FlowNode{}
+	updated := &[]models.FlowNode{}
 
 	q := d.Model(&models.Node{}).Where(FlowNodeCriteria, FlowNodeTypes)
 
-	q.Where("created_at > ?", params.Start).Order("created_at DESC").Scan(&before)
-	q.Where("created_at < ?", params.End).Order("created_at DESC").Offset(0).Limit(params.Take).Scan(&after)
+	var wg sync.WaitGroup
 
-	if params.WithHeroes {
-		d.Model(&models.Node{}).Where("type = ? AND is_heroic < ?", "image", true).Order("RAND()").Offset(0).Limit(20).Scan(&heroes)
-	}
+	wg.Add(2)
 
-	c.JSON(http.StatusOK, gin.H{"before": before, "after": after, "heroes": heroes})
+	go func() {
+		q.Where("created_at > ?", params.Start).Order("created_at DESC").Scan(&before)
+		q.Where("created_at < ?", params.End).Order("created_at DESC").Offset(0).Limit(params.Take).Scan(&after)
+
+		if params.WithHeroes {
+			d.Model(&models.Node{}).Where("type = ? AND is_heroic < ?", "image", true).Order("RAND()").Offset(0).Limit(20).Scan(&heroes)
+		}
+		wg.Done()
+	}()
+
+	go func() {
+		if uid != 0 {
+			q.Order("created_at DESC").Joins("JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).Where("node_view.visited < node.commented_at").Scan(&updated)
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
+	c.JSON(http.StatusOK, gin.H{"before": before, "after": after, "heroes": heroes, "updated": updated})
 }

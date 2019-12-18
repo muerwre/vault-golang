@@ -83,7 +83,7 @@ func (a *API) AuthOptional(c *gin.Context) {
 	matches := re.FindSubmatch([]byte(c.GetHeader("authorization")))
 
 	if len(matches) < 1 {
-		c.Set("UID", 0)
+		c.Set("UID", uint(0))
 		c.Next()
 		return
 	}
@@ -95,7 +95,7 @@ func (a *API) AuthOptional(c *gin.Context) {
 	d.First(&token, "token = ?", t)
 
 	if token.ID == 0 {
-		c.Set("UID", 0)
+		c.Set("UID", uint(0))
 		c.Next()
 		return
 	}
