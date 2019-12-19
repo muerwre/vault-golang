@@ -46,6 +46,8 @@ func (a *NodeController) GetNode(c *gin.Context) {
 		Preload("User").
 		Preload("Cover")
 
+	fmt.Printf("User: %#v", u)
+
 	if u != nil && u.Role == models.USER_ROLES.ADMIN {
 		q.First(&node, "id = ?", id)
 	} else {
@@ -448,10 +450,9 @@ func (_ NodeController) PostLock(c *gin.Context) {
 	}
 
 	if params.IsLocked {
-		d.Delete(&node)
+		d.Unscoped().Model(&node).Update("deleted_at", time.Now().Truncate(time.Second))
 	} else {
-		node.DeletedAt = nil
-		d.Unscoped().Update(&node)
+		d.Unscoped().Model(&node).Update("deleted_at", nil)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deleted_at": node.DeletedAt})

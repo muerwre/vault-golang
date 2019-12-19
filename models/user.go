@@ -19,8 +19,10 @@ var USER_ROLES = UserRoles{
 }
 
 type User struct {
-	*Model
-
+	ID               uint       `gorm:"primary_key" json:"id"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	DeletedAt        *time.Time `sql:"index" json:"-"`
 	Username         string     `gorm:"unique;not null" json:"username"`
 	Password         string     `json:"-"`
 	Email            string     `json:"-"`
