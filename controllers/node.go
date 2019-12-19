@@ -375,3 +375,34 @@ func (_ *NodeController) PostTags(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
+
+// PostLike - POST /node/:id/like - likes or dislikes node
+func (_ NodeController) PostLike(c *gin.Context) {
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	d := c.MustGet("DB").(*db.DB)
+	u := c.MustGet("User").(*models.User)
+
+	node := &models.Node{}
+
+	if nid == 0 || err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		return
+	}
+
+	d.First(&node, "id = ?", nid)
+
+	if node == nil || node.ID == 0 || !node.CanBeLiked() {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
+	}
+
+	isLiked := d.IsNodeLikedBy(node, u.ID)
+
+	if isLiked {
+		d.Model(&node).Association("Likes").Delete(u)
+	} else {
+		d.Model(&node).Association("Likes").Append(u)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"is_liked": !isLiked})
+}

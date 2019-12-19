@@ -11,6 +11,7 @@ func NodeRouter(r *gin.RouterGroup, a *API) {
 	{
 		node.GET("/", a.AuthOptional, a.WithUser(false), controllers.Node.GetNode)
 		node.POST("/tags", a.AuthRequired, a.WithUser(false), controllers.Node.PostTags)
+		node.POST("/like", a.AuthRequired, a.WithUser(false), controllers.Node.PostLike)
 	}
 
 	comment := r.Group("/:id/comment")
