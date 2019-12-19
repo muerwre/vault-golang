@@ -130,5 +130,9 @@ func (n Node) CanBeCommented() bool {
 }
 
 func (n Node) CanBeTaggedBy(user *User) bool {
-	return n.IsFlowType() && (user.Role == "admin" || n.UserID == user.ID)
+	return n.IsFlowType() && (user.Role == USER_ROLES.ADMIN || n.UserID == user.ID)
+}
+
+func (n Node) CanBeLiked() bool {
+	return n.IsFlowType()
 }

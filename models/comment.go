@@ -55,5 +55,5 @@ func (c *Comment) GetOrphanFiles(data *Comment) []uint {
 
 // CanBeEditedBy checks if comment can be edited by user
 func (c *Comment) CanBeEditedBy(user *User) bool {
-	return user.Role == "admin" || c.UserID == user.ID
+	return user.Role == USER_ROLES.ADMIN || c.UserID == user.ID
 }

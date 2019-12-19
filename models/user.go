@@ -6,6 +6,18 @@ import (
 	"github.com/muerwre/vault-golang/utils/passwords"
 )
 
+type UserRoles struct {
+	GUEST string
+	ADMIN string
+	USER  string
+}
+
+var USER_ROLES = UserRoles{
+	GUEST: "guest",
+	ADMIN: "admin",
+	USER:  "user",
+}
+
 type User struct {
 	*Model
 
@@ -45,5 +57,5 @@ func (u *User) IsValidPassword(password string) bool {
 }
 
 func (u User) CanEditComment(c *Comment) bool {
-	return c.UserID != 0 && (u.ID == c.UserID || u.Role == "admin")
+	return c.UserID != 0 && (u.ID == c.UserID || u.Role == USER_ROLES.ADMIN)
 }
