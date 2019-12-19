@@ -294,24 +294,29 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 	// Unsetting them
 	if len(lostFiles) > 0 {
 		d.Model(&comment.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
-		d.Table("comment_files_file").Exec("DELETE FROM comment_files_file WHERE fileId IN (?)", lostFiles)
+		// d.Table("comment_files_file").Exec("DELETE FROM comment_files_file WHERE fileId IN (?)", lostFiles)
 	}
 
 	comment.Text = data.Text
+
+	if len(comment.Text) > 2048 {
+		comment.Text = string(comment.Text[0:2048])
+	}
 
 	if len(comment.Text) < 2 && len(comment.FilesOrder) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TEXT_REQUIRED})
 		return
 	}
 
-	// TODO: update node brief here
+	// Updating node brief
 	if node.Description == "" && comment.UserID == node.UserID && len(comment.Text) >= 64 {
 		node.Description = comment.Text
 		d.Save(&node)
 	}
 
-	// comment.Files = make([]*models.File, 0)
-	d.Save(&comment)
+	d.Set("gorm:association_autoupdate", false).
+		Save(&comment).Association("Files").
+		Replace(comment.Files)
 
 	// Updating current files target
 	if len(comment.FilesOrder) > 0 {
