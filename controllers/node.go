@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/db"
@@ -103,7 +104,7 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 	recent := &[]models.FlowNode{}
 	valid := []uint{}
 
-	q := d.Model(&models.Node{}).Where(FlowNodeCriteria, models.FlowNodeTypes)
+	q := d.Model(&models.Node{}).Where(FlowNodeCriteria, structs.Values(models.FLOW_NODE_TYPES))
 
 	var wg sync.WaitGroup
 
@@ -372,5 +373,5 @@ func (_ *NodeController) PostTags(c *gin.Context) {
 
 	d.Model(&node).Association("Tags").Replace(tags)
 
-	c.JSON(http.StatusOK, gin.H{"params": params, "tags": tags})
+	c.JSON(http.StatusOK, gin.H{"node": node})
 }

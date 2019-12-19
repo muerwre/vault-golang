@@ -3,6 +3,7 @@ module github.com/muerwre/vault-golang
 go 1.13
 
 require (
+	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gin-contrib/sse v0.1.0
 	github.com/gin-gonic/gin v1.5.0

@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"github.com/fatih/structs"
 	"time"
 )
 
@@ -21,9 +22,35 @@ type NodeFlow struct {
 	ShowDescription bool   `json:"show_description"`
 }
 
-type NodeTypeList []string
+type FlowNodeTypes struct {
+	IMAGE string
+	VIDEO string
+	TEXT  string
+}
 
-var FlowNodeTypes = NodeTypeList{"image", "video", "text"}
+type ServiceNodeTypes struct {
+	BORIS string
+}
+
+type NodeTypes struct {
+	IMAGE string
+	VIDEO string
+	TEXT  string
+	BORIS string
+}
+
+var FLOW_NODE_TYPES = FlowNodeTypes{
+	IMAGE: "image",
+	VIDEO: "video",
+	TEXT:  "text",
+}
+
+var NODE_TYPES = NodeTypes{
+	IMAGE: "image",
+	VIDEO: "video",
+	TEXT:  "text",
+	BORIS: "boris",
+}
 
 type Node struct {
 	*Model
@@ -84,13 +111,9 @@ func (s NodeFlow) Value() (driver.Value, error) {
 	return string(val), err
 }
 
-func (n Node) CanBeCommented() bool {
-	if n.Type == "boris" {
-		return true
-	}
-
-	for _, a := range FlowNodeTypes {
-		if a == n.Type {
+func (f FlowNodeTypes) Contains(t string) bool {
+	for _, a := range structs.Map(f) {
+		if a == t {
 			return true
 		}
 	}
@@ -98,12 +121,14 @@ func (n Node) CanBeCommented() bool {
 	return false
 }
 
-func (n Node) CanBeTaggedBy(user *User) bool {
-	for _, a := range FlowNodeTypes {
-		if a == n.Type {
-			return user.Role == "admin" || n.UserID == user.ID
-		}
-	}
+func (n Node) IsFlowType() bool {
+	return FLOW_NODE_TYPES.Contains(n.Type)
+}
 
-	return false
+func (n Node) CanBeCommented() bool {
+	return n.Type == NODE_TYPES.BORIS || n.IsFlowType()
+}
+
+func (n Node) CanBeTaggedBy(user *User) bool {
+	return n.IsFlowType() && (user.Role == "admin" || n.UserID == user.ID)
 }
