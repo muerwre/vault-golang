@@ -77,7 +77,7 @@ func (a *NodeController) GetNodeComments(c *gin.Context) {
 	c.JSON(http.StatusAccepted, gin.H{"comments": comments})
 }
 
-// GetAll /node/list
+// GetDiff /nodes/diff gets newer and older nodes
 func (_ *NodeController) GetDiff(c *gin.Context) {
 	params := &NodeDiffParams{}
 	err := c.Bind(&params)
@@ -86,6 +86,7 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": codes.INCORRECT_DATA})
+		return
 	}
 
 	if params.Take == 0 {
@@ -96,6 +97,8 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 	after := &[]models.FlowNode{}
 	heroes := &[]models.FlowNode{}
 	updated := &[]models.FlowNode{}
+	recent := &[]models.FlowNode{}
+	valid := []uint{}
 
 	q := d.Model(&models.Node{}).Where(FlowNodeCriteria, FlowNodeTypes)
 
@@ -104,22 +107,80 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 	wg.Add(2)
 
 	go func() {
-		q.Where("created_at > ?", params.Start).Order("created_at DESC").Scan(&before)
-		q.Where("created_at < ?", params.End).Order("created_at DESC").Offset(0).Limit(params.Take).Scan(&after)
+		q.Where("created_at > ?", params.Start).
+			Order("created_at DESC").
+			Scan(&before)
+
+		q.Where("created_at < ?", params.End).
+			Order("created_at DESC").
+			Offset(0).
+			Limit(params.Take).Scan(&after)
 
 		if params.WithHeroes {
-			d.Model(&models.Node{}).Where("type = ? AND is_heroic < ?", "image", true).Order("RAND()").Offset(0).Limit(20).Scan(&heroes)
+			d.Model(&models.Node{}).
+				Where("type = ? AND is_heroic < ?", "image", true).
+				Order("RAND()").
+				Offset(0).
+				Limit(20).
+				Scan(&heroes)
 		}
+
 		wg.Done()
 	}()
 
 	go func() {
-		if uid != 0 {
-			q.Order("created_at DESC").Joins("JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).Where("node_view.visited < node.commented_at").Scan(&updated)
+		if uid != 0 && params.WithUpdated {
+			q.Order("created_at DESC").
+				Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
+				Where("node_view.visited < node.commented_at").
+				Limit(10).
+				Scan(&updated)
 		}
+
+		exclude := make([]uint, len(*updated)+1)
+		exclude[0] = 0
+
+		for k, v := range *updated {
+			exclude[k+1] = v.ID
+		}
+
+		if params.WithRecent {
+			q.Order("created_at DESC").
+				Preload("User").
+				Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
+				Limit(16).
+				Scan(&recent)
+		}
+
+		if params.WithValid {
+			rows, err := q.Table("node").
+				Select("id").
+				Where("created_at >= ? AND created_at <= ?", params.End, params.Start).
+				Rows()
+
+			if err == nil {
+				id := uint(0)
+				for i := 0; rows.Next(); i += 1 {
+					err = rows.Scan(&id)
+
+					if id > 0 && err == nil {
+						valid = append(valid, id)
+					}
+				}
+			}
+		}
+
 		wg.Done()
 	}()
 
 	wg.Wait()
-	c.JSON(http.StatusOK, gin.H{"before": before, "after": after, "heroes": heroes, "updated": updated})
+
+	c.JSON(http.StatusOK, gin.H{
+		"before":  before,
+		"after":   after,
+		"heroes":  heroes,
+		"updated": updated,
+		"recent":  recent,
+		"valid":   valid,
+	})
 }
