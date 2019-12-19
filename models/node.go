@@ -22,6 +22,10 @@ type NodeFlow struct {
 	ShowDescription bool   `json:"show_description"`
 }
 
+type NodeTypeList []string
+
+var FlowNodeTypes = NodeTypeList{"image", "video", "text"}
+
 type Node struct {
 	*Model
 
@@ -80,4 +84,18 @@ func (s *NodeFlow) Scan(src interface{}) error {
 func (s NodeFlow) Value() (driver.Value, error) {
 	val, err := json.Marshal(s)
 	return string(val), err
+}
+
+func (n Node) CanBeCommented() bool {
+	if n.Type == "boris" {
+		return true
+	}
+
+	for _, a := range FlowNodeTypes {
+		if a == n.Type {
+			return true
+		}
+	}
+
+	return false
 }

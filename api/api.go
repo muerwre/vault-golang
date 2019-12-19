@@ -63,14 +63,22 @@ func (a *API) Init(r *gin.RouterGroup) {
 
 func (a *API) AuthRequired(c *gin.Context) {
 	re := regexp.MustCompile(`Bearer (.*)`)
-	t := string(re.FindSubmatch([]byte(c.GetHeader("authorization")))[1])
 	d := c.MustGet("DB").(*db.DB)
+
+	matches := re.FindSubmatch([]byte(c.GetHeader("authorization")))
+
+	if len(matches) < 1 {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
+		return
+	}
+
+	t := string(matches[1])
 
 	token := &models.Token{}
 	d.First(&token, "token = ?", t)
 
 	if token.ID == 0 {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.EMPTY_REQUEST})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
 		return
 	}
 

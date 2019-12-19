@@ -15,6 +15,7 @@ func NodeRouter(r *gin.RouterGroup, a *API) {
 	comment := r.Group("/:id/comment")
 	{
 		comment.GET("/", controllers.Node.GetNodeComments)
+		comment.POST("/", a.AuthRequired, a.WithUser(false), controllers.Node.PostComment)
 		comment.POST("/:cid/lock", a.AuthRequired, a.WithUser(false), controllers.Node.LockComment)
 	}
 }

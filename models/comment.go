@@ -1,9 +1,17 @@
 package models
 
-import "fmt"
+import (
+	"time"
+)
 
 type Comment struct {
-	*CommentLike
+	ID        uint       `gorm:"primary_key" json:"id"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `sql:"index" json:"-"`
+
+	Text       string         `json:"text"`
+	FilesOrder CommaUintArray `gorm:"column:files_order;type:longtext;" json:"files_order"`
 
 	User   *User `json:"user" gorm:"foreignkey:UserID"`
 	UserID uint  `gorm:"column:userId" json:"-"`
@@ -12,6 +20,8 @@ type Comment struct {
 	NodeID uint    `gorm:"column:nodeId" json:"-"`
 	Files  []*File `gorm:"many2many:comment_files_file;jointable_foreignkey:commentId;association_jointable_foreignkey:fileId" json:"files"`
 }
+
+var CommentFiles = []string{"image", "audio"}
 
 func (Comment) TableName() string {
 	return "comment"
@@ -22,12 +32,12 @@ func (c *Comment) SortFiles() {
 		return
 	}
 
-	filesWithIds := make(map[string]*File, len(c.FilesOrder))
+	filesWithIds := make(map[uint]*File, len(c.FilesOrder))
 	files := make([]*File, len(c.FilesOrder))
 
 	for i := 0; i < len(c.Files); i += 1 {
 		k := c.Files[i]
-		filesWithIds[fmt.Sprint(k.ID)] = k
+		filesWithIds[k.ID] = k
 	}
 
 	for i := 0; i < len(c.FilesOrder); i += 1 {
@@ -36,4 +46,14 @@ func (c *Comment) SortFiles() {
 	}
 
 	c.Files = files
+}
+
+// GetOrphanFiles finds files, that was in comment, but no longer appears in data
+func (c *Comment) GetOrphanFiles(data *Comment) []uint {
+	return make([]uint, 0)
+}
+
+// CanBeEditedBy checks if comment can be edited by user
+func (c *Comment) CanBeEditedBy(user *User) bool {
+	return user.Role == "admin" || c.UserID == user.ID
 }

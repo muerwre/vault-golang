@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -21,7 +24,6 @@ type NodeDiffParams struct {
 	WithValid   bool      `json:"with_valid" form:"with_valid"`
 }
 
-var FlowNodeTypes = []string{"image", "video", "text"}
 var FlowNodeCriteria = "is_promoted = 1 AND is_public = 1 AND type IN (?)"
 
 type NodeController struct{}
@@ -100,7 +102,7 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 	recent := &[]models.FlowNode{}
 	valid := []uint{}
 
-	q := d.Model(&models.Node{}).Where(FlowNodeCriteria, FlowNodeTypes)
+	q := d.Model(&models.Node{}).Where(FlowNodeCriteria, models.FlowNodeTypes)
 
 	var wg sync.WaitGroup
 
@@ -200,10 +202,12 @@ func (_ *NodeController) LockComment(c *gin.Context) {
 
 	if comment == nil || comment.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.COMMENT_NOT_FOUND})
+		return
 	}
 
 	if !u.CanEditComment(comment) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
 	}
 
 	if params.IsLocked {
@@ -214,4 +218,105 @@ func (_ *NodeController) LockComment(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
+}
+
+// PostComment - /node/:id/comment savng and creating comments
+func (_ *NodeController) PostComment(c *gin.Context) {
+	comment := &models.Comment{}
+	data := &models.Comment{}
+	node := &models.Node{}
+	d := c.MustGet("DB").(*db.DB)
+	u := c.MustGet("User").(*models.User)
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	if nid == 0 || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NODE_NOT_FOUND})
+		return
+	}
+
+	d.First(&node, "id = ?", nid)
+
+	if node.Type == "" || !node.CanBeCommented() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NODE_NOT_FOUND})
+		return
+	}
+
+	err = c.BindJSON(&data)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	if data.ID != 0 {
+		d.First(&comment, "id = ?", data.ID)
+	} else {
+		comment.Node = node
+		comment.NodeID = node.ID
+		comment.User = u
+		comment.UserID = u.ID
+	}
+
+	if comment.NodeID != node.ID || !comment.CanBeEditedBy(u) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
+	}
+
+	originFiles := make([]uint, len(comment.FilesOrder))
+	copy(originFiles, comment.FilesOrder)
+
+	lostFiles := make(models.CommaUintArray, 0)
+	comment.FilesOrder = make(models.CommaUintArray, 0)
+
+	if len(data.FilesOrder) > 0 {
+		ids, _ := data.FilesOrder.Value()
+
+		d.Order(
+			gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids)),
+		).
+			Find(&comment.Files, "id IN (?) AND TYPE IN (?)", []uint(data.FilesOrder), models.CommentFiles)
+
+		for i := 0; i < len(comment.Files); i += 1 {
+			comment.FilesOrder = append(comment.FilesOrder, comment.Files[i].ID)
+		}
+	} else {
+		comment.Files = make([]*models.File, 0)
+		comment.FilesOrder = make(models.CommaUintArray, 0)
+	}
+
+	// Detecting lost files
+	for _, v := range originFiles {
+		if !comment.FilesOrder.Contains(v) {
+			lostFiles = append(lostFiles, v)
+		}
+	}
+
+	// Unsetting them
+	if len(lostFiles) > 0 {
+		d.Model(&comment.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
+		d.Table("comment_files_file").Exec("DELETE FROM comment_files_file WHERE fileId IN (?)", lostFiles)
+	}
+
+	comment.Text = data.Text
+
+	if len(comment.Text) < 2 && len(comment.FilesOrder) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TEXT_REQUIRED})
+		return
+	}
+
+	// TODO: update node brief here
+	if node.Description == "" && comment.UserID == node.UserID && len(comment.Text) >= 64 {
+		node.Description = comment.Text
+		d.Save(&node)
+	}
+
+	// comment.Files = make([]*models.File, 0)
+	d.Save(&comment)
+
+	// Updating current files target
+	if len(comment.FilesOrder) > 0 {
+		d.Model(&comment.Files).Where("id IN (?)", []uint(comment.FilesOrder)).Update("Target", "comment")
+	}
+
+	c.JSON(http.StatusOK, gin.H{"comment": comment, "data": data})
 }
