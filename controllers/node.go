@@ -421,12 +421,18 @@ func (_ NodeController) PostLike(c *gin.Context) {
 
 // PostLock - POST /node/:id/lock - safely deletes node
 func (_ NodeController) PostLock(c *gin.Context) {
-	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
 	params := struct {
 		IsLocked bool `json:"is_locked"`
 	}{}
+
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
 
 	err = c.BindJSON(&params)
 
@@ -456,4 +462,35 @@ func (_ NodeController) PostLock(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deleted_at": node.DeletedAt})
+}
+
+// PostHeroic - POST /node/:id/heroic - sets heroic status to node
+func (_ NodeController) PostHeroic(c *gin.Context) {
+	d := c.MustGet("DB").(*db.DB)
+	u := c.MustGet("User").(*models.User)
+
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	node := &models.Node{}
+
+	if nid == 0 || err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		return
+	}
+
+	d.First(&node, "id = ?", nid)
+
+	if node == nil || node.ID == 0 || !node.CanBeHeroedBy(u) {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
+	}
+
+	d.Model(&node).Update("is_heroic", !node.IsHeroic)
+
+	c.JSON(http.StatusOK, gin.H{"is_heroic": node.IsHeroic})
 }

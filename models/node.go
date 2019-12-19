@@ -140,3 +140,7 @@ func (n Node) CanBeEditedBy(user *User) bool {
 func (n Node) CanBeLiked() bool {
 	return n.IsFlowType()
 }
+
+func (n Node) CanBeHeroedBy(u *User) bool {
+	return u.Role == USER_ROLES.ADMIN && n.IsFlowType()
+}
