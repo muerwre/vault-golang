@@ -37,10 +37,20 @@ func (a *NodeController) GetNode(c *gin.Context) {
 	id := c.Param("id")
 	uid := c.MustGet("UID").(uint)
 	d := c.MustGet("DB").(*db.DB)
+	u := c.MustGet("User").(*models.User)
 
 	node := &models.Node{}
 
-	d.Preload("Tags").Preload("User").Preload("Cover").First(&node, "id = ?", id)
+	q := d.Unscoped().
+		Preload("Tags").
+		Preload("User").
+		Preload("Cover")
+
+	if u != nil && u.Role == models.USER_ROLES.ADMIN {
+		q.First(&node, "id = ?", id)
+	} else {
+		q.First(&node, "id = ? AND (deleted_at IS NULL OR userID = ?)", id, u.ID)
+	}
 
 	if node.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
