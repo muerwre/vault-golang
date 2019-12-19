@@ -43,3 +43,7 @@ func (User) TableName() string {
 func (u *User) IsValidPassword(password string) bool {
 	return password != "" && u.Password != "" && passwords.CheckPasswordHash(password, u.Password)
 }
+
+func (u User) CanEditComment(c *Comment) bool {
+	return c.UserID != 0 && (u.ID == c.UserID || u.Role == "admin")
+}

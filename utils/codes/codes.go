@@ -19,6 +19,7 @@ const (
 	INCORRECT_PASSWORD      string = "Incorrect_Password"
 	CODE_IS_INVALID         string = "Code_Is_Invalid"
 	REQUIRED                string = "Required"
+	COMMENT_NOT_FOUND       string = "Comment_Not_Found"
 )
 
 var VALIDATION_TO_CODE = map[string]string{

@@ -184,3 +184,34 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 		"valid":   valid,
 	})
 }
+
+func (_ *NodeController) LockComment(c *gin.Context) {
+	d := c.MustGet("DB").(*db.DB)
+	u := c.MustGet("User").(*models.User)
+	cid := c.Param("cid")
+	params := struct {
+		IsLocked bool `json:"is_locked"`
+	}{}
+
+	c.BindJSON(&params)
+
+	comment := &models.Comment{}
+	d.Unscoped().Where("id = ?", cid).First(&comment)
+
+	if comment == nil || comment.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.COMMENT_NOT_FOUND})
+	}
+
+	if !u.CanEditComment(comment) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+	}
+
+	if params.IsLocked {
+		d.Delete(&comment)
+	} else {
+		comment.DeletedAt = nil
+		d.Unscoped().Update(&comment)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
+}
