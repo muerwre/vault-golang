@@ -133,6 +133,10 @@ func (n Node) CanBeTaggedBy(user *User) bool {
 	return n.IsFlowType() && (user.Role == USER_ROLES.ADMIN || n.UserID == user.ID)
 }
 
+func (n Node) CanBeEditedBy(user *User) bool {
+	return n.IsFlowType() && (user.Role == USER_ROLES.ADMIN || n.UserID == user.ID)
+}
+
 func (n Node) CanBeLiked() bool {
 	return n.IsFlowType()
 }
