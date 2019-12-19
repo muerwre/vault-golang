@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -271,9 +272,7 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 	if len(data.FilesOrder) > 0 {
 		ids, _ := data.FilesOrder.Value()
 
-		d.Order(
-			gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids)),
-		).
+		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
 			Find(&comment.Files, "id IN (?) AND TYPE IN (?)", []uint(data.FilesOrder), models.CommentFiles)
 
 		for i := 0; i < len(comment.Files); i += 1 {
@@ -294,7 +293,6 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 	// Unsetting them
 	if len(lostFiles) > 0 {
 		d.Model(&comment.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
-		// d.Table("comment_files_file").Exec("DELETE FROM comment_files_file WHERE fileId IN (?)", lostFiles)
 	}
 
 	comment.Text = data.Text
@@ -323,5 +321,56 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 		d.Model(&comment.Files).Where("id IN (?)", []uint(comment.FilesOrder)).Update("Target", "comment")
 	}
 
-	c.JSON(http.StatusOK, gin.H{"comment": comment, "data": data})
+	c.JSON(http.StatusOK, gin.H{"comment": comment})
+}
+
+// PostTags - POST /node/:id/tags - updates node tags
+func (_ *NodeController) PostTags(c *gin.Context) {
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	d := c.MustGet("DB").(*db.DB)
+	u := c.MustGet("User").(*models.User)
+
+	node := &models.Node{}
+	tags := []*models.Tag{}
+
+	params := struct {
+		Tags []string `json:"tags"`
+	}{}
+
+	if nid == 0 || err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		return
+	}
+
+	d.First(&node, "id = ?", nid)
+
+	if node == nil || node.ID == 0 || !node.CanBeTaggedBy(u) {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
+	}
+
+	err = c.BindJSON(&params)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	for i := 0; i < len(params.Tags); i += 1 {
+		params.Tags[i] = strings.ToLower(params.Tags[i])
+	}
+
+	d.Where("title IN (?)", params.Tags).Find(&tags)
+
+	for _, v := range params.Tags {
+		if !models.TagArrayContains(tags, v) {
+			tag := models.Tag{Title: v}
+			d.Set("gorm:association_autoupdate", false).Save(&tag)
+			tags = append(tags, &tag)
+		}
+	}
+
+	d.Model(&node).Association("Tags").Replace(tags)
+
+	c.JSON(http.StatusOK, gin.H{"params": params, "tags": tags})
 }

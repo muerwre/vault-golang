@@ -10,6 +10,7 @@ func NodeRouter(r *gin.RouterGroup, a *API) {
 	node := r.Group("/:id")
 	{
 		node.GET("/", a.AuthOptional, a.WithUser(false), controllers.Node.GetNode)
+		node.POST("/tags", a.AuthRequired, a.WithUser(false), controllers.Node.PostTags)
 	}
 
 	comment := r.Group("/:id/comment")

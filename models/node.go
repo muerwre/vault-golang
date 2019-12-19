@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -72,7 +71,6 @@ func (s *NodeBlocks) Scan(src interface{}) error {
 }
 
 func (s NodeBlocks) Value() (driver.Value, error) {
-	fmt.Println("DECODER!", s)
 	val, err := json.Marshal(s)
 	return string(val), err
 }
@@ -94,6 +92,16 @@ func (n Node) CanBeCommented() bool {
 	for _, a := range FlowNodeTypes {
 		if a == n.Type {
 			return true
+		}
+	}
+
+	return false
+}
+
+func (n Node) CanBeTaggedBy(user *User) bool {
+	for _, a := range FlowNodeTypes {
+		if a == n.Type {
+			return user.Role == "admin" || n.UserID == user.ID
 		}
 	}
 
