@@ -66,6 +66,13 @@ var NODE_FLOW_DISPLAY = NodeFlowDisplay{
 	QUADRO:     "quadro",
 }
 
+type NodeRelatedItem struct {
+	Album     string `json:"-" sql:"album" gorm:"column:album"`
+	Id        uint   `json:"id" sql:"id"`
+	Thumbnail string `json:"thumbnail" sql:"thumbnail"`
+	Title     string `json:"title" sql:"title"`
+}
+
 type Node struct {
 	*Model
 

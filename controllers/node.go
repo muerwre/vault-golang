@@ -26,16 +26,9 @@ type NodeDiffParams struct {
 	WithValid   bool      `json:"with_valid" form:"with_valid"`
 }
 
-type NodeRelatedItem struct {
-	Album     string `json:"-" sql:"album" gorm:"column:album"`
-	Id        uint   `json:"id" sql:"id"`
-	Thumbnail string `json:"thumbnail" sql:"thumbnail"`
-	Title     string `json:"title" sql:"title"`
-}
-
 type NodeRelatedResponse struct {
-	Albums  map[string][]NodeRelatedItem `json:"albums"`
-	Similar []NodeRelatedItem            `json:"similar"`
+	Albums  map[string][]models.NodeRelatedItem `json:"albums"`
+	Similar []models.NodeRelatedItem            `json:"similar"`
 }
 
 var FlowNodeCriteria = "is_promoted = 1 AND is_public = 1 AND type IN (?)"
@@ -596,29 +589,16 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go func() {
-		rows := &[]NodeRelatedItem{}
+	albumsChan := make(chan map[string][]models.NodeRelatedItem)
+	similarChan := make(chan []models.NodeRelatedItem)
 
-		d.Table("`node_tags_tag` `tags`").
-			Select("`tag`.`title` as `album`, `node`.`thumbnail`, `node`.`id`, `node`.`title`").
-			Joins("LEFT JOIN `tag` `tag` ON `tags`.`tagId` = `tag`.`id`").
-			Joins("LEFT JOIN `node` `node` ON `tags`.`nodeId` = `node`.`id`").
-			Where("`tags`.`tagId` IN (?)", []uint(tagAlbumIds)).
-			Scan(&rows)
-
-		for _, v := range *rows {
-			if related.Albums[v.Album] == nil {
-				related.Albums = make(map[string][]NodeRelatedItem)
-			}
-
-			related.Albums[v.Album] = append(related.Albums[v.Album], v)
-		}
-
-		wg.Done()
-		wg.Done()
-	}()
+	go d.GetNodeAlbumRelated(tagAlbumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
+	go d.GetNodeSimilarRelated(tagSimilarIds, []uint{node.ID}, node.Type, &wg, similarChan)
 
 	wg.Wait()
 
-	c.JSON(http.StatusOK, gin.H{"sim": tagSimilarIds, "alb": tagAlbumIds, "related": related})
+	related.Albums = <-albumsChan
+	related.Similar = <-similarChan
+
+	c.JSON(http.StatusOK, gin.H{"related": related})
 }
