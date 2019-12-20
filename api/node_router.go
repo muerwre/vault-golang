@@ -10,6 +10,8 @@ func NodeRouter(r *gin.RouterGroup, a *API) {
 	node := r.Group("/:id")
 	{
 		node.GET("/", a.AuthOptional, a.WithUser(false), controllers.Node.GetNode)
+		node.GET("/related", controllers.Node.GetRelated)
+
 		node.POST("/tags", a.AuthRequired, a.WithUser(false), controllers.Node.PostTags)
 		node.POST("/like", a.AuthRequired, a.WithUser(false), controllers.Node.PostLike)
 		node.POST("/lock", a.AuthRequired, a.WithUser(false), controllers.Node.PostLock)

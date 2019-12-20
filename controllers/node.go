@@ -26,6 +26,18 @@ type NodeDiffParams struct {
 	WithValid   bool      `json:"with_valid" form:"with_valid"`
 }
 
+type NodeRelatedItem struct {
+	Album     string `json:"-" sql:"album" gorm:"column:album"`
+	Id        uint   `json:"id" sql:"id"`
+	Thumbnail string `json:"thumbnail" sql:"thumbnail"`
+	Title     string `json:"title" sql:"title"`
+}
+
+type NodeRelatedResponse struct {
+	Albums  map[string][]NodeRelatedItem `json:"albums"`
+	Similar []NodeRelatedItem            `json:"similar"`
+}
+
 var FlowNodeCriteria = "is_promoted = 1 AND is_public = 1 AND type IN (?)"
 
 type NodeController struct{}
@@ -536,4 +548,77 @@ func (_ NodeController) PostCellView(c *gin.Context) {
 	d.Model(&node).Update("flow", node.Flow)
 
 	c.JSON(http.StatusOK, gin.H{"flow": node.Flow})
+}
+
+// GetRelated - GET /node/:id/related - gets related nodes
+func (_ NodeController) GetRelated(c *gin.Context) {
+	d := c.MustGet("DB").(*db.DB)
+
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	if nid == 0 || err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		return
+	}
+
+	node := &models.Node{}
+
+	d.Preload("Tags").First(&node, "id = ?", nid)
+
+	if node == nil || node.ID == 0 || !node.IsFlowType() {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
+	}
+
+	if len(node.Tags) == 0 {
+		c.JSON(http.StatusOK, gin.H{"related": &NodeRelatedResponse{}})
+		return
+	}
+
+	var tagSimilarIds []uint
+	var tagAlbumIds []uint
+
+	for _, v := range node.Tags {
+		if v.Title[:1] == "/" {
+			tagAlbumIds = append(tagAlbumIds, v.ID)
+		} else {
+			tagSimilarIds = append(tagSimilarIds, v.ID)
+		}
+	}
+
+	related := &NodeRelatedResponse{}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		rows := &[]NodeRelatedItem{}
+
+		d.Table("`node_tags_tag` `tags`").
+			Select("`tag`.`title` as `album`, `node`.`thumbnail`, `node`.`id`, `node`.`title`").
+			Joins("LEFT JOIN `tag` `tag` ON `tags`.`tagId` = `tag`.`id`").
+			Joins("LEFT JOIN `node` `node` ON `tags`.`nodeId` = `node`.`id`").
+			Where("`tags`.`tagId` IN (?)", []uint(tagAlbumIds)).
+			Scan(&rows)
+
+		for _, v := range *rows {
+			if related.Albums[v.Album] == nil {
+				related.Albums = make(map[string][]NodeRelatedItem)
+			}
+
+			related.Albums[v.Album] = append(related.Albums[v.Album], v)
+		}
+
+		wg.Done()
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	c.JSON(http.StatusOK, gin.H{"sim": tagSimilarIds, "alb": tagAlbumIds, "related": related})
 }
