@@ -39,6 +39,13 @@ type NodeTypes struct {
 	BORIS string
 }
 
+type NodeFlowDisplay struct {
+	SINGLE     string
+	VERTICAL   string
+	HORIZONTAL string
+	QUADRO     string
+}
+
 var FLOW_NODE_TYPES = FlowNodeTypes{
 	IMAGE: "image",
 	VIDEO: "video",
@@ -50,6 +57,13 @@ var NODE_TYPES = NodeTypes{
 	VIDEO: "video",
 	TEXT:  "text",
 	BORIS: "boris",
+}
+
+var NODE_FLOW_DISPLAY = NodeFlowDisplay{
+	SINGLE:     "single",
+	VERTICAL:   "vertical",
+	HORIZONTAL: "horizontal",
+	QUADRO:     "quadro",
 }
 
 type Node struct {
@@ -109,6 +123,16 @@ func (s *NodeFlow) Scan(src interface{}) error {
 func (s NodeFlow) Value() (driver.Value, error) {
 	val, err := json.Marshal(s)
 	return string(val), err
+}
+
+func (f NodeFlowDisplay) Contains(t string) bool {
+	for _, a := range structs.Map(f) {
+		if a == t {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (f FlowNodeTypes) Contains(t string) bool {

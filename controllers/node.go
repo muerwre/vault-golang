@@ -494,3 +494,46 @@ func (_ NodeController) PostHeroic(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"is_heroic": node.IsHeroic})
 }
+
+// PostCellView - POST /node/:id/cell-view - sets cel display for node
+func (_ NodeController) PostCellView(c *gin.Context) {
+	d := c.MustGet("DB").(*db.DB)
+	u := c.MustGet("User").(*models.User)
+	params := struct {
+		Flow models.NodeFlow `json:"flow"`
+	}{}
+
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	err = c.BindJSON(&params)
+
+	if err != nil || !models.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	node := &models.Node{}
+
+	if nid == 0 || err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		return
+	}
+
+	d.First(&node, "id = ?", nid)
+
+	if node == nil || node.ID == 0 || !node.CanBeEditedBy(u) {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
+	}
+
+	node.Flow = params.Flow
+
+	d.Model(&node).Update("flow", node.Flow)
+
+	c.JSON(http.StatusOK, gin.H{"flow": node.Flow})
+}

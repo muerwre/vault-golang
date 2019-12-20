@@ -14,6 +14,7 @@ func NodeRouter(r *gin.RouterGroup, a *API) {
 		node.POST("/like", a.AuthRequired, a.WithUser(false), controllers.Node.PostLike)
 		node.POST("/lock", a.AuthRequired, a.WithUser(false), controllers.Node.PostLock)
 		node.POST("/heroic", a.AuthRequired, a.WithUser(false), controllers.Node.PostHeroic)
+		node.POST("/cell-view", a.AuthRequired, a.WithUser(false), controllers.Node.PostCellView)
 	}
 
 	comment := r.Group("/:id/comment")
