@@ -61,3 +61,7 @@ func (u *User) IsValidPassword(password string) bool {
 func (u User) CanEditComment(c *Comment) bool {
 	return c.UserID != 0 && (u.ID == c.UserID || u.Role == USER_ROLES.ADMIN)
 }
+
+func (u User) CanCreateNode() bool {
+	return u.Role == USER_ROLES.ADMIN || u.Role == USER_ROLES.USER
+}

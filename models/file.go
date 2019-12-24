@@ -5,9 +5,14 @@ import (
 	"encoding/json"
 )
 
-var FILE_TYPES = map[string]string{
-	"IMAGE": "image",
-	"AUDIO": "audio",
+type FileTypes struct {
+	IMAGE string
+	AUDIO string
+}
+
+var FILE_TYPES = FileTypes{
+	IMAGE: "image",
+	AUDIO: "audio",
 }
 
 type FileMetadata struct {

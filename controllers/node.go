@@ -68,7 +68,7 @@ func (a *NodeController) GetNode(c *gin.Context) {
 
 	go func() {
 		files := make([]*models.File, len(node.FilesOrder))
-		d.Where("id IN (?)", []string(node.FilesOrder)).Find(&files)
+		d.Where("id IN (?)", node.FilesOrder).Find(&files)
 		files_chan <- files
 	}()
 
@@ -276,12 +276,15 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 		comment.UserID = u.ID
 	}
 
+	// TODO: Set new FilesOrder here (its empty now!)
+
 	if comment.NodeID != node.ID || !comment.CanBeEditedBy(u) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
 		return
 	}
 
-	originFiles := make([]uint, len(comment.FilesOrder))
+	// Finding out valid comment attaches and sorting them according to files_order
+	originFiles := make([]uint, len(comment.FilesOrder)) // TODO: comment.FilesOrder is always empty
 	copy(originFiles, comment.FilesOrder)
 
 	lostFiles := make(models.CommaUintArray, 0)
@@ -293,7 +296,7 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
 			Find(&comment.Files, "id IN (?) AND TYPE IN (?)", []uint(data.FilesOrder), models.CommentFiles)
 
-		for i := 0; i < len(comment.Files); i += 1 {
+		for i := 0; i < len(comment.Files); i += 1 { // TODO: limit files count
 			comment.FilesOrder = append(comment.FilesOrder, comment.Files[i].ID)
 		}
 	} else {
@@ -601,4 +604,133 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 	related.Similar = <-similarChan
 
 	c.JSON(http.StatusOK, gin.H{"related": related})
+}
+
+func (_ NodeController) PostNode(c *gin.Context) {
+	d := c.MustGet("DB").(*db.DB)
+	u := c.MustGet("User").(*models.User)
+
+	if !u.CanCreateNode() {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
+	}
+
+	params := struct {
+		Node models.Node `json:"node"`
+	}{}
+
+	err := c.BindJSON(&params)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	node := &models.Node{}
+
+	if params.Node.ID != 0 {
+		d.First(&node, "id = ?", params.Node.ID)
+		node.Cover = nil
+		node.CoverID = 0
+	} else {
+		node.User = u
+		node.UserID = u.ID
+		node.Type = params.Node.Type
+	}
+
+	if params.Node.Type == "" || !models.FLOW_NODE_TYPES.Contains(params.Node.Type) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	if !node.CanBeEditedBy(u) {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		return
+	}
+
+	// Update previous node cover target to be null if its changed
+	if node.Cover != nil &&
+		node.CoverID != 0 &&
+		(params.Node.Cover == nil || params.Node.Cover.ID == 0 || params.Node.Cover.ID != node.CoverID) {
+		d.Model(&node.Files).Where("id IN (?)", node.CoverID).Update("target", nil)
+	}
+
+	// Validate node cover
+	if params.Node.Cover != nil && params.Node.Cover.ID != 0 {
+		if node.Cover == nil {
+			node.Cover = &models.File{}
+		}
+
+		d.First(&models.File{}, "id = ?", params.Node.Cover.ID).Scan(&node.Cover)
+		node.CoverID = params.Node.Cover.ID
+	}
+
+	// Finding out valid comment attaches and sorting them according to files_order
+	originFiles := make([]uint, len(node.FilesOrder))
+	copy(originFiles, node.FilesOrder)
+
+	lostFiles := make(models.CommaUintArray, 0)
+	node.FilesOrder = make(models.CommaUintArray, 0)
+	params.Node.FilesOrder = make(models.CommaUintArray, 0)
+
+	// Setting FilesOrder based in sorted Files array of input data
+	for _, v := range params.Node.Files {
+		params.Node.FilesOrder = append(node.FilesOrder, v.ID)
+	}
+
+	if len(params.Node.FilesOrder) > 0 {
+		ids, _ := params.Node.FilesOrder.Value()
+
+		params.Node.Files = make([]*models.File, 0)
+
+		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
+			Find(&params.Node.Files, "id IN (?)", []uint(params.Node.FilesOrder))
+
+		for i := 0; i < len(params.Node.Files); i += 1 { // TODO: limit files count
+			if node.CanHasFile(params.Node.Files[i]) {
+				node.FilesOrder = append(node.FilesOrder, params.Node.Files[i].ID)
+				node.Files = append(node.Files, params.Node.Files[i])
+			}
+		}
+	} else {
+		node.Files = make([]*models.File, 0)
+		node.FilesOrder = make(models.CommaUintArray, 0)
+		node.IsPublic = true
+		node.IsPromoted = true
+	}
+
+	// Detecting lost files
+	for _, v := range originFiles {
+		if !node.FilesOrder.Contains(v) {
+			lostFiles = append(lostFiles, v)
+		}
+	}
+
+	// Unsetting them
+	if len(lostFiles) > 0 {
+		d.Model(&node.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
+	}
+
+	// TODO: unset node blocks
+	// TODO: validate and write blocks
+	// TODO: update node description
+
+	// Save node and its files
+	d.Set("gorm:association_autoupdate", false).
+		Save(&node).
+		Association("Files").
+		Replace(node.Files)
+
+	// Node not saved
+	if node.ID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	// Updating current files target
+	if len(node.FilesOrder) > 0 {
+		d.Model(&node.Files).Where("id IN (?)", []uint(node.FilesOrder)).Update("Target", "node")
+	}
+
+	c.JSON(http.StatusOK, gin.H{"node": node})
 }

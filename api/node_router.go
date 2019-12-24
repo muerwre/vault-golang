@@ -7,6 +7,8 @@ import (
 
 // UserRouter for /node/*
 func NodeRouter(r *gin.RouterGroup, a *API) {
+	r.POST("/", a.AuthRequired, a.WithUser(false), controllers.Node.PostNode)
+
 	node := r.Group("/:id")
 	{
 		node.GET("/", a.AuthOptional, a.WithUser(false), controllers.Node.GetNode)

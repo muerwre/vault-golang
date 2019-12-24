@@ -57,7 +57,7 @@ func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 
 		db.First(&file, "id = ?", d.Photo.ID)
 
-		if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES["IMAGE"] {
+		if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES.IMAGE {
 			errors[d.GetJsonTagName("Photo")] = codes.IMAGE_CONVERSION_FAILED
 		}
 
@@ -70,7 +70,7 @@ func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 
 		db.First(&file, "id = ?", d.Photo.ID)
 
-		if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES["IMAGE"] {
+		if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES.IMAGE {
 			errors[d.GetJsonTagName("Cover")] = codes.IMAGE_CONVERSION_FAILED
 		}
 

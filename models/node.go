@@ -26,6 +26,7 @@ type FlowNodeTypes struct {
 	IMAGE string
 	VIDEO string
 	TEXT  string
+	AUDIO string
 }
 
 type ServiceNodeTypes struct {
@@ -37,6 +38,7 @@ type NodeTypes struct {
 	VIDEO string
 	TEXT  string
 	BORIS string
+	AUDIO string
 }
 
 type NodeFlowDisplay struct {
@@ -50,11 +52,13 @@ var FLOW_NODE_TYPES = FlowNodeTypes{
 	IMAGE: "image",
 	VIDEO: "video",
 	TEXT:  "text",
+	AUDIO: "audio",
 }
 
 var NODE_TYPES = NodeTypes{
 	IMAGE: "image",
 	VIDEO: "video",
+	AUDIO: "audio",
 	TEXT:  "text",
 	BORIS: "boris",
 }
@@ -76,28 +80,28 @@ type NodeRelatedItem struct {
 type Node struct {
 	*Model
 
-	Title       string           `json:"title"`
-	Type        string           `json:"type"`
-	IsPublic    bool             `json:"is_public"`
-	IsPromoted  bool             `json:"is_promoted"`
-	IsHeroic    bool             `json:"is_heroic"`
-	Thumbnail   string           `json:"thumbnail"`
-	Description string           `json:"description"`
-	Blocks      NodeBlocks       `gorm:"type:longtext" json:"blocks"`
-	Cover       *File            `gorm:"foreignkey:CoverID" json:"cover"` // on delete null
-	CoverID     uint             `gorm:"column:coverId" json:"-"`
-	User        *User            `json:"user" gorm:"foreignkey:UserID"`
-	UserID      uint             `gorm:"column:userId" json:"-"`
-	FilesOrder  CommaStringArray `gorm:"column:files_order;type:longtext;" json:"files_order"`
-	Files       []*File          `gorm:"many2many:node_files_file;jointable_foreignkey:nodeId;association_jointable_foreignkey:fileId;" json:"files"`
-	Tags        []*Tag           `gorm:"many2many:node_tags_tag;jointable_foreignkey:nodeId;association_jointable_foreignkey:tagId;" json:"tags"`
-	Comments    []*Comment       `json:"-"`
-	Likes       []*User          `gorm:"many2many:like;jointable_foreignkey:nodeId;association_jointable_foreignkey:userId;" json:"-"`
-	Views       []*NodeView      `json:"-"`
-	CommentedAt time.Time        `json:"commented_at" gorm:"column:commented_at"`
-	Flow        NodeFlow         `json:"flow" gorm:"column:flow"`
-	IsLiked     bool             `json:"is_liked" gorm:"-" sql:"-"`
-	LikeCount   int              `json:"like_count" gorm:"-" sql:"-"`
+	Title       string         `json:"title"`
+	Type        string         `json:"type"`
+	IsPublic    bool           `json:"is_public"`
+	IsPromoted  bool           `json:"is_promoted"`
+	IsHeroic    bool           `json:"is_heroic"`
+	Thumbnail   string         `json:"thumbnail"`
+	Description string         `json:"description"`
+	Blocks      NodeBlocks     `gorm:"type:longtext" json:"blocks"`
+	Cover       *File          `gorm:"foreignkey:CoverID" json:"cover"` // on delete null
+	CoverID     uint           `gorm:"column:coverId" json:"-"`
+	User        *User          `json:"user" gorm:"foreignkey:UserID"`
+	UserID      uint           `gorm:"column:userId" json:"-"`
+	FilesOrder  CommaUintArray `gorm:"column:files_order;type:longtext;" json:"files_order"`
+	Files       []*File        `gorm:"many2many:node_files_file;jointable_foreignkey:nodeId;association_jointable_foreignkey:fileId;" json:"files"`
+	Tags        []*Tag         `gorm:"many2many:node_tags_tag;jointable_foreignkey:nodeId;association_jointable_foreignkey:tagId;" json:"tags"`
+	Comments    []*Comment     `json:"-"`
+	Likes       []*User        `gorm:"many2many:like;jointable_foreignkey:nodeId;association_jointable_foreignkey:userId;" json:"-"`
+	Views       []*NodeView    `json:"-"`
+	CommentedAt time.Time      `json:"commented_at" gorm:"column:commented_at"`
+	Flow        NodeFlow       `json:"flow" gorm:"column:flow"`
+	IsLiked     bool           `json:"is_liked" gorm:"-" sql:"-"`
+	LikeCount   int            `json:"like_count" gorm:"-" sql:"-"`
 }
 
 type FlowNode struct {
@@ -174,4 +178,18 @@ func (n Node) CanBeLiked() bool {
 
 func (n Node) CanBeHeroedBy(u *User) bool {
 	return u.Role == USER_ROLES.ADMIN && n.IsFlowType()
+}
+
+func (n Node) CanHasFile(f *File) bool {
+	switch n.Type {
+
+	case NODE_TYPES.IMAGE:
+		return f.Type == FILE_TYPES.IMAGE
+
+	case NODE_TYPES.AUDIO:
+		return f.Type == FILE_TYPES.AUDIO || f.Type == FILE_TYPES.IMAGE
+
+	default:
+		return false
+	}
 }

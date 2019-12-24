@@ -27,6 +27,7 @@ func (Comment) TableName() string {
 	return "comment"
 }
 
+// SortFiles - sorts comment files according to files_order
 func (c *Comment) SortFiles() {
 	if len(c.FilesOrder) == 0 || len(c.Files) == 0 {
 		return
@@ -46,11 +47,6 @@ func (c *Comment) SortFiles() {
 	}
 
 	c.Files = files
-}
-
-// GetOrphanFiles finds files, that was in comment, but no longer appears in data
-func (c *Comment) GetOrphanFiles(data *Comment) []uint {
-	return make([]uint, 0)
 }
 
 // CanBeEditedBy checks if comment can be edited by user
