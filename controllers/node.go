@@ -688,8 +688,8 @@ func (_ NodeController) PostNode(c *gin.Context) {
 
 		for i := 0; i < len(params.Node.Files); i += 1 { // TODO: limit files count
 			if node.CanHasFile(params.Node.Files[i]) {
-				node.FilesOrder = append(node.FilesOrder, params.Node.Files[i].ID)
 				node.Files = append(node.Files, params.Node.Files[i])
+				node.FilesOrder = append(node.FilesOrder, params.Node.Files[i].ID)
 			}
 		}
 	} else {

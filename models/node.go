@@ -182,7 +182,6 @@ func (n Node) CanBeHeroedBy(u *User) bool {
 
 func (n Node) CanHasFile(f *File) bool {
 	switch n.Type {
-
 	case NODE_TYPES.IMAGE:
 		return f.Type == FILE_TYPES.IMAGE
 
