@@ -644,7 +644,7 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	}
 
 	if !node.CanBeEditedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
 		return
 	}
 
@@ -673,7 +673,7 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	node.FilesOrder = make(models.CommaUintArray, 0)
 	params.Node.FilesOrder = make(models.CommaUintArray, 0)
 
-	// Setting FilesOrder based in sorted Files array of input data
+	// Setting FilesOrder based on sorted Files array of input data
 	for _, v := range params.Node.Files {
 		params.Node.FilesOrder = append(node.FilesOrder, v.ID)
 	}
@@ -711,7 +711,12 @@ func (_ NodeController) PostNode(c *gin.Context) {
 		d.Model(&node.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
 	}
 
-	// TODO: update Title
+	node.Title = params.Node.Title
+
+	if len(node.Title) > 64 {
+		node.Title = node.Title[:64]
+	}
+
 	// TODO: unset node blocks
 	// TODO: validate and write blocks
 	// TODO: node validation (minimum files, text length, blocks, etc)
