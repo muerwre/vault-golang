@@ -711,9 +711,12 @@ func (_ NodeController) PostNode(c *gin.Context) {
 		d.Model(&node.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
 	}
 
+	// TODO: update Title
 	// TODO: unset node blocks
 	// TODO: validate and write blocks
+	// TODO: node validation (minimum files, text length, blocks, etc)
 	// TODO: update node description
+	// TODO: update node thumbnail
 
 	// Save node and its files
 	d.Set("gorm:association_autoupdate", false).
