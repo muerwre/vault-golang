@@ -143,8 +143,6 @@ func (a *API) WithUser(preload bool) func(*gin.Context) {
 		if user == nil || user.ID == 0 {
 			c.Set("User", &models.User{ID: 0, Role: models.USER_ROLES.GUEST})
 			c.Next()
-			// c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
-			// return
 		}
 
 		c.Set("User", user)

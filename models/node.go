@@ -192,3 +192,7 @@ func (n Node) CanHasFile(f *File) bool {
 		return false
 	}
 }
+
+func (n *Node) ApplyFiles(f []*File) {
+
+}
