@@ -193,6 +193,14 @@ func (n Node) CanHasFile(f *File) bool {
 	}
 }
 
-func (n *Node) ApplyFiles(f []*File) {
+func (n *Node) ApplyFiles(files []*File) {
+	n.Files = make([]*File, 0)
+	n.FilesOrder = make(CommaUintArray, 0)
 
+	for i := 0; i < len(files); i += 1 { // TODO: limit files count
+		if n.CanHasFile(files[i]) {
+			n.Files = append(n.Files, files[i])
+			n.FilesOrder = append(n.FilesOrder, files[i].ID)
+		}
+	}
 }

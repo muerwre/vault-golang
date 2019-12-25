@@ -669,11 +669,9 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	originFiles := make([]uint, len(node.FilesOrder))
 	copy(originFiles, node.FilesOrder)
 
-	lostFiles := make(models.CommaUintArray, 0)
-	node.FilesOrder = make(models.CommaUintArray, 0)
+	// Setting FilesOrder based on sorted Files array of input data
 	params.Node.FilesOrder = make(models.CommaUintArray, 0)
 
-	// Setting FilesOrder based on sorted Files array of input data
 	for _, v := range params.Node.Files {
 		params.Node.FilesOrder = append(node.FilesOrder, v.ID)
 	}
@@ -681,17 +679,10 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	if len(params.Node.FilesOrder) > 0 {
 		ids, _ := params.Node.FilesOrder.Value()
 
-		params.Node.Files = make([]*models.File, 0)
-
 		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
 			Find(&params.Node.Files, "id IN (?)", []uint(params.Node.FilesOrder))
 
-		for i := 0; i < len(params.Node.Files); i += 1 { // TODO: limit files count
-			if node.CanHasFile(params.Node.Files[i]) {
-				node.Files = append(node.Files, params.Node.Files[i])
-				node.FilesOrder = append(node.FilesOrder, params.Node.Files[i].ID)
-			}
-		}
+		node.ApplyFiles(params.Node.Files)
 	} else {
 		node.Files = make([]*models.File, 0)
 		node.FilesOrder = make(models.CommaUintArray, 0)
@@ -700,6 +691,8 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	}
 
 	// Detecting lost files
+	lostFiles := make(models.CommaUintArray, 0)
+
 	for _, v := range originFiles {
 		if !node.FilesOrder.Contains(v) {
 			lostFiles = append(lostFiles, v)
