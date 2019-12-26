@@ -215,7 +215,12 @@ func (_ *NodeController) LockComment(c *gin.Context) {
 		IsLocked bool `json:"is_locked"`
 	}{}
 
-	c.BindJSON(&params)
+	err := c.BindJSON(&params)
+
+	if err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
 
 	comment := &models.Comment{}
 	d.Unscoped().Where("id = ?", cid).First(&comment)
@@ -277,20 +282,26 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 		comment.UserID = u.ID
 	}
 
-	// TODO: Set new FilesOrder here (its empty now!)
-
 	if comment.NodeID != node.ID || !comment.CanBeEditedBy(u) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
 		return
 	}
 
+	// Setting FilesOrder based on sorted Files array of input data
+	data.FilesOrder = make(models.CommaUintArray, 0)
+
+	for _, v := range data.Files {
+		data.FilesOrder = append(data.FilesOrder, v.ID)
+	}
+
 	// Finding out valid comment attaches and sorting them according to files_order
-	originFiles := make([]uint, len(comment.FilesOrder)) // TODO: comment.FilesOrder is always empty
+	originFiles := make([]uint, len(comment.FilesOrder))
 	copy(originFiles, comment.FilesOrder)
 
 	lostFiles := make(models.CommaUintArray, 0)
 	comment.FilesOrder = make(models.CommaUintArray, 0)
 
+	// Loading that files
 	if len(data.FilesOrder) > 0 {
 		ids, _ := data.FilesOrder.Value()
 
@@ -637,6 +648,8 @@ func (_ NodeController) PostNode(c *gin.Context) {
 		node.User = u
 		node.UserID = u.ID
 		node.Type = params.Node.Type
+		node.IsPublic = true
+		node.IsPromoted = true
 	}
 
 	if params.Node.Type == "" || !models.FLOW_NODE_TYPES.Contains(params.Node.Type) {
@@ -687,8 +700,6 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	} else {
 		node.Files = make([]*models.File, 0)
 		node.FilesOrder = make(models.CommaUintArray, 0)
-		node.IsPublic = true
-		node.IsPromoted = true
 	}
 
 	// Detecting lost files
