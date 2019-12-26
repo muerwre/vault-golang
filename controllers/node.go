@@ -80,6 +80,8 @@ func (a *NodeController) GetNode(c *gin.Context) {
 	node.LikeCount = d.GetNodeLikeCount(node)
 	node.Files = <-files_chan
 
+	node.SortFiles()
+
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
 

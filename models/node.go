@@ -302,3 +302,25 @@ func (n *Node) UpdateThumbnail() {
 		}
 	}
 }
+
+// SortFiles - sorts comment files according to files_order
+func (n *Node) SortFiles() {
+	if len(n.FilesOrder) == 0 || len(n.Files) == 0 {
+		return
+	}
+
+	filesWithIds := make(map[uint]*File, len(n.FilesOrder))
+	files := make([]*File, len(n.FilesOrder))
+
+	for i := 0; i < len(n.Files); i += 1 {
+		k := n.Files[i]
+		filesWithIds[k.ID] = k
+	}
+
+	for i := 0; i < len(n.FilesOrder); i += 1 {
+		k := n.FilesOrder[i]
+		n.Files[i] = filesWithIds[k]
+	}
+
+	n.Files = files
+}
