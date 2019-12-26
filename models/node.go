@@ -50,6 +50,14 @@ type NodeFlowDisplay struct {
 	QUADRO     string
 }
 
+var BLOCK_TYPES = struct {
+	TEXT  string
+	VIDEO string
+}{
+	TEXT:  "text",
+	VIDEO: "video",
+}
+
 var FLOW_NODE_TYPES = FlowNodeTypes{
 	IMAGE: "image",
 	VIDEO: "video",
@@ -201,9 +209,9 @@ func (n Node) CanHasFile(f File) bool {
 func (n Node) CanHasBlock(b NodeBlock) bool {
 	switch n.Type {
 	case NODE_TYPES.TEXT:
-		return b.Type == "text"
+		return b.Type == BLOCK_TYPES.TEXT
 	case NODE_TYPES.VIDEO:
-		return b.Type == "video"
+		return b.Type == BLOCK_TYPES.VIDEO
 	default:
 		return false
 	}
@@ -235,7 +243,8 @@ func (n *Node) ApplyBlocks(blocks []NodeBlock) {
 
 // IsValid - validates node block
 func (b NodeBlock) IsValid() bool {
-	return (b.Type == "text" && len(b.Text) > 0) || (b.Type == "video" && len(b.Url) > 0 && utils.GetThumbFromUrl(b.Url) != "")
+	return (b.Type == BLOCK_TYPES.TEXT && len(b.Text) > 0) ||
+		(b.Type == BLOCK_TYPES.VIDEO && len(b.Url) > 0 && utils.GetThumbFromUrl(b.Url) != "")
 }
 
 // FirstBlockOfType - gets block file of type (t)
@@ -263,7 +272,7 @@ func (n Node) FirstFileOfType(t string) int {
 // UpdateDescription - generates node brief description from node's body
 func (n *Node) UpdateDescription() {
 	if n.Type == NODE_TYPES.TEXT {
-		textBlock := n.Blocks[n.FirstBlockOfType("text")]
+		textBlock := n.Blocks[n.FirstBlockOfType(BLOCK_TYPES.TEXT)]
 
 		if len(textBlock.Text) > 64 {
 			n.Description = textBlock.Text
@@ -284,7 +293,7 @@ func (n *Node) UpdateThumbnail() {
 	}
 
 	if n.Type == NODE_TYPES.VIDEO {
-		i := n.FirstBlockOfType("video")
+		i := n.FirstBlockOfType(BLOCK_TYPES.VIDEO)
 
 		if url := utils.GetThumbFromUrl(n.Blocks[i].Url); url != "" {
 			n.Thumbnail = url

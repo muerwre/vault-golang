@@ -29,7 +29,7 @@ func TextNodeValidator(n *models.Node) error {
 		return errors.New(codes.TOO_SHIRT)
 	}
 
-	if n.FirstBlockOfType("text") < 0 {
+	if n.FirstBlockOfType(models.BLOCK_TYPES.TEXT) < 0 {
 		return errors.New(codes.TOO_SHIRT)
 	}
 
@@ -42,7 +42,7 @@ func VideoNodeValidator(n *models.Node) error {
 		return errors.New(codes.TOO_SHIRT)
 	}
 
-	if n.FirstBlockOfType("video") < 0 {
+	if n.FirstBlockOfType(models.BLOCK_TYPES.VIDEO) < 0 {
 		return errors.New(codes.TOO_SHIRT)
 	}
 

@@ -21,7 +21,15 @@ type Comment struct {
 	Files  []*File `gorm:"many2many:comment_files_file;jointable_foreignkey:commentId;association_jointable_foreignkey:fileId" json:"files"`
 }
 
-var CommentFiles = []string{"image", "audio"}
+var COMMENT_FILE_TYPES = struct {
+	IMAGE string
+	AUDIO string
+}{
+	IMAGE: "image",
+	AUDIO: "audio",
+}
+
+// var CommentFiles =
 
 func (Comment) TableName() string {
 	return "comment"

@@ -306,7 +306,7 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 		ids, _ := data.FilesOrder.Value()
 
 		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
-			Find(&comment.Files, "id IN (?) AND TYPE IN (?)", []uint(data.FilesOrder), models.CommentFiles)
+			Find(&comment.Files, "id IN (?) AND TYPE IN (?)", []uint(data.FilesOrder), structs.Names(models.COMMENT_FILE_TYPES))
 
 		for i := 0; i < len(comment.Files); i += 1 { // TODO: limit files count
 			comment.FilesOrder = append(comment.FilesOrder, comment.Files[i].ID)
