@@ -20,6 +20,7 @@ const (
 	CODE_IS_INVALID         string = "Code_Is_Invalid"
 	REQUIRED                string = "Required"
 	COMMENT_NOT_FOUND       string = "Comment_Not_Found"
+	INCORRECT_TYPE          string = "Incorrect_Node_Type"
 )
 
 var VALIDATION_TO_CODE = map[string]string{

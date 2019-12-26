@@ -3,8 +3,10 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"github.com/fatih/structs"
 	"time"
+
+	"github.com/fatih/structs"
+	"github.com/muerwre/vault-golang/utils"
 )
 
 type NodeBlock struct {
@@ -176,11 +178,13 @@ func (n Node) CanBeLiked() bool {
 	return n.IsFlowType()
 }
 
+// CanBeHeroedBy - checks if node can be set as promoted to front slider by this user
 func (n Node) CanBeHeroedBy(u *User) bool {
 	return u.Role == USER_ROLES.ADMIN && n.IsFlowType()
 }
 
-func (n Node) CanHasFile(f *File) bool {
+// CanHasFile - checks if node can has file of type
+func (n Node) CanHasFile(f File) bool {
 	switch n.Type {
 	case NODE_TYPES.IMAGE:
 		return f.Type == FILE_TYPES.IMAGE
@@ -193,14 +197,99 @@ func (n Node) CanHasFile(f *File) bool {
 	}
 }
 
+// CanHasBlock - checks if node can has block of type
+func (n Node) CanHasBlock(b NodeBlock) bool {
+	switch n.Type {
+	case NODE_TYPES.TEXT:
+		return b.Type == "text"
+	case NODE_TYPES.VIDEO:
+		return b.Type == "video"
+	default:
+		return false
+	}
+}
+
+// ApplyFiles - sets node files with validation
 func (n *Node) ApplyFiles(files []*File) {
 	n.Files = make([]*File, 0)
 	n.FilesOrder = make(CommaUintArray, 0)
 
 	for i := 0; i < len(files); i += 1 { // TODO: limit files count
-		if n.CanHasFile(files[i]) {
+		if n.CanHasFile(*files[i]) {
 			n.Files = append(n.Files, files[i])
 			n.FilesOrder = append(n.FilesOrder, files[i].ID)
+		}
+	}
+}
+
+// ApplyBlocks - sets node blocks with validation
+func (n *Node) ApplyBlocks(blocks []NodeBlock) {
+	n.Blocks = make([]NodeBlock, 0)
+
+	for _, v := range blocks {
+		if n.CanHasBlock(v) && v.IsValid() {
+			n.Blocks = append(n.Blocks, v)
+		}
+	}
+}
+
+// IsValid - validates node block
+func (b NodeBlock) IsValid() bool {
+	return (b.Type == "text" && len(b.Text) > 0) || (b.Type == "video" && len(b.Url) > 0 && utils.GetThumbFromUrl(b.Url) != "")
+}
+
+// FirstBlockOfType - gets block file of type (t)
+func (n Node) FirstBlockOfType(t string) int {
+	for k, v := range n.Blocks {
+		if v.Type == t {
+			return k
+		}
+	}
+
+	return -1
+}
+
+// FirstFileOfType - gets first file of type (t)
+func (n Node) FirstFileOfType(t string) int {
+	for k, v := range n.Files {
+		if v.Type == t {
+			return k
+		}
+	}
+
+	return -1
+}
+
+// UpdateDescription - generates node brief description from node's body
+func (n *Node) UpdateDescription() {
+	if n.Type == NODE_TYPES.TEXT {
+		textBlock := n.Blocks[n.FirstBlockOfType("text")]
+
+		if len(textBlock.Text) > 64 {
+			n.Description = textBlock.Text
+			return
+		}
+	}
+}
+
+// UpdateDescription - generates node thumbnail image from node's body
+func (n *Node) UpdateThumbnail() {
+	if n.Type == NODE_TYPES.IMAGE || n.Type == NODE_TYPES.AUDIO {
+		i := n.FirstFileOfType(FILE_TYPES.IMAGE)
+
+		if i >= 0 {
+			n.Thumbnail = n.Files[i].Url
+			return
+		}
+	}
+
+	if n.Type == NODE_TYPES.VIDEO {
+		i := n.FirstBlockOfType("video")
+
+		if url := utils.GetThumbFromUrl(n.Blocks[i].Url); url != "" {
+			n.Thumbnail = url
+
+			return
 		}
 	}
 }

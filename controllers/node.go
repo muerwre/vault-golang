@@ -14,6 +14,7 @@ import (
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/muerwre/vault-golang/utils/validation"
 )
 
 type NodeDiffParams struct {
@@ -639,7 +640,7 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	}
 
 	if params.Node.Type == "" || !models.FLOW_NODE_TYPES.Contains(params.Node.Type) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_TYPE})
 		return
 	}
 
@@ -710,11 +711,20 @@ func (_ NodeController) PostNode(c *gin.Context) {
 		node.Title = node.Title[:64]
 	}
 
-	// TODO: unset node blocks
-	// TODO: validate and write blocks
-	// TODO: node validation (minimum files, text length, blocks, etc)
-	// TODO: update node description
-	// TODO: update node thumbnail
+	node.ApplyBlocks(params.Node.Blocks)
+
+	if val, ok := validation.NODE_VALIDATORS[node.Type]; ok {
+		err = val(node)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	// Update node metadata
+	node.UpdateDescription()
+	node.UpdateThumbnail()
 
 	// Save node and its files
 	d.Set("gorm:association_autoupdate", false).
