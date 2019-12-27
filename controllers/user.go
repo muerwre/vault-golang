@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -69,10 +70,6 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
 
-	// d.First(&u)
-	// fmt.Printf("UUUU: %+v", u)
-	// d.Model(&models.User{}).Updates(&u)
-
 	data := &struct {
 		User validation.UserPatchData `json:"user"`
 	}{}
@@ -95,4 +92,35 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 	d.Model(&models.User{}).Updates(u).Preload("Photo").Preload("Cover").First(&u)
 
 	c.JSON(http.StatusOK, gin.H{"data": u})
+}
+
+func (uc *UserController) CreateRestoreCode(c *gin.Context) {
+	params := struct {
+		Field string `json:"field"`
+	}{}
+	user := &models.User{}
+	d := c.MustGet("DB").(*db.DB)
+
+	err := c.BindJSON(&params)
+
+	if err != nil || params.Field == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.USER_NOT_FOUND})
+		return
+	}
+
+	d.First(&user, "username = ? OR email = ?", params.Field, params.Field)
+
+	if user.ID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.USER_NOT_FOUND})
+		return
+	}
+
+	code := &models.RestoreCode{
+		UserID: user.ID,
+		Code:   uuid.New().String(),
+	}
+
+	d.FirstOrCreate(&code, "UserId = ?", user.ID)
+
+	c.JSON(http.StatusCreated, gin.H{"code": code})
 }

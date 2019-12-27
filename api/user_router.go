@@ -9,6 +9,7 @@ import (
 func UserRouter(r *gin.RouterGroup, a *API) {
 	r.POST("/login", controllers.User.LoginUser)
 	r.GET("/:username/profile", a.AuthOptional, controllers.User.GetUserProfile)
+	r.POST("/restore", controllers.User.CreateRestoreCode)
 
 	required := r.Group("/").Use(a.AuthRequired)
 	{

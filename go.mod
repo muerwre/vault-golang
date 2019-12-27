@@ -12,6 +12,7 @@ require (
 	github.com/go-playground/validator v9.30.2+incompatible
 	github.com/go-playground/validator/v10 v10.0.1
 	github.com/golang/protobuf v1.3.2
+	github.com/google/uuid v1.1.1
 	github.com/hashicorp/hcl v1.0.0
 	github.com/inconshreveable/mousetrap v1.0.0
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
@@ -36,6 +37,7 @@ require (
 	github.com/subosito/gotenv v1.2.0
 	github.com/theaaf/todos v0.0.0-20190402231846-ad63ef47a387
 	github.com/ugorji/go v1.1.7
+	go.mongodb.org/mongo-driver v1.2.0
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c
 	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
 	golang.org/x/text v0.3.2

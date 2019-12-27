@@ -42,6 +42,7 @@ func New() (*DB, error) {
 		&models.Social{},
 		&models.Message{},
 		&models.MessageView{},
+		&models.RestoreCode{},
 	)
 
 	return &DB{db}, nil
