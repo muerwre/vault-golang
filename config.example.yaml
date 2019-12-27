@@ -10,3 +10,12 @@ API:
   Debug: false
   TlsFiles: []
   Host: 
+Smtp:
+  Host: hostname.org
+  Port: 25
+  User: user
+  Password: password
+  From: Robot Mailer <robot@hostname.org>
+Frontend:
+  ResetUrl: /restore/
+  PublicHost: localhost
