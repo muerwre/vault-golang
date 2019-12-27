@@ -59,7 +59,7 @@ func (a *API) Init(r *gin.RouterGroup) {
 
 	UserRouter(r.Group("/user"), a)
 	NodeRouter(r.Group("/node"), a)
-	NodesRouter(r.Group("/nodes"), a)
+	NodesRouter(r.Group("/nodes"), a) // TODO: updated
 }
 
 func (a *API) AuthRequired(c *gin.Context) {

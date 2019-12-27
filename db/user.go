@@ -30,3 +30,14 @@ func (d *DB) GetUserByUsername(n string) (user *models.User, err error) {
 
 	return user, nil
 }
+
+func (d *DB) GenerateTokenFor(u *models.User) *models.Token {
+	token := &models.Token{
+		UserID: u.ID,
+	}
+	token.New(u.Username)
+
+	d.Create(&token)
+
+	return token
+}

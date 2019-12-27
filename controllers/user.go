@@ -69,7 +69,9 @@ func (u *UserController) LoginUser(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	token := d.GenerateTokenFor(user)
+
+	c.JSON(http.StatusOK, gin.H{"user": user, "token": token.Token})
 }
 
 func (uc *UserController) PatchUser(c *gin.Context) {
@@ -149,5 +151,52 @@ func (uc *UserController) CreateRestoreCode(c *gin.Context) {
 
 	mailer.Chan <- message
 
-	c.JSON(http.StatusCreated, gin.H{"code": code})
+	c.JSON(http.StatusCreated, gin.H{})
+}
+
+func (uc UserController) GetRestoreCode(c *gin.Context) {
+	id := c.Param("id")
+	d := uc.DB
+
+	if id == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		return
+	}
+
+	code := &models.RestoreCode{}
+
+	d.Preload("User").Preload("User.Photo").First(&code, "code = ?", id)
+
+	if code.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"user": map[string]interface{}{
+			"username": code.User.Username,
+			"photo":    code.User.Photo,
+		},
+	})
+}
+
+func (uc UserController) PostRestoreCode(c *gin.Context) {
+	id := c.Param("id")
+	d := uc.DB
+
+	if id == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		return
+	}
+
+	code := &models.RestoreCode{}
+
+	d.First(&code, "code = ?", id)
+
+	if code.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": code})
 }

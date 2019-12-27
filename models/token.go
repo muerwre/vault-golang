@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/muerwre/vault-golang/utils/passwords"
+)
 
 type Token struct {
 	ID uint
@@ -15,4 +19,8 @@ type Token struct {
 
 func (Token) TableName() string {
 	return "token"
+}
+
+func (t *Token) New(username string) {
+	t.Token, _ = passwords.HashPassword(username + string(time.Now().String()))
 }

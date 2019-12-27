@@ -14,8 +14,12 @@ func UserRouter(r *gin.RouterGroup, a *API) {
 	}
 
 	r.POST("/login", controller.LoginUser)
-	r.GET("/:username/profile", a.AuthOptional, controller.GetUserProfile)
+
+	r.GET("/restore/:id", controller.GetRestoreCode)
+	r.POST("/restore/:id", controller.PostRestoreCode)
 	r.POST("/restore", controller.CreateRestoreCode)
+
+	r.GET("/user/:username/profile", a.AuthOptional, controller.GetUserProfile) // TODO: CHANGED!
 
 	required := r.Group("/").Use(a.AuthRequired)
 	{
