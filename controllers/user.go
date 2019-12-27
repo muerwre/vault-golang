@@ -6,14 +6,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/muerwre/vault-golang/utils/mail"
 	"github.com/muerwre/vault-golang/utils/passwords"
 	"github.com/muerwre/vault-golang/utils/validation"
 )
 
-type UserController struct{}
+type UserController struct {
+	Mailer *mail.Mailer
+	DB     *db.DB
+	Config *app.Config
+}
 
 var User = &UserController{}
 
@@ -95,11 +101,14 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 }
 
 func (uc *UserController) CreateRestoreCode(c *gin.Context) {
+	user := &models.User{}
+	d := uc.DB
+	mailer := uc.Mailer
+	config := uc.Config
+
 	params := struct {
 		Field string `json:"field"`
 	}{}
-	user := &models.User{}
-	d := c.MustGet("DB").(*db.DB)
 
 	err := c.BindJSON(&params)
 
@@ -121,6 +130,25 @@ func (uc *UserController) CreateRestoreCode(c *gin.Context) {
 	}
 
 	d.FirstOrCreate(&code, "UserId = ?", user.ID)
+
+	if code.ID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.USER_NOT_FOUND})
+		return
+	}
+
+	message := mailer.Create(
+		user.Email,
+		mail.MAIL_RESTORE_SUBJECT,
+		mail.MAIL_RESTORE_TEXT,
+		mail.MAIL_RESTORE_HTML,
+		&map[string]string{
+			"url":  config.Protocol + "://" + config.PublicHost + config.ResetUrl,
+			"code": code.Code,
+		},
+	)
+
+	mailer.Chan <- message
+	// fmt.Printf("MEssage is: %#v", message)
 
 	c.JSON(http.StatusCreated, gin.H{"code": code})
 }

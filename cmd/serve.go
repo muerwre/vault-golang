@@ -89,12 +89,19 @@ var serveCmd = &cobra.Command{
 
 		var wg sync.WaitGroup
 
-		wg.Add(1)
+		wg.Add(2)
 
 		go func() {
 			defer wg.Done()
 			defer cancel()
 			serveAPI(ctx, api)
+		}()
+
+		go func() {
+			defer wg.Done()
+			go a.Mailer.Listen()
+			<-ctx.Done()
+			a.Mailer.Done()
 		}()
 
 		wg.Wait()

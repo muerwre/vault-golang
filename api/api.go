@@ -51,6 +51,7 @@ func (a *API) Init(r *gin.RouterGroup) {
 	r.Use(func(c *gin.Context) {
 		c.Set("DB", a.App.DB)
 		c.Set("Config", a.App.Config)
+		c.Set("Mailer", a.App.Mailer.Chan)
 		c.Next()
 	})
 

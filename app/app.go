@@ -1,18 +1,15 @@
 package app
 
-import "github.com/muerwre/vault-golang/db"
+import (
+	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/utils/mail"
+)
 
 type App struct {
 	Config *Config
 	DB     *db.DB
+	Mailer *mail.Mailer
 }
-
-// func (a *App) NewContext() *Context {
-// return &Context{
-// DB:     a.DB,
-// Config: a.Config,
-// }
-// }
 
 func New() (app *App, err error) {
 	app = &App{}
@@ -26,6 +23,17 @@ func New() (app *App, err error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if app.Config.SmtpHost != "" {
+		app.Mailer = &mail.Mailer{}
+		app.Mailer.Init(&mail.MailerConfig{
+			Host:     app.Config.SmtpHost,
+			Port:     app.Config.SmtpPort,
+			User:     app.Config.SmtpUser,
+			Password: app.Config.SmtpPassword,
+			From:     app.Config.SmtpFrom,
+		})
 	}
 
 	return app, err

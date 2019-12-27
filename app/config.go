@@ -5,16 +5,36 @@ import (
 )
 
 type Config struct {
-	Host     string
-	Port     int
-	TlsFiles []string
+	Host         string
+	Port         int
+	TlsFiles     []string
+	SmtpHost     string
+	SmtpPort     int
+	SmtpUser     string
+	SmtpPassword string
+	SmtpFrom     string
+	Protocol     string
+	ResetUrl     string
+	PublicHost   string
 }
 
 func InitConfig() (*Config, error) {
 	config := &Config{
-		Host:     viper.GetString("Host"),
-		Port:     viper.GetInt("Port"),
-		TlsFiles: viper.GetStringSlice("TlsFiles"),
+		Host:         viper.GetString("Host"),
+		Port:         viper.GetInt("Port"),
+		TlsFiles:     viper.GetStringSlice("TlsFiles"),
+		SmtpHost:     viper.GetString("Smtp.Host"),
+		SmtpPort:     viper.GetInt("Smtp.Port"),
+		SmtpUser:     viper.GetString("Smtp.User"),
+		SmtpPassword: viper.GetString("Smtp.Password"),
+		SmtpFrom:     viper.GetString("Smtp.From"),
+		ResetUrl:     viper.GetString("Frontend.ResetUrl"),
+		PublicHost:   viper.GetString("Frontend.PublicHost"),
+		Protocol:     "http",
+	}
+
+	if len(config.TlsFiles) == 2 {
+		config.Protocol = "https"
 	}
 
 	return config, nil
