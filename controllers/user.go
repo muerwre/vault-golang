@@ -148,7 +148,6 @@ func (uc *UserController) CreateRestoreCode(c *gin.Context) {
 	)
 
 	mailer.Chan <- message
-	// fmt.Printf("MEssage is: %#v", message)
 
 	c.JSON(http.StatusCreated, gin.H{"code": code})
 }

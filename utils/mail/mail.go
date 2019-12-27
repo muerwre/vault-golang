@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 )
 
@@ -57,8 +56,6 @@ func (ml *Mailer) Listen() {
 				ml.Open = true
 			}
 
-			logrus.Info("Sent restore message to: ", m.GetHeader("To"))
-
 			if err := gomail.Send(ml.Closer, m); err != nil {
 				fmt.Println(err)
 			}
@@ -80,14 +77,10 @@ func (ml Mailer) Create(to string, subj string, text string, html string, vals *
 
 	if vals != nil {
 		for k, v := range *vals {
-			fmt.Printf("REPL %v %v", k, v)
 			text = strings.ReplaceAll(text, fmt.Sprintf("{%s}", k), v)
 			html = strings.ReplaceAll(html, fmt.Sprintf("{%s}", k), v)
 		}
 	}
-
-	fmt.Printf("\n\nTEXT: %v\n\n", text)
-	fmt.Printf("\n\nHTML: %v\n\n", html)
 
 	m.SetHeader("From", ml.Config.From)
 	m.SetHeader("To", to)
@@ -102,7 +95,7 @@ func (ml Mailer) Create(to string, subj string, text string, html string, vals *
 }
 
 func (ml Mailer) Send(m *gomail.Message) {
-	// ml.Chan <- m
+	ml.Chan <- m
 }
 
 func (ml Mailer) Done() {
