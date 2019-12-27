@@ -184,19 +184,42 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 	id := c.Param("id")
 	d := uc.DB
 
-	if id == "" {
+	params := struct {
+		Password string `json:"password"`
+	}{}
+
+	c.BindJSON(&params)
+
+	if id == "" || params.Password == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		return
+	}
+
+	if len(params.Password) < 6 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TOO_SHIRT})
 		return
 	}
 
 	code := &models.RestoreCode{}
 
-	d.First(&code, "code = ?", id)
+	d.Preload("User").
+		Preload("User.Photo").
+		Preload("User.Cover").
+		First(&code, "code = ?", id)
 
-	if code.ID == 0 {
+	if code.ID == 0 || code.UserID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"code": code})
+	d.Set("gorm:association_autoupdate", false).
+		Set("gorm:association_save_reference", false).
+		Model(&models.User{}).Where("id = ?", code.UserID).
+		Update("password", params.Password)
+
+	d.Delete(&code)
+
+	token := d.GenerateTokenFor(code.User)
+
+	c.JSON(http.StatusOK, gin.H{"user": code.User, "token": token.Token})
 }
