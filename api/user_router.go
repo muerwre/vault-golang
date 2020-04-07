@@ -20,6 +20,7 @@ func UserRouter(r *gin.RouterGroup, a *API) {
 	r.POST("/restore", controller.CreateRestoreCode)
 
 	r.GET("/user/:username/messages", a.AuthRequired, a.WithUser(false), controller.GetUserMessages) // TODO: CHANGED URL!!!
+	r.POST("/user/:username/messages", a.AuthRequired, a.WithUser(false), controller.PostMessage)    // TODO: CHANGED URL!!!
 	r.GET("/user/:username/profile", a.AuthOptional, controller.GetUserProfile)                      // TODO: CHANGED URL!!!
 
 	required := r.Group("/").Use(a.AuthRequired)

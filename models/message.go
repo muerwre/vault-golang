@@ -23,3 +23,7 @@ type Message struct {
 func (Message) TableName() string {
 	return "message"
 }
+
+func (m Message) IsValid() bool {
+	return len(m.Text) >= 3
+}

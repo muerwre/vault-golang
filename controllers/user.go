@@ -261,3 +261,60 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"messages": messages})
 }
+
+func (uc *UserController) PostMessage(c *gin.Context) {
+	username := c.Param("username")
+	u := c.MustGet("User").(*models.User)
+	d := uc.DB
+
+	user, err := d.GetUserByUsername(username)
+
+	if err != nil || user.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.USER_NOT_FOUND})
+		return
+	}
+
+	params := struct {
+		Message string `json:"message"`
+	}{}
+
+	err = c.BindJSON(&params)
+
+	if err != nil || user.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	message := &models.Message{
+		Text:   params.Message,
+		FromID: u.ID,
+		ToID:   user.ID,
+	}
+
+	if !message.IsValid() {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.INCORRECT_DATA})
+		return
+	}
+
+	q := d.Model(&models.Message{}).Create(message)
+
+	if q.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.INCORRECT_DATA, "details": q.Error.Error()})
+		return
+	}
+
+	view := &models.MessageView{
+		DialogId: user.ID,
+		UserId:   u.ID,
+	}
+
+	d.
+		Where("userId = ? AND dialogId = ?", u.ID, user.ID).
+		FirstOrCreate(&view)
+
+	view.Viewed = time.Now()
+
+	d.Save(&view)
+
+	c.JSON(http.StatusOK, gin.H{"params": params, "message": message})
+}
