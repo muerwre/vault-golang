@@ -316,5 +316,5 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 
 	d.Save(&view)
 
-	c.JSON(http.StatusOK, gin.H{"params": params, "message": message})
+	c.JSON(http.StatusOK, gin.H{"message": message})
 }
