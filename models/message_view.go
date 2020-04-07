@@ -9,7 +9,7 @@ type MessageView struct {
 	DialogId uint      `gorm:"column:dialogId"`
 	User     *User     `json:"-" gorm:"foreignkey:UserID"`
 	UserId   uint      `gorm:"column:userId" json:"-"`
-	Viewed   time.Time `json:"-"`
+	Viewed   time.Time `json:"viewed"`
 }
 
 func (MessageView) TableName() string {

@@ -13,11 +13,11 @@ type Message struct {
 	FilesOrder CommaUintArray `gorm:"column:files_order;type:longtext;" json:"files_order"`
 	Files      []*File        `gorm:"many2many:message_files_file;jointable_foreignkey:messageId;association_jointable_foreignkey:fileId" json:"files"`
 
-	From   *User `json:"from" gorm:"foreignkey:FromID"`
-	FromID *User `gorm:"column:fromId" json:"-"`
-
 	To   *User `json:"to" gorm:"foreignkey:ToID"`
-	ToID *User `gorm:"column:toId" json:"-"`
+	ToID uint  `gorm:"column:toId" json:"-"`
+
+	From   *User `json:"from" gorm:"foreignkey:FromID"`
+	FromID uint  `gorm:"column:fromId" json:"-"`
 }
 
 func (Message) TableName() string {

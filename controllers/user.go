@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -31,7 +32,7 @@ func (u *UserController) CheckCredentials(c *gin.Context) {
 
 func (u *UserController) GetUserProfile(c *gin.Context) {
 	username := c.Param("username")
-	d := c.MustGet("DB").(*db.DB)
+	d := u.DB
 
 	user, err := d.GetUserByUsername(username)
 
@@ -225,5 +226,38 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 }
 
 func (uc *UserController) GetUserMessages(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"user": "yep"})
+	username := c.Param("username")
+	u := c.MustGet("User").(*models.User)
+	d := uc.DB
+
+	user, err := d.GetUserByUsername(username)
+
+	if err != nil || user.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.USER_NOT_FOUND})
+		return
+	}
+
+	messages := []models.Message{}
+
+	d.Preload("From").
+		Preload("To").
+		Where("(fromId = ? AND toId = ?) OR (fromId = ? AND toId = ?)", u.ID, user.ID, user.ID, u.ID).
+		Limit(50).
+		Order("created_at DESC").
+		Find(&messages)
+
+	view := &models.MessageView{
+		DialogId: user.ID,
+		UserId:   u.ID,
+	}
+
+	d.
+		Where("userId = ? AND dialogId = ?", u.ID, user.ID).
+		FirstOrCreate(&view)
+
+	view.Viewed = time.Now()
+
+	d.Save(&view)
+
+	c.JSON(http.StatusOK, gin.H{"messages": messages})
 }
