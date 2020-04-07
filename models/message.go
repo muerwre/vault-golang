@@ -1,9 +1,19 @@
 package models
 
-type Message struct {
-	*CommentLike
+import "time"
 
-	From   *User `json:"from" gorm:"foreignkey:FromId"`
+type Message struct {
+	ID        uint       `gorm:"primary_key" json:"id"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `sql:"index" json:"-"`
+
+	Text string `json:"text"`
+
+	FilesOrder CommaUintArray `gorm:"column:files_order;type:longtext;" json:"files_order"`
+	Files      []*File        `gorm:"many2many:message_files_file;jointable_foreignkey:messageId;association_jointable_foreignkey:fileId" json:"files"`
+
+	From   *User `json:"from" gorm:"foreignkey:FromID"`
 	FromID *User `gorm:"column:fromId" json:"-"`
 
 	To   *User `json:"to" gorm:"foreignkey:ToID"`

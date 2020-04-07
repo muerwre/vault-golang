@@ -223,3 +223,7 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"user": code.User, "token": token.Token})
 }
+
+func (uc *UserController) GetUserMessages(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"user": "yep"})
+}
