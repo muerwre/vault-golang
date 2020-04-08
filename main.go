@@ -5,6 +5,7 @@ package main
 
 	-- porting from js --
 
+	TODO: user updates
 	TODO: change music title on node / post save
 	TODO: image cache
 	TODO: jenkins task

@@ -45,24 +45,28 @@ func (u *UserController) GetUserProfile(c *gin.Context) {
 }
 
 func (u *UserController) LoginUser(c *gin.Context) {
-	username := c.PostForm("username")
-	password := c.PostForm("password")
+	credentials := struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{}
 
-	if username == "" || password == "" {
+	err := c.BindJSON(&credentials)
+
+	if err != nil || credentials.Username == "" || credentials.Password == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.INCORRECT_DATA})
 		return
 	}
 
 	d := c.MustGet("DB").(*db.DB)
-	user, err := d.GetUserByUsername(username)
+	user, err := d.GetUserByUsername(credentials.Username)
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
 		return
 	}
 
-	if !user.IsValidPassword(password) {
-		md5hash := passwords.GetMD5Hash(password)
+	if !user.IsValidPassword(credentials.Password) {
+		md5hash := passwords.GetMD5Hash(credentials.Password)
 
 		if md5hash != user.Password {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})

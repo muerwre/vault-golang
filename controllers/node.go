@@ -581,8 +581,15 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 
 	d.Preload("Tags").First(&node, "id = ?", nid)
 
-	if node == nil || node.ID == 0 || !node.IsFlowType() {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+	fmt.Printf("N type is %s", node.Type)
+
+	if node == nil || node.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"related": &NodeRelatedResponse{}})
+		return
+	}
+
+	if !node.IsFlowType() {
+		c.JSON(http.StatusOK, gin.H{"related": &NodeRelatedResponse{}})
 		return
 	}
 
