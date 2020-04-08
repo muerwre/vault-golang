@@ -5,12 +5,13 @@ package main
 
 	-- porting from js --
 
-	TODO: messages
 	TODO: change music title on node / post save
+	TODO: image cache
 	TODO: jenkins task
 
 	-- release --
 
+	TODO: youtube titles
 	TODO: search
 	TODO: friends
 	TODO: dialogs list
