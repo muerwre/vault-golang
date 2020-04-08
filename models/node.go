@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/fatih/structs"
@@ -317,9 +318,13 @@ func (n *Node) SortFiles() {
 		filesWithIds[k.ID] = k
 	}
 
+	for k, v := range filesWithIds {
+		fmt.Printf("%+v: %+v\n", k, v)
+	}
+
 	for i := 0; i < len(n.FilesOrder); i += 1 {
 		k := n.FilesOrder[i]
-		n.Files[i] = filesWithIds[k]
+		files[i] = filesWithIds[k]
 	}
 
 	n.Files = files

@@ -51,7 +51,7 @@ func (c *Comment) SortFiles() {
 
 	for i := 0; i < len(c.FilesOrder); i += 1 {
 		k := c.FilesOrder[i]
-		c.Files[i] = filesWithIds[k]
+		files[i] = filesWithIds[k]
 	}
 
 	c.Files = files

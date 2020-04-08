@@ -87,12 +87,38 @@ func (a *NodeController) GetNode(c *gin.Context) {
 
 // GetNodeComments /node/:id/comments - returns comments for node
 func (a *NodeController) GetNodeComments(c *gin.Context) {
-	id := c.Param("id")
 	d := c.MustGet("DB").(*db.DB)
+
+	id := c.Param("id")
+
+	take, err := strconv.Atoi(c.Query("take"))
+
+	if err != nil {
+		take = 100
+	}
+
+	skip, err := strconv.Atoi(c.Query("skip"))
+
+	if err != nil {
+		skip = 0
+	}
+
+	order := c.Query("order")
+
+	if order != "DESC" {
+		order = "ASC"
+	}
 
 	comments := &[]*models.Comment{}
 
-	d.Preload("User").Preload("Files").Preload("User.Photo").Where("nodeId = ?", id).Order("created_at").Find(&comments)
+	d.Preload("User").
+		Preload("Files").
+		Preload("User.Photo").
+		Where("nodeId = ?", id).
+		Offset(skip).
+		Limit(take).
+		Order(fmt.Sprintf("created_at %s", order)).
+		Find(&comments)
 
 	for _, v := range *comments {
 		v.SortFiles()
