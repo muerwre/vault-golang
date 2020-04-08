@@ -52,8 +52,6 @@ func (a *NodeController) GetNode(c *gin.Context) {
 		Preload("User").
 		Preload("Cover")
 
-	fmt.Printf("User: %#v", u)
-
 	if u != nil && u.Role == models.USER_ROLES.ADMIN {
 		q.First(&node, "id = ?", id)
 	} else {
@@ -69,7 +67,7 @@ func (a *NodeController) GetNode(c *gin.Context) {
 
 	go func() {
 		files := make([]*models.File, len(node.FilesOrder))
-		d.Where("id IN (?)", node.FilesOrder).Find(&files)
+		d.Where("id IN (?)", []uint(node.FilesOrder)).Find(&files)
 		files_chan <- files
 	}()
 
