@@ -103,8 +103,8 @@ func (a *NodeController) GetNodeComments(c *gin.Context) {
 
 	order := c.Query("order")
 
-	if order != "DESC" {
-		order = "ASC"
+	if order != "ASC" {
+		order = "DESC"
 	}
 
 	comments := &[]*models.Comment{}
@@ -357,7 +357,7 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 	comment.Text = data.Text
 
 	if len(comment.Text) > 2048 {
-		comment.Text = string(comment.Text[0:2048])
+		comment.Text = comment.Text[0:2048]
 	}
 
 	if len(comment.Text) < 2 && len(comment.FilesOrder) == 0 {
@@ -376,10 +376,16 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 		Save(&comment).Association("Files").
 		Replace(comment.Files)
 
+	if comment.Files == nil {
+		comment.Files = make([]*models.File, 0)
+	}
+
 	// Updating current files target
 	if len(comment.FilesOrder) > 0 {
 		d.Model(&comment.Files).Where("id IN (?)", []uint(comment.FilesOrder)).Update("Target", "comment")
 	}
+
+	// TODO: update comment mp3 titles
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 }
