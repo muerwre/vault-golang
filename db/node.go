@@ -38,6 +38,7 @@ func (d DB) GetNodeAlbumRelated(
 		Joins("LEFT JOIN `tag` `tag` ON `tags`.`tagId` = `tag`.`id`").
 		Joins("LEFT JOIN `node` `node` ON `tags`.`nodeId` = `node`.`id`").
 		Where("`tags`.`tagId` IN (?) AND `node`.`type` = ? AND `node`.`id` NOT IN (?)", []uint(ids), types, exclude).
+		Limit(6).
 		Scan(&rows)
 
 	for _, v := range *rows {

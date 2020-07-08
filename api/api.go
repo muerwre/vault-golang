@@ -64,7 +64,7 @@ func (a *API) Init(r *gin.RouterGroup) {
 
 func (a *API) AuthRequired(c *gin.Context) {
 	re := regexp.MustCompile(`Bearer (.*)`)
-	d := c.MustGet("DB").(*db.DB)
+	d := a.DB
 
 	matches := re.FindSubmatch([]byte(c.GetHeader("authorization")))
 

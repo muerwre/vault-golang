@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,15 +25,15 @@ type UserController struct {
 
 var User = &UserController{}
 
-func (u *UserController) CheckCredentials(c *gin.Context) {
+func (uc *UserController) CheckCredentials(c *gin.Context) {
 	user := c.MustGet("User").(*models.User)
 
 	c.JSON(http.StatusOK, gin.H{"user": &user})
 }
 
-func (u *UserController) GetUserProfile(c *gin.Context) {
+func (uc *UserController) GetUserProfile(c *gin.Context) {
 	username := c.Param("username")
-	d := u.DB
+	d := uc.DB
 
 	user, err := d.GetUserByUsername(username)
 
@@ -44,7 +45,7 @@ func (u *UserController) GetUserProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
-func (u *UserController) LoginUser(c *gin.Context) {
+func (uc *UserController) LoginUser(c *gin.Context) {
 	credentials := struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -193,9 +194,9 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 		Password string `json:"password"`
 	}{}
 
-	c.BindJSON(&params)
+	err := c.BindJSON(&params)
 
-	if id == "" || params.Password == "" {
+	if err != nil || id == "" || params.Password == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
 		return
 	}
@@ -278,8 +279,12 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 		return
 	}
 
+	type Message struct {
+		Text string `json:"text"`
+	}
+
 	params := struct {
-		Message string `json:"message"`
+		Message `json:"message"`
 	}{}
 
 	err = c.BindJSON(&params)
@@ -290,7 +295,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	}
 
 	message := &models.Message{
-		Text:   params.Message,
+		Text:   params.Message.Text,
 		FromID: u.ID,
 		ToID:   user.ID,
 	}
@@ -320,5 +325,54 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 
 	d.Save(&view)
 
+	d.Where("id = ?", message.ID).Preload("From").Preload("To").First(&message)
+
 	c.JSON(http.StatusOK, gin.H{"message": message})
+}
+
+func (uc *UserController) GetUpdates(c *gin.Context) {
+	d := uc.DB
+	user := c.MustGet("User").(*models.User)
+	last := c.Query("last")
+	exclude, err := strconv.Atoi(c.Query("exclude_dialogs"))
+	messages := []models.Message{}
+
+	if err != nil {
+		exclude = 0
+	}
+
+	foundation, _ := time.Parse(time.RFC3339, "2019-11-10T10:10:22.717Z")
+
+	sq := d.Select("*").
+		Table("message").
+		Select("MAX(message.id)").
+		Joins("LEFT JOIN message_view view ON view.dialogId = message.fromId AND view.userId = ?", user.ID).
+		Where("message.toId = ? AND message.fromId != ?", user.ID, user.ID).
+		Where("(view.viewed < message.created_at OR view.viewed IS NULL)").
+		Where("message.created_at > ?", foundation).
+		Where("message.deleted_at IS NULL").
+		Group("message.fromId")
+
+	if exclude > 0 {
+		sq = sq.Where("`message`.`fromId` !=", exclude)
+	}
+
+	if since, err := time.Parse(time.RFC3339, last); err != nil {
+		sq = sq.Where("message.created_at > ", since)
+	}
+
+	d.Select("*").
+		Table("message").
+		Where("message.id IN (?)", sq.SubQuery()).
+		Order("message.created_at").
+		Limit(10).
+		Preload("From").
+		Preload("To").
+		Find(&messages)
+
+	boris := &models.Node{}
+
+	d.Where("id = ?", 696).First(&boris)
+
+	c.JSON(http.StatusOK, gin.H{"messages": messages, "boris": boris})
 }

@@ -27,5 +27,6 @@ func UserRouter(r *gin.RouterGroup, a *API) {
 	{
 		required.GET("/", a.WithUser(true), controller.CheckCredentials)
 		required.PATCH("/", a.WithUser(false), controller.PatchUser) // TODO: not working
+		required.GET("/updates", a.WithUser(true), controller.GetUpdates)
 	}
 }

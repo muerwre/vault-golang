@@ -596,7 +596,7 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 		return
 	}
 
-	if nid == 0 || err != nil {
+	if nid == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
 		return
 	}
@@ -605,9 +605,7 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 
 	d.Preload("Tags").First(&node, "id = ?", nid)
 
-	fmt.Printf("N type is %s", node.Type)
-
-	if node == nil || node.ID == 0 {
+	if node == nil || node.ID == 0 || node.DeletedAt != nil {
 		c.JSON(http.StatusNotFound, gin.H{"related": &NodeRelatedResponse{}})
 		return
 	}

@@ -25,6 +25,7 @@ require (
 	github.com/magiconair/properties v1.8.1
 	github.com/mattn/go-isatty v0.0.11
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/mitranim/gow v0.0.0-20200310140433-1453861c60a5 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742
 	github.com/pelletier/go-toml v1.6.0
@@ -41,7 +42,7 @@ require (
 	github.com/ugorji/go v1.1.7
 	go.mongodb.org/mongo-driver v1.2.0
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c
-	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
+	golang.org/x/sys v0.0.0-20200408040146-ea54a3c99b9b
 	golang.org/x/text v0.3.2
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.2
