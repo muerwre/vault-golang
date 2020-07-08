@@ -25,5 +25,5 @@ func (Message) TableName() string {
 }
 
 func (m Message) IsValid() bool {
-	return len(m.Text) >= 3
+	return len(m.Text) >= 1
 }

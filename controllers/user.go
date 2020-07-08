@@ -291,7 +291,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	err = c.BindJSON(&params)
 
 	if err != nil || user.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
 		return
 	}
 
@@ -302,7 +302,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	}
 
 	if !message.IsValid() {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
 		return
 	}
 
