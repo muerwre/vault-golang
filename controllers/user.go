@@ -302,7 +302,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	}
 
 	if !message.IsValid() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TOO_SHIRT})
 		return
 	}
 
@@ -333,52 +333,22 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 
 func (uc *UserController) GetUpdates(c *gin.Context) {
 	d := uc.DB
-	user := c.MustGet("User").(*models.User)
+	user := c.MustGet("User").(models.User)
 	last := c.Query("last")
 	exclude, err := strconv.Atoi(c.Query("exclude_dialogs"))
-	messages := []models.Message{}
 
 	if err != nil {
 		exclude = 0
 	}
 
-	foundation, _ := time.Parse(time.RFC3339, "2019-11-10T10:10:22.717Z")
+	messages, err := d.GetUserNewMessages(user, exclude, last)
 
-	sq := d.Select("*").
-		Table("message").
-		Select("MAX(message.id)").
-		Joins("LEFT JOIN message_view view ON view.dialogId = message.fromId AND view.userId = ?", user.ID).
-		Where("message.toId = ? AND message.fromId != ?", user.ID, user.ID).
-		Where("(view.viewed < message.created_at OR view.viewed IS NULL)").
-		Where("message.created_at > ?", foundation).
-		Where("message.deleted_at IS NULL").
-		Group("message.fromId")
-
-	if exclude > 0 {
-		sq = sq.Where("`message`.`fromId` !=", exclude)
-	}
-
-	if since, err := time.Parse(time.RFC3339, last); err != nil {
-		sq = sq.Where("message.created_at > ", since)
-	}
-
-	d.Select("*").
-		Table("message").
-		Where("message.id IN (?)", sq.SubQuery()).
-		Order("message.created_at").
-		Limit(10).
-		Preload("From").
-		Preload("To").
-		Find(&messages)
-
-	boris := &models.Node{}
+	boris, _ := d.GetNodeBoris()
 	notifications := make([]response.Notification, len(messages))
 
 	for k, _ := range notifications {
 		notifications[k].FromMessage(messages[k])
 	}
-
-	d.Where("id = ?", 696).First(&boris)
 
 	c.JSON(http.StatusOK, gin.H{"notifications": notifications, "boris": boris})
 }

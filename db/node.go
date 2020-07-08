@@ -77,3 +77,9 @@ func (d DB) GetNodeSimilarRelated(
 
 	c <- similar
 }
+
+func (d *DB) GetNodeBoris() (node models.Node, err error) {
+	d.Where("id = ?", 696).First(&node)
+
+	return node, nil
+}
