@@ -11,6 +11,7 @@ package main
 	TODO: update song titles after save
 	TODO: posting comments
 	TODO: updating user profile
+	TODO: updates: new messages not displayed in notifications because they should be Notification type, not message
 */
 
 import (
