@@ -59,7 +59,7 @@ func (a *NodeController) GetNode(c *gin.Context) {
 	}
 
 	if node.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
@@ -133,7 +133,7 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 	uid := c.MustGet("UID").(uint)
 
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusForbidden, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
@@ -244,7 +244,7 @@ func (_ *NodeController) LockComment(c *gin.Context) {
 	err := c.BindJSON(&params)
 
 	if err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
@@ -252,12 +252,12 @@ func (_ *NodeController) LockComment(c *gin.Context) {
 	d.Unscoped().Where("id = ?", cid).First(&comment)
 
 	if comment == nil || comment.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.COMMENT_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CommentNotFound})
 		return
 	}
 
 	if !u.CanEditComment(comment) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -281,21 +281,21 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	if nid == 0 || err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
 	d.First(&node, "id = ?", nid)
 
 	if node.Type == "" || !node.CanBeCommented() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
 	err = c.BindJSON(&data)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
@@ -309,7 +309,7 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 	}
 
 	if comment.NodeID != node.ID || !comment.CanBeEditedBy(u) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -361,7 +361,7 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 	}
 
 	if len(comment.Text) < 2 && len(comment.FilesOrder) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TEXT_REQUIRED})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TextRequired})
 		return
 	}
 
@@ -398,21 +398,21 @@ func (_ *NodeController) PostTags(c *gin.Context) {
 	}{}
 
 	if nid == 0 || err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
 	d.First(&node, "id = ?", nid)
 
 	if node == nil || node.ID == 0 || !node.CanBeTaggedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
 	err = c.BindJSON(&params)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
@@ -444,14 +444,14 @@ func (_ NodeController) PostLike(c *gin.Context) {
 	node := &models.Node{}
 
 	if nid == 0 || err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
 	d.First(&node, "id = ?", nid)
 
 	if node == nil || node.ID == 0 || !node.CanBeLiked() {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -477,28 +477,28 @@ func (_ NodeController) PostLock(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	err = c.BindJSON(&params)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	node := &models.Node{}
 
 	if nid == 0 || err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
 	d.Unscoped().First(&node, "id = ?", nid)
 
 	if node == nil || node.ID == 0 || !node.CanBeEditedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -519,21 +519,21 @@ func (_ NodeController) PostHeroic(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	node := &models.Node{}
 
 	if nid == 0 || err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
 	d.First(&node, "id = ?", nid)
 
 	if node == nil || node.ID == 0 || !node.CanBeHeroedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -553,28 +553,28 @@ func (_ NodeController) PostCellView(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	err = c.BindJSON(&params)
 
 	if err != nil || !models.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	node := &models.Node{}
 
 	if nid == 0 || err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
 	d.First(&node, "id = ?", nid)
 
 	if node == nil || node.ID == 0 || !node.CanBeEditedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -592,12 +592,12 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	if nid == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NODE_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
@@ -655,7 +655,7 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
 
 	if !u.CanCreateNode() {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -666,7 +666,7 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	err := c.BindJSON(&params)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
@@ -685,12 +685,12 @@ func (_ NodeController) PostNode(c *gin.Context) {
 	}
 
 	if params.Node.Type == "" || !models.FLOW_NODE_TYPES.Contains(params.Node.Type) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_TYPE})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectType})
 		return
 	}
 
 	if !node.CanBeEditedBy(u) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NOT_ENOUGH_RIGHTS})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -777,7 +777,7 @@ func (_ NodeController) PostNode(c *gin.Context) {
 
 	// Node not saved
 	if node.ID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 

@@ -4,6 +4,8 @@ package main
 /*
 
 	-- not working ---
+	TODO: updating user profile
+
 	TODO: heroes displaying all nodes
 	TODO: /uploads
 	TODO: /stats
@@ -11,7 +13,6 @@ package main
 	TODO: youtube titles
 	TODO: update song titles after save
 	TODO: posting comments
-	TODO: updating user profile
 
 	DONE: updates: new messages not displayed in notifications because they should be Notification type, not message
 */

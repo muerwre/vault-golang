@@ -14,7 +14,7 @@ func (d *DB) GetUserByToken(t string) (user *models.User, err error) {
 	d.Preload("User").Preload("User.Photo").Preload("User.Cover").First(&token, "token = ?", t)
 
 	if token.ID == 0 || token.User.ID == 0 {
-		return nil, errors.New(codes.USER_NOT_FOUND)
+		return nil, errors.New(codes.UserNotFound)
 	}
 
 	return token.User, nil
@@ -26,7 +26,7 @@ func (d *DB) GetUserByUsername(n string) (user *models.User, err error) {
 	d.Preload("Photo").Preload("Cover").First(&user, "username = ?", n)
 
 	if user.ID == 0 {
-		return nil, errors.New(codes.USER_NOT_FOUND)
+		return nil, errors.New(codes.UserNotFound)
 	}
 
 	return user, nil
@@ -57,7 +57,7 @@ func (d *DB) GetUserNewMessages(user models.User, exclude int, last string) (mes
 		Group("message.fromId")
 
 	if exclude > 0 {
-		sq = sq.Where("`message`.`fromId` !=", exclude)
+		sq = sq.Where("message.fromId != ?", exclude)
 	}
 
 	if since, err := time.Parse(time.RFC3339, last); err != nil {

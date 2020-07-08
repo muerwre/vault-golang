@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/muerwre/vault-golang/response"
 	"net/http"
 	"strconv"
@@ -39,7 +38,7 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 	user, err := d.GetUserByUsername(username)
 
 	if err != nil || user.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.USER_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
@@ -55,7 +54,7 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 	err := c.BindJSON(&credentials)
 
 	if err != nil || credentials.Username == "" || credentials.Password == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
@@ -63,7 +62,7 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 	user, err := d.GetUserByUsername(credentials.Username)
 
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
@@ -71,7 +70,7 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 		md5hash := passwords.GetMD5Hash(credentials.Password)
 
 		if md5hash != user.Password {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
 			return
 		}
 	}
@@ -85,20 +84,20 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
 
-	data := &struct {
+	data := struct {
 		User validation.UserPatchData `json:"user"`
 	}{}
 
 	err := c.ShouldBind(&data)
 
 	if err != nil {
-		fmt.Printf("ERR 1 %+v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 	}
 
-	validation_errors := data.User.Validate(u, d)
+	validationErrors := data.User.Validate(u, d)
 
-	if validation_errors != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"errors": validation_errors})
+	if validationErrors != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": validationErrors})
 		return
 	}
 
@@ -106,7 +105,7 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 
 	d.Model(&models.User{}).Updates(u).Preload("Photo").Preload("Cover").First(&u)
 
-	c.JSON(http.StatusOK, gin.H{"data": u})
+	c.JSON(http.StatusOK, gin.H{"user": u})
 }
 
 func (uc *UserController) CreateRestoreCode(c *gin.Context) {
@@ -122,14 +121,14 @@ func (uc *UserController) CreateRestoreCode(c *gin.Context) {
 	err := c.BindJSON(&params)
 
 	if err != nil || params.Field == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.USER_NOT_FOUND})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
 	d.First(&user, "username = ? OR email = ?", params.Field, params.Field)
 
 	if user.ID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.USER_NOT_FOUND})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
@@ -141,7 +140,7 @@ func (uc *UserController) CreateRestoreCode(c *gin.Context) {
 	d.FirstOrCreate(&code, "UserId = ?", user.ID)
 
 	if code.ID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.USER_NOT_FOUND})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
@@ -166,7 +165,7 @@ func (uc UserController) GetRestoreCode(c *gin.Context) {
 	d := uc.DB
 
 	if id == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CodeIsInvalid})
 		return
 	}
 
@@ -175,7 +174,7 @@ func (uc UserController) GetRestoreCode(c *gin.Context) {
 	d.Preload("User").Preload("User.Photo").First(&code, "code = ?", id)
 
 	if code.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CodeIsInvalid})
 		return
 	}
 
@@ -198,12 +197,12 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 	err := c.BindJSON(&params)
 
 	if err != nil || id == "" || params.Password == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CodeIsInvalid})
 		return
 	}
 
 	if len(params.Password) < 6 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TOO_SHIRT})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TooShirt})
 		return
 	}
 
@@ -215,7 +214,7 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 		First(&code, "code = ?", id)
 
 	if code.ID == 0 || code.UserID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.CODE_IS_INVALID})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CodeIsInvalid})
 		return
 	}
 
@@ -239,7 +238,7 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 	user, err := d.GetUserByUsername(username)
 
 	if err != nil || user.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.USER_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
@@ -276,7 +275,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	user, err := d.GetUserByUsername(username)
 
 	if err != nil || user.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.USER_NOT_FOUND})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
@@ -291,7 +290,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	err = c.BindJSON(&params)
 
 	if err != nil || user.ID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.INCORRECT_DATA})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
@@ -302,14 +301,14 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	}
 
 	if !message.IsValid() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TOO_SHIRT})
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TooShirt})
 		return
 	}
 
 	q := d.Model(&models.Message{}).Create(message)
 
 	if q.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.INCORRECT_DATA, "details": q.Error.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.IncorrectData, "details": q.Error.Error()})
 		return
 	}
 

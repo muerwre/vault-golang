@@ -25,8 +25,8 @@ type UserPatchData struct {
 	Cover *models.File
 }
 
-func (d *UserPatchData) GetJsonTagName(f string) string {
-	field, ok := reflect.TypeOf(d).Elem().FieldByName(f)
+func (upd *UserPatchData) GetJsonTagName(f string) string {
+	field, ok := reflect.TypeOf(upd).Elem().FieldByName(f)
 
 	if !ok {
 		return ""
@@ -35,52 +35,52 @@ func (d *UserPatchData) GetJsonTagName(f string) string {
 	return field.Tag.Get("json")
 }
 
-func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
-	err := On.Struct(d)
+func (upd *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
+	err := On.Struct(upd)
 	errors := map[string]string{}
 
-	// We need password to change password or email
-	if (d.NewPassword != "" || (d.Email != "" && d.Email != u.Email)) &&
-		(d.Password == "" || !passwords.CheckPasswordHash(d.Password, u.Password)) {
-		errors[d.GetJsonTagName("Password")] = codes.INCORRECT_PASSWORD
+	// We need password to change password or email or username
+	if (upd.NewPassword != "" || (upd.Email != "" && upd.Email != u.Email) || (upd.Username != "" && upd.Username != u.Username)) &&
+		(upd.Password == "" || !passwords.CheckPasswordHash(upd.Password, u.Password)) {
+		errors[upd.GetJsonTagName("Password")] = codes.IncorrectPassword
 	}
 
 	// Shouldn't cover exist user
-	if d.Username != "" && d.Username != u.Username &&
-		db.First(&models.User{}, "username = ?", d.Username).RowsAffected > 0 {
-		errors[d.GetJsonTagName("Username")] = codes.USER_EXIST
+	if upd.Username != "" && upd.Username != u.Username &&
+		db.First(&models.User{}, "username = ?", upd.Username).RowsAffected > 0 {
+		errors[upd.GetJsonTagName("Username")] = codes.UserExist
 	}
 
 	// Photo should be at database
-	if d.Photo.ID != 0 {
+	if upd.Photo != nil && upd.Photo.ID != 0 {
 		file := &models.File{}
 
-		db.First(&file, "id = ?", d.Photo.ID)
+		db.First(&file, "id = ?", upd.Photo.ID)
 
 		if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES.IMAGE {
-			errors[d.GetJsonTagName("Photo")] = codes.IMAGE_CONVERSION_FAILED
+			errors[upd.GetJsonTagName("Photo")] = codes.ImageConversionFailed
 		}
 
-		d.PhotoID = file.ID
+		upd.PhotoID = file.ID
 	}
 
 	// Cover should be at database
-	if d.Cover.ID != 0 {
+	if upd.Cover != nil && upd.Cover.ID != 0 {
 		file := &models.File{}
 
-		db.First(&file, "id = ?", d.Photo.ID)
+		db.First(&file, "id = ?", upd.Photo.ID)
 
 		if file == nil || file.UserID != u.ID || file.Type != models.FILE_TYPES.IMAGE {
-			errors[d.GetJsonTagName("Cover")] = codes.IMAGE_CONVERSION_FAILED
+			errors[upd.GetJsonTagName("Cover")] = codes.ImageConversionFailed
 		}
 
-		d.CoverID = file.ID
+		upd.CoverID = file.ID
 	}
 
 	// Minimal requirements for fields from validate tag
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			field := d.GetJsonTagName(err.Field())
+			field := upd.GetJsonTagName(err.Field())
 
 			if field == "" {
 				continue
@@ -101,17 +101,17 @@ func (d *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
 	return errors
 }
 
-func (d *UserPatchData) ApplyTo(u *models.User) {
-	if d.NewPassword != "" {
-		u.Password, _ = passwords.HashPassword(d.NewPassword)
+func (upd *UserPatchData) ApplyTo(u *models.User) {
+	if upd.NewPassword != "" {
+		u.Password, _ = passwords.HashPassword(upd.NewPassword)
 	}
 
-	u.Email = d.Email
-	u.Description = d.Description
-	u.Username = d.Username
-	u.Fullname = d.Fullname
+	u.Email = upd.Email
+	u.Description = upd.Description
+	u.Username = upd.Username
+	u.Fullname = upd.Fullname
 
-	if d.PhotoID != 0 {
-		u.PhotoID = d.PhotoID
+	if upd.PhotoID != 0 {
+		u.PhotoID = upd.PhotoID
 	}
 }
