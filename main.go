@@ -4,7 +4,7 @@ package main
 /*
 
 	-- not working ---
-	TODO: updates: new messages not displayed in notifications because they should be Notification type, not message
+	TODO: heroes displaying all nodes
 	TODO: /uploads
 	TODO: /stats
 	TODO: /node POST
@@ -12,6 +12,8 @@ package main
 	TODO: update song titles after save
 	TODO: posting comments
 	TODO: updating user profile
+
+	DONE: updates: new messages not displayed in notifications because they should be Notification type, not message
 */
 
 import (
