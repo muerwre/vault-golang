@@ -17,6 +17,8 @@ import (
 	"github.com/muerwre/vault-golang/utils/validation"
 )
 
+var Node = &NodeController{}
+
 type NodeDiffParams struct {
 	Start       time.Time `json:"start" form:"start"`
 	End         time.Time `json:"end" form:"end"`
@@ -35,8 +37,6 @@ type NodeRelatedResponse struct {
 var FlowNodeCriteria = "is_promoted = 1 AND is_public = 1 AND type IN (?)"
 
 type NodeController struct{}
-
-var Node = &NodeController{}
 
 // GetNode /node:id - returns single node with tags, likes count and files
 func (a *NodeController) GetNode(c *gin.Context) {
@@ -166,7 +166,7 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 
 		if params.WithHeroes {
 			d.Model(&models.Node{}).
-				Where("type = ? AND is_heroic < ?", "image", true).
+				Where("type = ? AND is_heroic = ?", "image", true).
 				Order("RAND()").
 				Offset(0).
 				Limit(20).

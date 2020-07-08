@@ -13,6 +13,9 @@ package main
 	TODO: update song titles after save
 	TODO: posting comments
 
+	TODO: refactor GetDiff
+	TODO: add Responses and Requests
+
 	DONE: updating user profile
 	DONE: updates: new messages not displayed in notifications because they should be Notification type, not message
 */
