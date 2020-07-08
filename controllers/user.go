@@ -23,8 +23,6 @@ type UserController struct {
 	Config *app.Config
 }
 
-var User = &UserController{}
-
 func (uc *UserController) CheckCredentials(c *gin.Context) {
 	user := c.MustGet("User").(*models.User)
 
@@ -58,7 +56,7 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 		return
 	}
 
-	d := c.MustGet("DB").(*db.DB)
+	d := uc.DB
 	user, err := d.GetUserByUsername(credentials.Username)
 
 	if err != nil {
@@ -332,7 +330,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 
 func (uc *UserController) GetUpdates(c *gin.Context) {
 	d := uc.DB
-	user := c.MustGet("User").(models.User)
+	user := c.MustGet("User").(*models.User)
 	last := c.Query("last")
 	exclude, err := strconv.Atoi(c.Query("exclude_dialogs"))
 
@@ -340,12 +338,12 @@ func (uc *UserController) GetUpdates(c *gin.Context) {
 		exclude = 0
 	}
 
-	messages, err := d.GetUserNewMessages(user, exclude, last)
+	messages, err := d.GetUserNewMessages(*user, exclude, last)
 
 	boris, _ := d.GetNodeBoris()
 	notifications := make([]response.Notification, len(messages))
 
-	for k, _ := range notifications {
+	for k := range notifications {
 		notifications[k].FromMessage(messages[k])
 	}
 
