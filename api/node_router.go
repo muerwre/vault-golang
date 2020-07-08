@@ -5,7 +5,7 @@ import (
 	"github.com/muerwre/vault-golang/controllers"
 )
 
-// UserRouter for /node/*
+// NodeRouter for /node/*
 func NodeRouter(r *gin.RouterGroup, a *API) {
 	r.POST("/", a.AuthRequired, a.WithUser(false), controllers.Node.PostNode)
 

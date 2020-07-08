@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/muerwre/vault-golang/response"
 	"net/http"
 	"strconv"
 	"time"
@@ -371,8 +372,13 @@ func (uc *UserController) GetUpdates(c *gin.Context) {
 		Find(&messages)
 
 	boris := &models.Node{}
+	notifications := make([]response.Notification, len(messages))
+
+	for k, _ := range notifications {
+		notifications[k].FromMessage(messages[k])
+	}
 
 	d.Where("id = ?", 696).First(&boris)
 
-	c.JSON(http.StatusOK, gin.H{"messages": messages, "boris": boris})
+	c.JSON(http.StatusOK, gin.H{"notifications": notifications, "boris": boris})
 }
