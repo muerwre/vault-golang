@@ -3,28 +3,29 @@ package codes
 type Code string
 
 const (
-	NOT_AN_EMAIL            string = "Not_An_Email"
-	USER_NOT_FOUND          string = "User_Not_found"
-	TOO_SHIRT               string = "Is_Too_Shirt"
-	EMPTY_REQUEST           string = "Empty_Request"
-	FILES_REQUIRED          string = "Files_Required"
-	NODE_NOT_FOUND          string = "Node_Not_Found"
-	TEXT_REQUIRED           string = "Text_Required"
-	URL_INVALID             string = "Url_Invalid"
-	FILES_AUDIO_REQUIRED    string = "Files_Audio_Required"
-	NOT_ENOUGH_RIGHTS       string = "Not_Enough_Rights"
-	INCORRECT_DATA          string = "Incorrect_Data"
-	IMAGE_CONVERSION_FAILED string = "Image_Conversion_Failed"
-	USER_EXIST              string = "User_Exist"
-	INCORRECT_PASSWORD      string = "Incorrect_Password"
-	CODE_IS_INVALID         string = "Code_Is_Invalid"
-	REQUIRED                string = "Required"
-	COMMENT_NOT_FOUND       string = "Comment_Not_Found"
-	INCORRECT_TYPE          string = "Incorrect_Node_Type"
+	NotAnEmail            string = "Not_An_Email"
+	UserNotFound          string = "User_Not_found"
+	TooShirt              string = "Is_Too_Shirt"
+	EmptyRequest          string = "Empty_Request"
+	FilesRequired         string = "Files_Required"
+	NodeNotFound          string = "Node_Not_Found"
+	TextRequired          string = "Text_Required"
+	UrlInvalid            string = "Url_Invalid"
+	FilesAudioRequired    string = "Files_Audio_Required"
+	NotEnoughRights       string = "Not_Enough_Rights"
+	IncorrectData         string = "Incorrect_Data"
+	ImageConversionFailed string = "Image_Conversion_Failed"
+	UserExist             string = "User_Exist"
+	IncorrectPassword     string = "Incorrect_Password"
+	CodeIsInvalid         string = "Code_Is_Invalid"
+	Required              string = "Required"
+	CommentNotFound       string = "Comment_Not_Found"
+	IncorrectType         string = "Incorrect_Node_Type"
+	UnexpectedBehavior    string = "Unexpected_Behavior"
 )
 
 var VALIDATION_TO_CODE = map[string]string{
-	"gte":      TOO_SHIRT,
-	"email":    NOT_AN_EMAIL,
-	"required": REQUIRED,
+	"gte":      TooShirt,
+	"email":    NotAnEmail,
+	"required": Required,
 }

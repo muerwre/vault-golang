@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 
@@ -26,10 +27,6 @@ type ErrorCode struct {
 func New(a *app.App) (api *API, err error) {
 	api = &API{App: a, DB: a.DB}
 
-	if err != nil {
-		return nil, err
-	}
-
 	return api, nil
 }
 
@@ -44,6 +41,19 @@ func (a *API) Init(r *gin.RouterGroup) {
 			c.AbortWithStatus(204)
 			return
 		}
+
+		c.Next()
+	})
+
+	r.Use(func(c *gin.Context) {
+		defer func() {
+			if r := recover(); r != nil {
+				c.AbortWithStatusJSON(
+					http.StatusInternalServerError,
+					gin.H{"panic": fmt.Sprint(r), "error": codes.UnexpectedBehavior},
+				)
+			}
+		}()
 
 		c.Next()
 	})
@@ -69,7 +79,7 @@ func (a *API) AuthRequired(c *gin.Context) {
 	matches := re.FindSubmatch([]byte(c.GetHeader("authorization")))
 
 	if len(matches) < 1 {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
@@ -79,7 +89,7 @@ func (a *API) AuthRequired(c *gin.Context) {
 	d.First(&token, "token = ?", t)
 
 	if token.ID == 0 {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.USER_NOT_FOUND})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
