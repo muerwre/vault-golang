@@ -1,35 +1,40 @@
-package db
+package repository
 
 import (
-	"sync"
-
+	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/models"
+	"sync"
 )
 
-func (d *DB) GetNodeFiles(nid uint) ([]*models.File, error) {
-	return nil, nil
+type NodeRepository struct {
+	db *gorm.DB
 }
 
-func (d *DB) IsNodeLikedBy(node *models.Node, uid uint) bool {
+func (nr *NodeRepository) Init(db *gorm.DB) {
+	nr.db = db
+}
+
+func (nr NodeRepository) IsNodeLikedBy(node *models.Node, uid uint) bool {
 	c := 0
 
-	d.Table("like").Where("nodeId = ? AND userId = ?", node.ID, uid).Count(&c)
+	nr.db.Table("like").Where("nodeId = ? AND userId = ?", node.ID, uid).Count(&c)
 
 	return c > 0
 }
 
-func (d *DB) GetNodeLikeCount(node *models.Node) (c int) {
-	d.Table("like").Where("nodeId = ?", node.ID).Count(&c)
+func (nr NodeRepository) GetNodeLikeCount(node *models.Node) (c int) {
+	nr.db.Table("like").Where("nodeId = ?", node.ID).Count(&c)
 	return
 }
 
-func (d DB) GetNodeAlbumRelated(
+func (nr NodeRepository) GetNodeAlbumRelated(
 	ids []uint,
 	exclude []uint,
 	types string,
 	wg *sync.WaitGroup,
 	c chan map[string][]models.NodeRelatedItem,
 ) {
+	d := nr.db
 	rows := &[]models.NodeRelatedItem{}
 	albums := make(map[string][]models.NodeRelatedItem)
 
@@ -50,13 +55,14 @@ func (d DB) GetNodeAlbumRelated(
 	c <- albums
 }
 
-func (d DB) GetNodeSimilarRelated(
+func (nr NodeRepository) GetNodeSimilarRelated(
 	ids []uint,
 	exclude []uint,
 	types string,
 	wg *sync.WaitGroup,
 	c chan []models.NodeRelatedItem,
 ) {
+	d := nr.db
 	similar := []models.NodeRelatedItem{}
 
 	sq := d.Select("*").
@@ -78,8 +84,8 @@ func (d DB) GetNodeSimilarRelated(
 	c <- similar
 }
 
-func (d *DB) GetNodeBoris() (node models.Node, err error) {
-	d.Where("id = ?", 696).First(&node)
+func (nr NodeRepository) GetNodeBoris() (node models.Node, err error) {
+	nr.db.Where("id = ?", 696).First(&node)
 
 	return node, nil
 }

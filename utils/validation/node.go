@@ -7,7 +7,7 @@ import (
 	"github.com/muerwre/vault-golang/utils/codes"
 )
 
-var NODE_VALIDATORS = map[string]func(n *models.Node) error{
+var NodeValidators = map[string]func(n *models.Node) error{
 	models.FLOW_NODE_TYPES.IMAGE: ImageNodeValidator,
 	models.FLOW_NODE_TYPES.AUDIO: AudioNodeValidator,
 	models.FLOW_NODE_TYPES.TEXT:  TextNodeValidator,

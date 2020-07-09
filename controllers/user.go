@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/response"
 	"net/http"
 	"strconv"
@@ -14,7 +15,6 @@ import (
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/mail"
 	"github.com/muerwre/vault-golang/utils/passwords"
-	"github.com/muerwre/vault-golang/utils/validation"
 )
 
 type UserController struct {
@@ -33,7 +33,7 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 	username := c.Param("username")
 	d := uc.DB
 
-	user, err := d.GetUserByUsername(username)
+	user, err := d.UserRepository.GetUserByUsername(username)
 
 	if err != nil || user.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
@@ -44,10 +44,7 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 }
 
 func (uc *UserController) LoginUser(c *gin.Context) {
-	credentials := struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}{}
+	credentials := request.UserCredentialsRequest{}
 
 	err := c.BindJSON(&credentials)
 
@@ -57,7 +54,7 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 	}
 
 	d := uc.DB
-	user, err := d.GetUserByUsername(credentials.Username)
+	user, err := d.UserRepository.GetUserByUsername(credentials.Username)
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
@@ -73,17 +70,17 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 		}
 	}
 
-	token := d.GenerateTokenFor(user)
+	token := d.UserRepository.GenerateTokenFor(user)
 
 	c.JSON(http.StatusOK, gin.H{"user": user, "token": token.Token})
 }
 
 func (uc *UserController) PatchUser(c *gin.Context) {
-	d := c.MustGet("DB").(*db.DB)
+	d := uc.DB
 	u := c.MustGet("User").(*models.User)
 
 	data := struct {
-		User validation.UserPatchData `json:"user"`
+		User request.UserPatchRequest `json:"user"`
 	}{}
 
 	err := c.ShouldBind(&data)
@@ -112,9 +109,7 @@ func (uc *UserController) CreateRestoreCode(c *gin.Context) {
 	mailer := uc.Mailer
 	config := uc.Config
 
-	params := struct {
-		Field string `json:"field"`
-	}{}
+	params := request.UserRestoreCodeRequest{}
 
 	err := c.BindJSON(&params)
 
@@ -188,9 +183,7 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 	id := c.Param("id")
 	d := uc.DB
 
-	params := struct {
-		Password string `json:"password"`
-	}{}
+	params := request.UserRestorePostRequest{}
 
 	err := c.BindJSON(&params)
 
@@ -223,7 +216,7 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 
 	d.Delete(&code)
 
-	token := d.GenerateTokenFor(code.User)
+	token := d.UserRepository.GenerateTokenFor(code.User)
 
 	c.JSON(http.StatusOK, gin.H{"user": code.User, "token": token.Token})
 }
@@ -233,7 +226,7 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
 	d := uc.DB
 
-	user, err := d.GetUserByUsername(username)
+	user, err := d.UserRepository.GetUserByUsername(username)
 
 	if err != nil || user.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
@@ -270,20 +263,14 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
 	d := uc.DB
 
-	user, err := d.GetUserByUsername(username)
+	user, err := d.UserRepository.GetUserByUsername(username)
 
 	if err != nil || user.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
-	type Message struct {
-		Text string `json:"text"`
-	}
-
-	params := struct {
-		Message `json:"message"`
-	}{}
+	params := request.UserMessageRequest{}
 
 	err = c.BindJSON(&params)
 
@@ -293,7 +280,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	}
 
 	message := &models.Message{
-		Text:   params.Message.Text,
+		Text:   params.UserMessage.Text,
 		FromID: u.ID,
 		ToID:   user.ID,
 	}
@@ -338,9 +325,9 @@ func (uc *UserController) GetUpdates(c *gin.Context) {
 		exclude = 0
 	}
 
-	messages, err := d.GetUserNewMessages(*user, exclude, last)
+	messages, err := d.UserRepository.GetUserNewMessages(*user, exclude, last)
 
-	boris, _ := d.GetNodeBoris()
+	boris, _ := d.NodeRepository.GetNodeBoris()
 	notifications := make([]response.Notification, len(messages))
 
 	for k := range notifications {

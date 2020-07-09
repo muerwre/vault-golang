@@ -1,6 +1,7 @@
-package validation
+package request
 
 import (
+	"github.com/muerwre/vault-golang/utils/validation"
 	"reflect"
 
 	"github.com/go-playground/validator"
@@ -10,7 +11,7 @@ import (
 	"github.com/muerwre/vault-golang/utils/passwords"
 )
 
-type UserPatchData struct {
+type UserPatchRequest struct {
 	ID          uint
 	Username    string `json:"username" validate:"omitempty,gte=3,lte=64"`
 	Fullname    string `json:"fullname" validate:"omitempty,gte=1,lte=64"`
@@ -25,7 +26,7 @@ type UserPatchData struct {
 	Cover *models.File
 }
 
-func (upd *UserPatchData) GetJsonTagName(f string) string {
+func (upd *UserPatchRequest) GetJsonTagName(f string) string {
 	field, ok := reflect.TypeOf(upd).Elem().FieldByName(f)
 
 	if !ok {
@@ -35,8 +36,8 @@ func (upd *UserPatchData) GetJsonTagName(f string) string {
 	return field.Tag.Get("json")
 }
 
-func (upd *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string {
-	err := On.Struct(upd)
+func (upd *UserPatchRequest) Validate(u *models.User, db *db.DB) map[string]string {
+	err := validation.On.Struct(upd)
 	errors := map[string]string{}
 
 	// We need password to change password or email or username
@@ -101,7 +102,7 @@ func (upd *UserPatchData) Validate(u *models.User, db *db.DB) map[string]string 
 	return errors
 }
 
-func (upd *UserPatchData) ApplyTo(u *models.User) {
+func (upd *UserPatchRequest) ApplyTo(u *models.User) {
 	if upd.NewPassword != "" {
 		u.Password, _ = passwords.HashPassword(upd.NewPassword)
 	}
@@ -114,4 +115,25 @@ func (upd *UserPatchData) ApplyTo(u *models.User) {
 	if upd.PhotoID != 0 {
 		u.PhotoID = upd.PhotoID
 	}
+}
+
+type UserCredentialsRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type UserRestoreCodeRequest struct {
+	Field string `json:"field"`
+}
+
+type UserRestorePostRequest struct {
+	Password string `json:"password"`
+}
+
+type UserMessage struct {
+	Text string `json:"text"`
+}
+
+type UserMessageRequest struct {
+	UserMessage `json:"message"`
 }

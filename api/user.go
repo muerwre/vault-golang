@@ -19,12 +19,16 @@ func UserRouter(r *gin.RouterGroup, a *API) {
 	r.POST("/restore/:id", controller.PostRestoreCode)
 	r.POST("/restore", controller.CreateRestoreCode)
 
-	r.GET("/user/:username/messages", a.AuthRequired, a.WithUser(false), controller.GetUserMessages)
-	r.POST("/user/:username/messages", a.AuthRequired, a.WithUser(false), controller.PostMessage)
-	r.GET("/user/:username/profile", a.AuthOptional, controller.GetUserProfile)
+	optional := r.Group("/").Use(a.AuthOptional)
+	{
+		optional.GET("/user/:username/profile", controller.GetUserProfile)
+	}
 
 	required := r.Group("/").Use(a.AuthRequired)
 	{
+		required.GET("/user/:username/messages", a.WithUser(false), controller.GetUserMessages)
+		required.POST("/user/:username/messages", a.WithUser(false), controller.PostMessage)
+
 		required.GET("/", a.WithUser(true), controller.CheckCredentials)
 		required.PATCH("/", a.WithUser(false), controller.PatchUser) // TODO: not working
 		required.GET("/updates", a.WithUser(true), controller.GetUpdates)

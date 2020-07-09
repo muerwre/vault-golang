@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/muerwre/vault-golang/request"
+	"github.com/muerwre/vault-golang/response"
 	"net/http"
 	"strconv"
 	"strings"
@@ -17,32 +19,17 @@ import (
 	"github.com/muerwre/vault-golang/utils/validation"
 )
 
-var Node = &NodeController{}
-
-type NodeDiffParams struct {
-	Start       time.Time `json:"start" form:"start"`
-	End         time.Time `json:"end" form:"end"`
-	Take        uint      `json:"take" form:"take"`
-	WithHeroes  bool      `json:"with_heroes" form:"with_heroes"`
-	WithUpdated bool      `json:"with_updated" form:"with_updated"`
-	WithRecent  bool      `json:"with_recent" form:"with_recent"`
-	WithValid   bool      `json:"with_valid" form:"with_valid"`
-}
-
-type NodeRelatedResponse struct {
-	Albums  map[string][]models.NodeRelatedItem `json:"albums"`
-	Similar []models.NodeRelatedItem            `json:"similar"`
-}
-
 var FlowNodeCriteria = "is_promoted = 1 AND is_public = 1 AND type IN (?)"
 
-type NodeController struct{}
+type NodeController struct {
+	DB *db.DB
+}
 
 // GetNode /node:id - returns single node with tags, likes count and files
-func (a *NodeController) GetNode(c *gin.Context) {
+func (nc *NodeController) GetNode(c *gin.Context) {
 	id := c.Param("id")
 	uid := c.MustGet("UID").(uint)
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 
 	node := &models.Node{}
@@ -72,10 +59,10 @@ func (a *NodeController) GetNode(c *gin.Context) {
 	}()
 
 	if uid != 0 {
-		node.IsLiked = d.IsNodeLikedBy(node, uid)
+		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, uid)
 	}
 
-	node.LikeCount = d.GetNodeLikeCount(node)
+	node.LikeCount = d.NodeRepository.GetNodeLikeCount(node)
 	node.Files = <-files_chan
 
 	node.SortFiles()
@@ -84,8 +71,8 @@ func (a *NodeController) GetNode(c *gin.Context) {
 }
 
 // GetNodeComments /node/:id/comments - returns comments for node
-func (a *NodeController) GetNodeComments(c *gin.Context) {
-	d := c.MustGet("DB").(*db.DB)
+func (nc *NodeController) GetNodeComments(c *gin.Context) {
+	d := nc.DB
 
 	id := c.Param("id")
 
@@ -126,10 +113,10 @@ func (a *NodeController) GetNodeComments(c *gin.Context) {
 }
 
 // GetDiff /nodes/diff gets newer and older nodes
-func (_ *NodeController) GetDiff(c *gin.Context) {
-	params := &NodeDiffParams{}
+func (nc *NodeController) GetDiff(c *gin.Context) {
+	params := &request.NodeDiffParams{}
 	err := c.Bind(&params)
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	uid := c.MustGet("UID").(uint)
 
 	if err != nil {
@@ -233,13 +220,11 @@ func (_ *NodeController) GetDiff(c *gin.Context) {
 	})
 }
 
-func (_ *NodeController) LockComment(c *gin.Context) {
-	d := c.MustGet("DB").(*db.DB)
+func (nc *NodeController) LockComment(c *gin.Context) {
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 	cid := c.Param("cid")
-	params := struct {
-		IsLocked bool `json:"is_locked"`
-	}{}
+	params := request.NodeLockCommentRequest{}
 
 	err := c.BindJSON(&params)
 
@@ -272,11 +257,11 @@ func (_ *NodeController) LockComment(c *gin.Context) {
 }
 
 // PostComment - /node/:id/comment savng and creating comments
-func (_ *NodeController) PostComment(c *gin.Context) {
+func (nc *NodeController) PostComment(c *gin.Context) {
 	comment := &models.Comment{}
 	data := &models.Comment{}
 	node := &models.Node{}
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
@@ -391,17 +376,15 @@ func (_ *NodeController) PostComment(c *gin.Context) {
 }
 
 // PostTags - POST /node/:id/tags - updates node tags
-func (_ *NodeController) PostTags(c *gin.Context) {
+func (nc *NodeController) PostTags(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 
 	node := &models.Node{}
 	tags := []*models.Tag{}
 
-	params := struct {
-		Tags []string `json:"tags"`
-	}{}
+	params := request.NodeTagsPostRequest{}
 
 	if nid == 0 || err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
@@ -442,7 +425,7 @@ func (_ *NodeController) PostTags(c *gin.Context) {
 }
 
 // PostLike - POST /node/:id/like - likes or dislikes node
-func (_ NodeController) PostLike(c *gin.Context) {
+func (nc NodeController) PostLike(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
@@ -461,7 +444,7 @@ func (_ NodeController) PostLike(c *gin.Context) {
 		return
 	}
 
-	isLiked := d.IsNodeLikedBy(node, u.ID)
+	isLiked := d.NodeRepository.IsNodeLikedBy(node, u.ID)
 
 	if isLiked {
 		d.Model(&node).Association("Likes").Delete(u)
@@ -473,12 +456,10 @@ func (_ NodeController) PostLike(c *gin.Context) {
 }
 
 // PostLock - POST /node/:id/lock - safely deletes node
-func (_ NodeController) PostLock(c *gin.Context) {
+func (nc NodeController) PostLock(c *gin.Context) {
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
-	params := struct {
-		IsLocked bool `json:"is_locked"`
-	}{}
+	params := request.NodeLockRequest{}
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
@@ -518,7 +499,7 @@ func (_ NodeController) PostLock(c *gin.Context) {
 }
 
 // PostHeroic - POST /node/:id/heroic - sets heroic status to node
-func (_ NodeController) PostHeroic(c *gin.Context) {
+func (nc NodeController) PostHeroic(c *gin.Context) {
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
 
@@ -549,12 +530,10 @@ func (_ NodeController) PostHeroic(c *gin.Context) {
 }
 
 // PostCellView - POST /node/:id/cell-view - sets cel display for node
-func (_ NodeController) PostCellView(c *gin.Context) {
+func (nc NodeController) PostCellView(c *gin.Context) {
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
-	params := struct {
-		Flow models.NodeFlow `json:"flow"`
-	}{}
+	params := request.NodeCellViewPostRequest{}
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
@@ -572,7 +551,7 @@ func (_ NodeController) PostCellView(c *gin.Context) {
 
 	node := &models.Node{}
 
-	if nid == 0 || err != nil {
+	if nid == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
@@ -592,7 +571,7 @@ func (_ NodeController) PostCellView(c *gin.Context) {
 }
 
 // GetRelated - GET /node/:id/related - gets related nodes
-func (_ NodeController) GetRelated(c *gin.Context) {
+func (nc NodeController) GetRelated(c *gin.Context) {
 	d := c.MustGet("DB").(*db.DB)
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
@@ -612,17 +591,17 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 	d.Preload("Tags").First(&node, "id = ?", nid)
 
 	if node == nil || node.ID == 0 || node.DeletedAt != nil {
-		c.JSON(http.StatusNotFound, gin.H{"related": &NodeRelatedResponse{}})
+		c.JSON(http.StatusNotFound, gin.H{"related": &response.NodeRelatedResponse{}})
 		return
 	}
 
 	if !node.IsFlowType() {
-		c.JSON(http.StatusOK, gin.H{"related": &NodeRelatedResponse{}})
+		c.JSON(http.StatusOK, gin.H{"related": &response.NodeRelatedResponse{}})
 		return
 	}
 
 	if len(node.Tags) == 0 {
-		c.JSON(http.StatusOK, gin.H{"related": &NodeRelatedResponse{}})
+		c.JSON(http.StatusOK, gin.H{"related": &response.NodeRelatedResponse{}})
 		return
 	}
 
@@ -637,7 +616,7 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 		}
 	}
 
-	related := &NodeRelatedResponse{}
+	related := &response.NodeRelatedResponse{}
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -645,8 +624,8 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 	albumsChan := make(chan map[string][]models.NodeRelatedItem)
 	similarChan := make(chan []models.NodeRelatedItem)
 
-	go d.GetNodeAlbumRelated(tagAlbumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
-	go d.GetNodeSimilarRelated(tagSimilarIds, []uint{node.ID}, node.Type, &wg, similarChan)
+	go d.NodeRepository.GetNodeAlbumRelated(tagAlbumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
+	go d.NodeRepository.GetNodeSimilarRelated(tagSimilarIds, []uint{node.ID}, node.Type, &wg, similarChan)
 
 	wg.Wait()
 
@@ -656,7 +635,7 @@ func (_ NodeController) GetRelated(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"related": related})
 }
 
-func (_ NodeController) PostNode(c *gin.Context) {
+func (nc NodeController) PostNode(c *gin.Context) {
 	d := c.MustGet("DB").(*db.DB)
 	u := c.MustGet("User").(*models.User)
 
@@ -665,9 +644,7 @@ func (_ NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
-	params := struct {
-		Node models.Node `json:"node"`
-	}{}
+	params := request.NodePostRequest{}
 
 	err := c.BindJSON(&params)
 
@@ -762,7 +739,7 @@ func (_ NodeController) PostNode(c *gin.Context) {
 
 	node.ApplyBlocks(params.Node.Blocks)
 
-	if val, ok := validation.NODE_VALIDATORS[node.Type]; ok {
+	if val, ok := validation.NodeValidators[node.Type]; ok {
 		err = val(node)
 
 		if err != nil {
