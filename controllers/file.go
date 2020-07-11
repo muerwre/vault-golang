@@ -10,6 +10,7 @@ import (
 	"github.com/muerwre/vault-golang/utils/codes"
 	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -32,9 +33,8 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	fileType := c.Param("type")
 
 	content := strings.Builder{}
-	_, err = io.Copy(&content, file)
 
-	if err != nil {
+	if _, err = io.Copy(&content, file); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.EmptyRequest})
 		return
 	}
@@ -49,32 +49,47 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 
 	// TODO: check target
 
-	// TODO: use CONFIG_UPLOAD_PATH/TARGET/YEAR/MONTH pattern in dir
 	path := fmt.Sprintf("%s/%d/%s", target, time.Now().Year(), time.Now().Month().String())
-	// TODO: add hash to filename
 	cleanName := filepath.Base(filepath.Clean(header.Filename))
 	fileExt := filepath.Ext(cleanName)
 	fileName := cleanName[:len(cleanName)-len(fileExt)]
-
 	name := fmt.Sprintf("%s-%d%s", fileName, time.Now().Unix(), fileExt)
-	// TODO: make file path from them
-	// TODO: mkdirp
-	// TODO: save file
+	fullDir := fmt.Sprintf("%s/%s", filepath.Clean(fc.config.UploadPath), path)
 
-	url := fmt.Sprintf("REMOTE_CURRENT://%s%s", path, name)
+	if err = os.MkdirAll(fullDir, os.ModePerm); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
+		return
+	}
+
+	if out, err := os.Create(fmt.Sprintf("%s/%s", fullDir, name)); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
+		return
+	} else {
+		defer out.Close()
+
+		if _, err = out.WriteString(content.String()); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
+			return
+		}
+	}
+
+	url := fmt.Sprintf("REMOTE_CURRENT://%s/%s", path, name)
 
 	instance := &models.File{
 		User:     user,
 		Mime:     mime.String(),
+		FullPath: fmt.Sprintf("%s/%s", path, name),
 		Name:     name,
 		Path:     path,
 		OrigName: header.Filename,
 		Url:      url,
+		Size:     int(header.Size),
 	}
 
 	fmt.Printf("got file %+v", instance)
 
-	c.JSON(http.StatusOK, gin.H{"file": file})
+	c.JSON(http.StatusOK, gin.H{"file": instance})
+	// TODO: check if it matches old api
 }
 
 func (fc *FileController) GetFileType(fileMime string) string {

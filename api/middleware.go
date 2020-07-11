@@ -41,7 +41,7 @@ func (a API) RecoverMiddleware(c *gin.Context) {
 		if r := recover(); r != nil {
 			c.AbortWithStatusJSON(
 				http.StatusInternalServerError,
-				gin.H{"panic": fmt.Sprint(r), "error": codes.UnexpectedBehavior},
+				gin.H{"details": fmt.Sprint(r), "error": codes.UnexpectedBehavior},
 			)
 		}
 	}()
