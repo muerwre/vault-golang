@@ -32,6 +32,16 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	target := c.Param("target")
 	fileType := c.Param("type")
 
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
+
+	if int(header.Size) > fc.config.UploadMaxSizeMb {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.FilesIsTooBig})
+		return
+	}
+
 	content := strings.Builder{}
 
 	if _, err = io.Copy(&content, file); err != nil {
@@ -85,8 +95,6 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		Url:      url,
 		Size:     int(header.Size),
 	}
-
-	fmt.Printf("got file %+v", instance)
 
 	// TODO: save file at db
 

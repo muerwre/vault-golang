@@ -23,9 +23,10 @@ const (
 	IncorrectType         string = "Incorrect_Node_Type"
 	UnexpectedBehavior    string = "Unexpected_Behavior"
 	UnknownFileType       string = "Unknown_File_Type"
+	FilesIsTooBig         string = "File_Is_Too_Big"
 )
 
-var VALIDATION_TO_CODE = map[string]string{
+var ValidationToCode = map[string]string{
 	"gte":      TooShirt,
 	"email":    NotAnEmail,
 	"required": Required,

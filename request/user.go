@@ -87,10 +87,10 @@ func (upd *UserPatchRequest) Validate(u *models.User, db db.DB) map[string]strin
 				continue
 			}
 
-			if codes.VALIDATION_TO_CODE[err.Tag()] != "" {
-				errors[field] = codes.VALIDATION_TO_CODE[err.Tag()]
+			if codes.ValidationToCode[err.Tag()] != "" {
+				errors[field] = codes.ValidationToCode[err.Tag()]
 			} else {
-				errors[field] = codes.VALIDATION_TO_CODE["required"]
+				errors[field] = codes.ValidationToCode["required"]
 			}
 		}
 	}

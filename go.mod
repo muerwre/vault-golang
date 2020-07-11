@@ -18,6 +18,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/hcl v1.0.0
 	github.com/inconshreveable/mousetrap v1.0.0
+	github.com/inhies/go-bytesize v0.0.0-20151001220322-5990f52c6ad6
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/jinzhu/gorm v1.9.11
 	github.com/json-iterator/go v1.1.8

@@ -21,3 +21,4 @@ Frontend:
   PublicHost: localhost
 Uploads:
   Path: /tmp/uploads/here
+  MaxSizeMb: 100
