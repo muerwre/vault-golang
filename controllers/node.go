@@ -22,7 +22,7 @@ import (
 var FlowNodeCriteria = "is_promoted = 1 AND is_public = 1 AND type IN (?)"
 
 type NodeController struct {
-	DB *db.DB
+	DB db.DB
 }
 
 // GetNode /node:id - returns single node with tags, likes count and files

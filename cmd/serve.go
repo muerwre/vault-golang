@@ -22,10 +22,10 @@ func serveAPI(ctx context.Context, api *api.API) {
 	// router.LoadHTMLGlob("views/*")
 	api.Init(router.Group("/"))
 
-	hasCerts := len(api.App.Config.TlsFiles) == 2
+	hasCerts := len(api.Config.TlsFiles) == 2
 
 	s := &http.Server{
-		Addr:        fmt.Sprintf("%s:%d", api.App.Config.Host, api.App.Config.Port),
+		Addr:        fmt.Sprintf("%s:%d", api.Config.Host, api.Config.Port),
 		Handler:     router,
 		ReadTimeout: 2 * time.Minute,
 	}
@@ -43,13 +43,13 @@ func serveAPI(ctx context.Context, api *api.API) {
 	}()
 
 	if hasCerts {
-		logrus.Infof(fmt.Sprintf("Listening https://%s:%d", api.App.Config.Host, api.App.Config.Port))
+		logrus.Infof(fmt.Sprintf("Listening https://%s:%d", api.Config.Host, api.Config.Port))
 
-		if err := s.ListenAndServeTLS(api.App.Config.TlsFiles[0], api.App.Config.TlsFiles[1]); err != http.ErrServerClosed {
+		if err := s.ListenAndServeTLS(api.Config.TlsFiles[0], api.Config.TlsFiles[1]); err != http.ErrServerClosed {
 			logrus.Error(err)
 		}
 	} else {
-		logrus.Infof(fmt.Sprintf("Listening http://%s:%d", api.App.Config.Host, api.App.Config.Port))
+		logrus.Infof(fmt.Sprintf("Listening http://%s:%d", api.Config.Host, api.Config.Port))
 
 		if err := s.ListenAndServe(); err != http.ErrServerClosed {
 			logrus.Error(err)

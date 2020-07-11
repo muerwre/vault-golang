@@ -18,9 +18,9 @@ import (
 )
 
 type UserController struct {
-	Mailer *mail.Mailer
-	DB     *db.DB
-	Config *app.Config
+	Mailer mail.Mailer
+	DB     db.DB
+	Config app.Config
 }
 
 func (uc *UserController) CheckCredentials(c *gin.Context) {

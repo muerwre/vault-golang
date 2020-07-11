@@ -11,7 +11,7 @@ import (
 func (a *API) WithUser(preload bool) func(*gin.Context) {
 	return func(c *gin.Context) {
 		uid := c.MustGet("UID").(uint)
-		d := a.DB
+		d := a.db
 
 		if uid == 0 {
 			c.Set("User", nil)
@@ -50,9 +50,9 @@ func (a API) RecoverMiddleware(c *gin.Context) {
 }
 
 func (a API) InjectContextMiddleware(c *gin.Context) {
-	c.Set("DB", a.App.DB)
-	c.Set("Config", a.App.Config)
-	c.Set("Mailer", a.App.Mailer.Chan)
+	c.Set("DB", a.db)
+	c.Set("Config", a.Config)
+	c.Set("Mailer", a.mailer.Chan)
 
 	c.Next()
 }

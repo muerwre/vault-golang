@@ -1,4 +1,4 @@
-package router
+package routing
 
 import (
 	"github.com/gin-gonic/gin"
@@ -8,12 +8,12 @@ import (
 )
 
 type NodeRouter struct {
-	controller *controllers.NodeController
+	controller controllers.NodeController
 	api        utils.AppApi
 }
 
-func (nr *NodeRouter) Init(a utils.AppApi, db *db.DB) {
-	nr.controller = &controllers.NodeController{db}
+func (nr *NodeRouter) Init(a utils.AppApi, db db.DB) {
+	nr.controller = controllers.NodeController{DB: db}
 	nr.api = a
 }
 

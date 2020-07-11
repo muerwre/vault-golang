@@ -36,7 +36,7 @@ func (upd *UserPatchRequest) GetJsonTagName(f string) string {
 	return field.Tag.Get("json")
 }
 
-func (upd *UserPatchRequest) Validate(u *models.User, db *db.DB) map[string]string {
+func (upd *UserPatchRequest) Validate(u *models.User, db db.DB) map[string]string {
 	err := validation.On.Struct(upd)
 	errors := map[string]string{}
 

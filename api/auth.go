@@ -10,7 +10,7 @@ import (
 
 func (a *API) AuthRequired(c *gin.Context) {
 	re := regexp.MustCompile(`Bearer (.*)`)
-	d := a.DB
+	d := a.db
 
 	matches := re.FindSubmatch([]byte(c.GetHeader("authorization")))
 
@@ -44,7 +44,7 @@ func (a *API) AuthOptional(c *gin.Context) {
 	}
 
 	t := string(matches[1])
-	d := a.DB
+	d := a.db
 
 	token := &models.Token{}
 	d.First(&token, "token = ?", t)
