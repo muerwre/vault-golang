@@ -21,6 +21,7 @@ func (fc *FileController) Init(db db.DB) {
 }
 
 func (fc *FileController) UploadFile(c *gin.Context) {
+	user := c.MustGet("User").(*models.User)
 	file, header, err := c.Request.FormFile("file")
 	target := c.Param("target")
 	fileType := c.Param("type")
@@ -41,7 +42,19 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("got file", file, header, err, target, fileType, mime, inferredType)
+	// TODO: make file path
+	// TODO: add hash to filename
+	// TODO: mkdirp
+	// TODO: save file
+
+	instance := &models.File{
+		User:     user,
+		Mime:     mime.String(),
+		Name:     strings.ReplaceAll(header.Filename, "/", ""),
+		OrigName: header.Filename,
+	}
+
+	fmt.Printf("got file", file, header, err, target, fileType, mime, inferredType, instance)
 
 	c.JSON(http.StatusOK, gin.H{"file": file})
 }
