@@ -49,19 +49,19 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 
 	// TODO: check target
 
-	path := fmt.Sprintf("%s/%d/%s", target, time.Now().Year(), time.Now().Month().String())
-	cleanName := filepath.Base(filepath.Clean(header.Filename))
-	fileExt := filepath.Ext(cleanName)
-	fileName := cleanName[:len(cleanName)-len(fileExt)]
-	name := fmt.Sprintf("%s-%d%s", fileName, time.Now().Unix(), fileExt)
-	fullDir := fmt.Sprintf("%s/%s", filepath.Clean(fc.config.UploadPath), path)
+	pathCategorized := fmt.Sprintf("%s/%d/%s", target, time.Now().Year(), time.Now().Month().String())
+	cleanedSafeName := filepath.Base(filepath.Clean(header.Filename))
+	fileExt := filepath.Ext(cleanedSafeName)
+	fileName := cleanedSafeName[:len(cleanedSafeName)-len(fileExt)]
+	nameUnique := fmt.Sprintf("%s-%d%s", fileName, time.Now().Unix(), fileExt)
+	fsFullDir := fmt.Sprintf("%s/%s", filepath.Clean(fc.config.UploadPath), pathCategorized)
 
-	if err = os.MkdirAll(fullDir, os.ModePerm); err != nil {
+	if err = os.MkdirAll(fsFullDir, os.ModePerm); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
 		return
 	}
 
-	if out, err := os.Create(fmt.Sprintf("%s/%s", fullDir, name)); err != nil {
+	if out, err := os.Create(fmt.Sprintf("%s/%s", fsFullDir, nameUnique)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
 		return
 	} else {
@@ -73,20 +73,22 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		}
 	}
 
-	url := fmt.Sprintf("REMOTE_CURRENT://%s/%s", path, name)
+	url := fmt.Sprintf("REMOTE_CURRENT://%s/%s", pathCategorized, nameUnique)
 
 	instance := &models.File{
 		User:     user,
 		Mime:     mime.String(),
-		FullPath: fmt.Sprintf("%s/%s", path, name),
-		Name:     name,
-		Path:     path,
+		FullPath: fmt.Sprintf("%s/%s", pathCategorized, nameUnique),
+		Name:     nameUnique,
+		Path:     pathCategorized,
 		OrigName: header.Filename,
 		Url:      url,
 		Size:     int(header.Size),
 	}
 
 	fmt.Printf("got file %+v", instance)
+
+	// TODO: save file at db
 
 	c.JSON(http.StatusOK, gin.H{"file": instance})
 	// TODO: check if it matches old api
