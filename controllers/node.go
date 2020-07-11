@@ -19,8 +19,6 @@ import (
 	"github.com/muerwre/vault-golang/utils/validation"
 )
 
-var FlowNodeCriteria = "is_promoted = 1 AND is_public = 1 AND type IN (?)"
-
 type NodeController struct {
 	DB db.DB
 }
@@ -135,7 +133,8 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	recent := &[]models.FlowNode{}
 	valid := []uint{}
 
-	q := d.Model(&models.Node{}).Where(FlowNodeCriteria, structs.Values(models.FLOW_NODE_TYPES))
+	// TODO: move to repo
+	q := nc.DB.NodeRepository.WhereIsFlowNode(d.Model(&models.Node{}))
 
 	var wg sync.WaitGroup
 

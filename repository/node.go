@@ -1,13 +1,23 @@
 package repository
 
 import (
+	"fmt"
+	"github.com/fatih/structs"
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/utils/codes"
 	"sync"
 )
 
 type NodeRepository struct {
 	db *gorm.DB
+}
+
+func (nr *NodeRepository) WhereIsFlowNode(q *gorm.DB) *gorm.DB {
+	return q.Where(
+		"deleted_at IS NULL AND is_promoted = 1 AND is_public = 1 AND type IN (?)",
+		structs.Values(models.FLOW_NODE_TYPES),
+	)
 }
 
 func (nr *NodeRepository) Init(db *gorm.DB) {
@@ -86,6 +96,43 @@ func (nr NodeRepository) GetNodeSimilarRelated(
 
 func (nr NodeRepository) GetNodeBoris() (node models.Node, err error) {
 	nr.db.Where("id = ?", 696).First(&node)
+
+	return node, nil
+}
+
+func (nr NodeRepository) GetImagesCount() (count int) {
+	nr.db.Model(&models.Node{}).Where("node.type = ?", models.NODE_TYPES.IMAGE).Count(&count)
+	return
+}
+
+func (nr NodeRepository) GetAudiosCount() (count int) {
+	nr.db.Model(&models.Node{}).Where("node.type = ?", models.NODE_TYPES.AUDIO).Count(&count)
+	return
+}
+
+func (nr NodeRepository) GetVideosCount() (count int) {
+	nr.db.Model(&models.Node{}).Where("node.type = ?", models.NODE_TYPES.VIDEO).Count(&count)
+	return
+}
+
+func (nr NodeRepository) GetTextsCount() (count int) {
+	nr.db.Model(&models.Node{}).Where("node.type = ?", models.NODE_TYPES.TEXT).Count(&count)
+	return
+}
+
+func (nr NodeRepository) GetCommentsCount() (count int) {
+	nr.db.Model(&models.Comment{}).Count(&count)
+	return
+}
+
+func (nr NodeRepository) GetFlowLastPost() (*models.Node, error) {
+	node := &models.Node{}
+
+	nr.WhereIsFlowNode(nr.db.Model(&node).Order("created_at DESC").Limit(1)).First(&node)
+
+	if node.ID == 0 {
+		return nil, fmt.Errorf(codes.NodeNotFound)
+	}
 
 	return node, nil
 }

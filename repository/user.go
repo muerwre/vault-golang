@@ -83,3 +83,13 @@ func (ur UserRepository) GetUserNewMessages(user models.User, exclude int, last 
 
 	return messages, nil
 }
+
+func (ur UserRepository) GetTotalCount() (count int) {
+	ur.db.Model(&models.User{}).Count(&count)
+	return
+}
+
+func (ur UserRepository) GetAliveCount() (count int) {
+	ur.db.Model(&models.User{}).Where("user.last_seen > NOW() - INTERVAL 40 DAY").Count(&count)
+	return
+}

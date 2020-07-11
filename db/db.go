@@ -14,6 +14,7 @@ type DB struct {
 
 	NodeRepository *repository.NodeRepository
 	UserRepository *repository.UserRepository
+	FileRepository *repository.FileRepository
 }
 
 func New() (*DB, error) {
@@ -51,13 +52,16 @@ func New() (*DB, error) {
 
 	nr := &repository.NodeRepository{}
 	ur := &repository.UserRepository{}
+	fr := &repository.FileRepository{}
 
 	nr.Init(db)
 	ur.Init(db)
+	fr.Init(db)
 
 	return &DB{
 		DB:             db,
 		NodeRepository: nr,
 		UserRepository: ur,
+		FileRepository: fr,
 	}, nil
 }
