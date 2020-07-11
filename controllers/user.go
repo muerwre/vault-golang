@@ -26,6 +26,8 @@ type UserController struct {
 func (uc *UserController) CheckCredentials(c *gin.Context) {
 	user := c.MustGet("User").(*models.User)
 
+	uc.DB.UserRepository.UpdateLastSeen(user)
+
 	c.JSON(http.StatusOK, gin.H{"user": &user})
 }
 

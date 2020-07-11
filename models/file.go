@@ -5,14 +5,39 @@ import (
 	"encoding/json"
 )
 
-type FileTypes struct {
+type FileTypesStruct struct {
 	IMAGE string
 	AUDIO string
 }
 
-var FILE_TYPES = FileTypes{
+var FileTypes = FileTypesStruct{
 	IMAGE: "image",
 	AUDIO: "audio",
+}
+
+type FileMimeStruct struct {
+	JPEG  string
+	PNG   string
+	GIF   string
+	MPEG3 string
+	MPEG  string
+	MP3   string
+}
+
+var FileMime = FileMimeStruct{
+	JPEG:  "image/jpeg",
+	PNG:   "image/png",
+	GIF:   "image/gif",
+	MPEG3: "audio/mpeg3",
+	MPEG:  "audio/mpeg",
+	MP3:   "audio/mp3",
+}
+
+type FileTypeToMimeStruct map[string][]string
+
+var FileTypeToMime = FileTypeToMimeStruct{
+	FileTypes.IMAGE: {FileMime.JPEG, FileMime.PNG, FileMime.GIF},
+	FileTypes.AUDIO: {FileMime.MP3, FileMime.MPEG, FileMime.MPEG3},
 }
 
 type FileMetadata struct {

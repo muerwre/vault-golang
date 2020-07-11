@@ -15,10 +15,11 @@ type API struct {
 	db     db.DB
 	mailer mail.Mailer
 
-	nodeRouter  *routing.NodeRouter
-	userRouter  *routing.UserRouter
-	statsRouter *routing.StatsRouter
-	flowRouter  *routing.FlowRouter
+	nodeRouter   *routing.NodeRouter
+	userRouter   *routing.UserRouter
+	statsRouter  *routing.StatsRouter
+	flowRouter   *routing.FlowRouter
+	uploadRouter *routing.UploadRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -48,6 +49,9 @@ func (a *API) Init(r *gin.RouterGroup) {
 	a.flowRouter = &routing.FlowRouter{}
 	a.flowRouter.Init(a, a.db)
 
+	a.uploadRouter = &routing.UploadRouter{}
+	a.uploadRouter.Init(a, a.db, a.Config)
+
 	a.Handle(r)
 }
 
@@ -56,4 +60,5 @@ func (a *API) Handle(r *gin.RouterGroup) {
 	a.userRouter.Handle(r.Group("/user"))
 	a.statsRouter.Handle(r.Group("/stats"))
 	a.flowRouter.Handle(r.Group("/flow"))
+	a.uploadRouter.Handle(r.Group("/upload"))
 }

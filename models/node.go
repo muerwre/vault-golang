@@ -196,10 +196,10 @@ func (n Node) CanBeHeroedBy(u *User) bool {
 func (n Node) CanHasFile(f File) bool {
 	switch n.Type {
 	case NODE_TYPES.IMAGE:
-		return f.Type == FILE_TYPES.IMAGE
+		return f.Type == FileTypes.IMAGE
 
 	case NODE_TYPES.AUDIO:
-		return f.Type == FILE_TYPES.AUDIO || f.Type == FILE_TYPES.IMAGE
+		return f.Type == FileTypes.AUDIO || f.Type == FileTypes.IMAGE
 
 	default:
 		return false
@@ -285,7 +285,7 @@ func (n *Node) UpdateDescription() {
 // UpdateDescription - generates node thumbnail image from node's body
 func (n *Node) UpdateThumbnail() {
 	if n.Type == NODE_TYPES.IMAGE || n.Type == NODE_TYPES.AUDIO {
-		i := n.FirstFileOfType(FILE_TYPES.IMAGE)
+		i := n.FirstFileOfType(FileTypes.IMAGE)
 
 		if i >= 0 {
 			n.Thumbnail = n.Files[i].Url

@@ -7,6 +7,7 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.7
+	github.com/gabriel-vasile/mimetype v1.1.1
 	github.com/gin-contrib/sse v0.1.0
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-playground/locales v0.13.0

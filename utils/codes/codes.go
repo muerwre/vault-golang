@@ -22,6 +22,7 @@ const (
 	CommentNotFound       string = "Comment_Not_Found"
 	IncorrectType         string = "Incorrect_Node_Type"
 	UnexpectedBehavior    string = "Unexpected_Behavior"
+	UnknownFileType       string = "Unknown_File_Type"
 )
 
 var VALIDATION_TO_CODE = map[string]string{

@@ -16,7 +16,7 @@ var NodeValidators = map[string]func(n *models.Node) error{
 
 // ImageNodeValidator validates node of type image
 func ImageNodeValidator(n *models.Node) error {
-	if n.FirstFileOfType(models.FILE_TYPES.IMAGE) < 0 {
+	if n.FirstFileOfType(models.FileTypes.IMAGE) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 
@@ -55,7 +55,7 @@ func AudioNodeValidator(n *models.Node) error {
 		return errors.New(codes.TooShirt)
 	}
 
-	if n.FirstFileOfType(models.FILE_TYPES.AUDIO) < 0 {
+	if n.FirstFileOfType(models.FileTypes.AUDIO) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 

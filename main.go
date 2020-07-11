@@ -5,15 +5,16 @@ package main
 
 	-- not working ---
 
-	TODO: /related
 	TODO: /uploads
 	TODO: /node POST
 	TODO: youtube titles
 	TODO: update song titles after save
+	TODO: search
 
 	TODO: refactor GetDiff
 	TODO: moved all queries to repositories
 
+	DONE: /related
 	DONE: add Responses and Requests
 	DONE: /stats
 	DONE: posting comments

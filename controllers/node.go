@@ -426,7 +426,7 @@ func (nc *NodeController) PostTags(c *gin.Context) {
 // PostLike - POST /node/:id/like - likes or dislikes node
 func (nc NodeController) PostLike(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 
 	node := &models.Node{}
@@ -456,7 +456,7 @@ func (nc NodeController) PostLike(c *gin.Context) {
 
 // PostLock - POST /node/:id/lock - safely deletes node
 func (nc NodeController) PostLock(c *gin.Context) {
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeLockRequest{}
 
@@ -499,7 +499,7 @@ func (nc NodeController) PostLock(c *gin.Context) {
 
 // PostHeroic - POST /node/:id/heroic - sets heroic status to node
 func (nc NodeController) PostHeroic(c *gin.Context) {
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
@@ -530,7 +530,7 @@ func (nc NodeController) PostHeroic(c *gin.Context) {
 
 // PostCellView - POST /node/:id/cell-view - sets cel display for node
 func (nc NodeController) PostCellView(c *gin.Context) {
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeCellViewPostRequest{}
 
@@ -571,7 +571,7 @@ func (nc NodeController) PostCellView(c *gin.Context) {
 
 // GetRelated - GET /node/:id/related - gets related nodes
 func (nc NodeController) GetRelated(c *gin.Context) {
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
@@ -635,7 +635,7 @@ func (nc NodeController) GetRelated(c *gin.Context) {
 }
 
 func (nc NodeController) PostNode(c *gin.Context) {
-	d := c.MustGet("DB").(*db.DB)
+	d := nc.DB
 	u := c.MustGet("User").(*models.User)
 
 	if !u.CanCreateNode() {
