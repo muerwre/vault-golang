@@ -52,6 +52,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	mime := mimetype.Detect([]byte(content.String()))
 	inferredType := fc.GetFileType(mime.String())
 
+	// check type
 	if inferredType == "" || inferredType != fileType {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.UnknownFileType})
 		return
@@ -66,11 +67,13 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	nameUnique := fmt.Sprintf("%s-%d%s", fileName, time.Now().Unix(), fileExt)
 	fsFullDir := fmt.Sprintf("%s/%s", filepath.Clean(fc.config.UploadPath), pathCategorized)
 
+	// recursively create destination folder
 	if err = os.MkdirAll(fsFullDir, os.ModePerm); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
 		return
 	}
 
+	// create dir and write file
 	if out, err := os.Create(fmt.Sprintf("%s/%s", fsFullDir, nameUnique)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
 		return
@@ -83,8 +86,6 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		}
 	}
 
-	url := fmt.Sprintf("REMOTE_CURRENT://%s/%s", pathCategorized, nameUnique)
-
 	instance := &models.File{
 		User:     user,
 		Mime:     mime.String(),
@@ -92,7 +93,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		Name:     nameUnique,
 		Path:     pathCategorized,
 		OrigName: header.Filename,
-		Url:      url,
+		Url:      fmt.Sprintf("REMOTE_CURRENT://%s/%s", pathCategorized, nameUnique),
 		Size:     int(header.Size),
 	}
 
