@@ -19,3 +19,5 @@ Smtp:
 Frontend:
   ResetUrl: /restore/
   PublicHost: localhost
+Uploads:
+  Path: /tmp/uploads/here

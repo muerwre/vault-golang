@@ -12,16 +12,18 @@ type UploadRouter struct {
 	controller controllers.FileController
 	db         db.DB
 	config     app.Config
+	api        utils.AppApi
 }
 
 func (ur *UploadRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
 	ur.controller = controllers.FileController{}
-	ur.controller.Init(db)
+	ur.controller.Init(db, config)
+	ur.api = api
 	ur.db = db
 	ur.config = config
 }
 
 // UploadRouter for /node/*
 func (ur *UploadRouter) Handle(r *gin.RouterGroup) {
-	r.POST("/:target/:type", ur.controller.UploadFile)
+	r.POST("/:target/:type", ur.api.AuthRequired, ur.api.WithUser(false), ur.controller.UploadFile)
 }

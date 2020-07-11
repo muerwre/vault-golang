@@ -16,6 +16,7 @@ type Config struct {
 	Protocol     string
 	ResetUrl     string
 	PublicHost   string
+	UploadPath   string
 }
 
 func InitConfig() (*Config, error) {
@@ -31,6 +32,7 @@ func InitConfig() (*Config, error) {
 		ResetUrl:     viper.GetString("Frontend.ResetUrl"),
 		PublicHost:   viper.GetString("Frontend.PublicHost"),
 		Protocol:     "http",
+		UploadPath:   viper.GetString("Uploads.Path"),
 	}
 
 	if len(config.TlsFiles) == 2 {
