@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
-	"github.com/goulash/audio"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"image"
 	_ "image/gif"
@@ -35,16 +35,13 @@ func (fc *FileController) Init(db db.DB, config app.Config) {
 func (fc *FileController) FillMetadataAudio(f *models.File) error {
 	path := filepath.Join(fc.config.UploadPath, f.FullPath)
 
-	metadata, err := audio.ReadMetadata(path)
-
-	if err != nil {
-		return err
-	}
+	duration := utils.GetAudioDuration(path)
+	artist, title := utils.GetAudioArtistTitle(path)
 
 	f.Metadata = models.FileMetadata{
-		Id3title:  metadata.Title(),
-		Id3artist: metadata.Artist(),
-		Duration:  int(metadata.Length().Seconds()),
+		Id3title:  artist,
+		Id3artist: title,
+		Duration:  duration,
 	}
 
 	return nil

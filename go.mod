@@ -3,9 +3,9 @@ module github.com/muerwre/vault-golang
 go 1.13
 
 require (
-	github.com/bogem/id3v2 v1.2.0 // indirect
+	github.com/bogem/id3v2 v1.2.0
 	github.com/canthefason/go-watcher v0.2.4 // indirect
-	github.com/dhowden/tag v0.0.0-20200412032933-5d76b8eaae27 // indirect
+	github.com/dhowden/tag v0.0.0-20200412032933-5d76b8eaae27
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.7
@@ -44,6 +44,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
 	github.com/subosito/gotenv v1.2.0
+	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	github.com/theaaf/todos v0.0.0-20190402231846-ad63ef47a387
 	github.com/ugorji/go v1.1.7
 	go.mongodb.org/mongo-driver v1.2.0
