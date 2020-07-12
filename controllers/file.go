@@ -161,6 +161,5 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 
 	fc.db.FileRepository.Save(dbEntry)
 
-	c.JSON(http.StatusOK, gin.H{"file": dbEntry})
-	// TODO: check if it matches old api
+	c.JSON(http.StatusCreated, dbEntry)
 }
