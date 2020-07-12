@@ -50,7 +50,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 	}
 
 	mime := mimetype.Detect([]byte(content.String()))
-	inferredType := fc.GetFileType(mime.String())
+	inferredType := models.FileGetTypeByMime(mime.String())
 
 	// check type
 	if inferredType == "" || inferredType != fileType {
@@ -86,7 +86,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		}
 	}
 
-	instance := &models.File{
+	dbEntry := &models.File{
 		User:     user,
 		Mime:     mime.String(),
 		FullPath: fmt.Sprintf("%s/%s", pathCategorized, nameUnique),
@@ -99,18 +99,6 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 
 	// TODO: save file at db
 
-	c.JSON(http.StatusOK, gin.H{"file": instance})
+	c.JSON(http.StatusOK, gin.H{"file": dbEntry})
 	// TODO: check if it matches old api
-}
-
-func (fc *FileController) GetFileType(fileMime string) string {
-	for fileType, mimes := range models.FileTypeToMime {
-		for _, mimeType := range mimes {
-			if mimeType == fileMime {
-				return fileType
-			}
-		}
-	}
-
-	return ""
 }

@@ -48,12 +48,13 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	files_chan := make(chan []*models.File)
+	// TODO: don't need it?
+	filesChan := make(chan []*models.File)
 
 	go func() {
 		files := make([]*models.File, len(node.FilesOrder))
 		d.Where("id IN (?)", []uint(node.FilesOrder)).Find(&files)
-		files_chan <- files
+		filesChan <- files
 	}()
 
 	if uid != 0 {
@@ -61,7 +62,7 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 	}
 
 	node.LikeCount = d.NodeRepository.GetNodeLikeCount(node)
-	node.Files = <-files_chan
+	node.Files = <-filesChan
 
 	node.SortFiles()
 

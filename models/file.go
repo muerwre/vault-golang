@@ -15,31 +15,6 @@ var FileTypes = FileTypesStruct{
 	AUDIO: "audio",
 }
 
-type FileMimeStruct struct {
-	JPEG  string
-	PNG   string
-	GIF   string
-	MPEG3 string
-	MPEG  string
-	MP3   string
-}
-
-var FileMime = FileMimeStruct{
-	JPEG:  "image/jpeg",
-	PNG:   "image/png",
-	GIF:   "image/gif",
-	MPEG3: "audio/mpeg3",
-	MPEG:  "audio/mpeg",
-	MP3:   "audio/mp3",
-}
-
-type FileTypeToMimeStruct map[string][]string
-
-var FileTypeToMime = FileTypeToMimeStruct{
-	FileTypes.IMAGE: {FileMime.JPEG, FileMime.PNG, FileMime.GIF},
-	FileTypes.AUDIO: {FileMime.MP3, FileMime.MPEG, FileMime.MPEG3},
-}
-
 type FileMetadata struct {
 	Width     int    `json:"width"`
 	Height    int    `json:"height"`
@@ -79,4 +54,41 @@ func (s *FileMetadata) Scan(src interface{}) error {
 func (s FileMetadata) Value() (driver.Value, error) {
 	val, err := json.Marshal(s)
 	return string(val), err
+}
+
+type FileMimeStruct struct {
+	JPEG  string
+	PNG   string
+	GIF   string
+	MPEG3 string
+	MPEG  string
+	MP3   string
+}
+
+var FileMime = FileMimeStruct{
+	JPEG:  "image/jpeg",
+	PNG:   "image/png",
+	GIF:   "image/gif",
+	MPEG3: "audio/mpeg3",
+	MPEG:  "audio/mpeg",
+	MP3:   "audio/mp3",
+}
+
+type FileTypeToMimeStruct map[string][]string
+
+var FileTypeToMime = FileTypeToMimeStruct{
+	FileTypes.IMAGE: {FileMime.JPEG, FileMime.PNG, FileMime.GIF},
+	FileTypes.AUDIO: {FileMime.MP3, FileMime.MPEG, FileMime.MPEG3},
+}
+
+func FileGetTypeByMime(fileMime string) string {
+	for fileType, mimes := range FileTypeToMime {
+		for _, mimeType := range mimes {
+			if mimeType == fileMime {
+				return fileType
+			}
+		}
+	}
+
+	return ""
 }
