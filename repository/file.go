@@ -37,3 +37,11 @@ func (fr FileRepository) GetTotalSize() (count int) {
 
 	return
 }
+
+func (fr FileRepository) GetFilesByIds(ids []uint) ([]*models.File, error) {
+	files := make([]*models.File, len(ids))
+
+	fr.db.Where("id IN (?)", ids).Find(&files)
+
+	return files, nil
+}

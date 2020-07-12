@@ -136,3 +136,24 @@ func (nr NodeRepository) GetFlowLastPost() (*models.Node, error) {
 
 	return node, nil
 }
+
+func (nr NodeRepository) GetFullNode(id int, isAdmin bool, uid uint) (*models.Node, error) {
+	node := &models.Node{}
+
+	q := nr.db.Unscoped().
+		Preload("Tags").
+		Preload("User").
+		Preload("Cover")
+
+	if uid != 0 && isAdmin {
+		q.First(&node, "id = ?", id)
+	} else {
+		q.First(&node, "id = ? AND (deleted_at IS NULL OR userID = ?)", id, uid)
+	}
+
+	if node.ID == 0 {
+		return nil, fmt.Errorf(codes.NodeNotFound)
+	}
+
+	return node, nil
+}

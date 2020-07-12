@@ -25,44 +25,30 @@ type NodeController struct {
 
 // GetNode /node:id - returns single node with tags, likes count and files
 func (nc *NodeController) GetNode(c *gin.Context) {
-	id := c.Param("id")
 	uid := c.MustGet("UID").(uint)
-	d := nc.DB
 	u := c.MustGet("User").(*models.User)
+	d := nc.DB
 
-	node := &models.Node{}
+	id, err := strconv.Atoi(c.Param("id"))
 
-	q := d.Unscoped().
-		Preload("Tags").
-		Preload("User").
-		Preload("Cover")
-
-	if u != nil && u.Role == models.USER_ROLES.ADMIN {
-		q.First(&node, "id = ?", id)
-	} else {
-		q.First(&node, "id = ? AND (deleted_at IS NULL OR userID = ?)", id, u.ID)
-	}
-
-	if node.ID == 0 {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	// TODO: don't need it?
-	filesChan := make(chan []*models.File)
+	node, err := nc.DB.NodeRepository.GetFullNode(id, u.Role == models.USER_ROLES.ADMIN, u.ID)
 
-	go func() {
-		files := make([]*models.File, len(node.FilesOrder))
-		d.Where("id IN (?)", []uint(node.FilesOrder)).Find(&files)
-		filesChan <- files
-	}()
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
+		return
+	}
 
 	if uid != 0 {
 		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, uid)
 	}
 
 	node.LikeCount = d.NodeRepository.GetNodeLikeCount(node)
-	node.Files = <-filesChan
+	node.Files, _ = nc.DB.FileRepository.GetFilesByIds([]uint(node.FilesOrder))
 
 	node.SortFiles()
 
