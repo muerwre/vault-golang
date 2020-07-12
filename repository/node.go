@@ -157,3 +157,22 @@ func (nr NodeRepository) GetFullNode(id int, isAdmin bool, uid uint) (*models.No
 
 	return node, nil
 }
+
+func (nr NodeRepository) GetComments(id int, take int, skip int, order string) *[]*models.Comment {
+	comments := &[]*models.Comment{}
+
+	nr.db.Preload("User").
+		Preload("Files").
+		Preload("User.Photo").
+		Where("nodeId = ?", id).
+		Offset(skip).
+		Limit(take).
+		Order(fmt.Sprintf("created_at %s", order)).
+		Find(&comments)
+
+	for _, v := range *comments {
+		v.SortFiles()
+	}
+
+	return comments
+}
