@@ -10,10 +10,10 @@ import (
 
 func (a *API) WithUser(preload bool) func(*gin.Context) {
 	return func(c *gin.Context) {
-		uid := c.MustGet("UID").(uint)
+		uid := c.MustGet("UID").(*uint)
 		d := a.db
 
-		if uid == 0 {
+		if *uid == 0 {
 			c.Set("User", nil)
 		}
 

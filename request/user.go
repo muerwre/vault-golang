@@ -114,7 +114,7 @@ func (upd *UserPatchRequest) ApplyTo(u *models.User) {
 	u.Fullname = upd.Fullname
 
 	if upd.PhotoID != 0 {
-		u.PhotoID = upd.PhotoID
+		*u.PhotoID = upd.PhotoID
 	}
 }
 

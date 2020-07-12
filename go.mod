@@ -29,6 +29,7 @@ require (
 	github.com/jinzhu/gorm v1.9.11
 	github.com/json-iterator/go v1.1.8
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2
+	github.com/lEx0/go-libjpeg-nrgba v0.3.0
 	github.com/leodido/go-urn v1.2.0
 	github.com/magiconair/properties v1.8.1
 	github.com/mattn/go-isatty v0.0.11
@@ -38,6 +39,7 @@ require (
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pelletier/go-toml v1.6.0
+	github.com/pixiv/go-libjpeg v0.0.0-20190822045933-3da21a74767d
 	github.com/pkg/errors v0.8.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2

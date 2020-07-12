@@ -31,9 +31,9 @@ type User struct {
 	Description      string     `json:"description"`
 	IsActivated      string     `json:"-"`
 	Cover            *File      `gorm:"foreignkey:CoverID;" json:"cover"` // on delete null
-	CoverID          uint       `gorm:"column:coverId" json:"-"`
+	CoverID          *uint      `gorm:"column:coverId" json:"-"`
 	Photo            *File      `gorm:"foreignkey:PhotoID;" json:"photo"` // on delete null, eager
-	PhotoID          uint       `gorm:"column:photoId" json:"-"`
+	PhotoID          *uint      `gorm:"column:photoId" json:"-"`
 	Files            []File     `gorm:"foreignkey:userId" json:"-"`
 	Nodes            []Node     `json:"-"`
 	Comments         []Comment  `json:"-"`
@@ -59,7 +59,7 @@ func (u *User) IsValidPassword(password string) bool {
 }
 
 func (u User) CanEditComment(c *Comment) bool {
-	return c.UserID != 0 && (u.ID == c.UserID || u.Role == USER_ROLES.ADMIN)
+	return *c.UserID != 0 && (u.ID == *c.UserID || u.Role == USER_ROLES.ADMIN)
 }
 
 func (u User) CanCreateNode() bool {

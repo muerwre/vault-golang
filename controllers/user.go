@@ -283,8 +283,8 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 
 	message := &models.Message{
 		Text:   params.UserMessage.Text,
-		FromID: u.ID,
-		ToID:   user.ID,
+		FromID: &u.ID,
+		ToID:   &user.ID,
 	}
 
 	if !message.IsValid() {

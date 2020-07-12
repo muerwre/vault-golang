@@ -5,20 +5,17 @@ import (
 )
 
 type Comment struct {
-	ID        uint       `gorm:"primary_key" json:"id"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `sql:"index" json:"-"`
-
+	ID         uint           `gorm:"primary_key" json:"id"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  *time.Time     `sql:"index" json:"-"`
 	Text       string         `json:"text"`
 	FilesOrder CommaUintArray `gorm:"column:files_order;type:longtext;" json:"files_order"`
-
-	User   *User `json:"user" gorm:"foreignkey:UserID"`
-	UserID uint  `gorm:"column:userId" json:"-"`
-
-	Node   *Node   `json:"node" gorm:"foreignkey:NodeID"`
-	NodeID uint    `gorm:"column:nodeId" json:"-"`
-	Files  []*File `gorm:"many2many:comment_files_file;jointable_foreignkey:commentId;association_jointable_foreignkey:fileId" json:"files"`
+	User       *User          `json:"user" gorm:"foreignkey:UserID"`
+	UserID     *uint          `gorm:"column:userId" json:"-"`
+	Node       *Node          `json:"node" gorm:"foreignkey:NodeID"`
+	NodeID     *uint          `gorm:"column:nodeId" json:"-"`
+	Files      []*File        `gorm:"many2many:comment_files_file;jointable_foreignkey:commentId;association_jointable_foreignkey:fileId" json:"files"`
 }
 
 var COMMENT_FILE_TYPES = struct {
@@ -59,5 +56,5 @@ func (c *Comment) SortFiles() {
 
 // CanBeEditedBy checks if comment can be edited by user
 func (c *Comment) CanBeEditedBy(user *User) bool {
-	return user.Role == USER_ROLES.ADMIN || c.UserID == user.ID
+	return user.Role == USER_ROLES.ADMIN || *c.UserID == user.ID
 }

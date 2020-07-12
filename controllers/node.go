@@ -25,7 +25,7 @@ type NodeController struct {
 
 // GetNode /node:id - returns single node with tags, likes count and files
 func (nc *NodeController) GetNode(c *gin.Context) {
-	uid := c.MustGet("UID").(uint)
+	uid := c.MustGet("UID").(*uint)
 	u := c.MustGet("User").(*models.User)
 	d := nc.DB
 
@@ -43,8 +43,8 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	if uid != 0 {
-		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, uid)
+	if *uid != 0 {
+		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, *uid)
 	}
 
 	node.LikeCount = d.NodeRepository.GetNodeLikeCount(node)
@@ -92,7 +92,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	params := &request.NodeDiffParams{}
 	err := c.Bind(&params)
 	d := nc.DB
-	uid := c.MustGet("UID").(uint)
+	uid := c.MustGet("UID").(*uint)
 
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": codes.IncorrectData})
@@ -140,7 +140,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	}()
 
 	go func() {
-		if uid != 0 && params.WithUpdated {
+		if *uid != 0 && params.WithUpdated {
 			q.Order("created_at DESC").
 				Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
 				Where("node_view.visited < node.commented_at").
@@ -264,12 +264,12 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		d.First(&comment, "id = ?", data.ID)
 	} else {
 		comment.Node = node
-		comment.NodeID = node.ID
+		comment.NodeID = &node.ID
 		comment.User = u
-		comment.UserID = u.ID
+		comment.UserID = &u.ID
 	}
 
-	if comment.NodeID != node.ID || !comment.CanBeEditedBy(u) {
+	if *comment.NodeID != node.ID || !comment.CanBeEditedBy(u) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
@@ -327,7 +327,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 	}
 
 	// Updating node brief
-	if node.Description == "" && comment.UserID == node.UserID && len(comment.Text) >= 64 {
+	if node.Description == "" && *comment.UserID == *node.UserID && len(comment.Text) >= 64 {
 		node.Description = comment.Text
 		d.Save(&node)
 	}
@@ -634,10 +634,10 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	if params.Node.ID != 0 {
 		d.First(&node, "id = ?", params.Node.ID)
 		node.Cover = nil
-		node.CoverID = 0
+		//node.CoverID = 0
 	} else {
 		node.User = u
-		node.UserID = u.ID
+		node.UserID = &u.ID
 		node.Type = params.Node.Type
 		node.IsPublic = true
 		node.IsPromoted = true
@@ -655,8 +655,8 @@ func (nc NodeController) PostNode(c *gin.Context) {
 
 	// Update previous node cover target to be null if its changed
 	if node.Cover != nil &&
-		node.CoverID != 0 &&
-		(params.Node.Cover == nil || params.Node.Cover.ID == 0 || params.Node.Cover.ID != node.CoverID) {
+		//node.CoverID != 0 &&
+		(params.Node.Cover == nil || params.Node.Cover.ID == 0 || params.Node.Cover.ID != *node.CoverID) {
 		d.Model(&node.Files).Where("id IN (?)", node.CoverID).Update("target", nil)
 	}
 
@@ -667,7 +667,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		}
 
 		d.First(&models.File{}, "id = ?", params.Node.Cover.ID).Scan(&node.Cover)
-		node.CoverID = params.Node.Cover.ID
+		*node.CoverID = params.Node.Cover.ID
 	}
 
 	// Finding out valid comment attaches and sorting them according to files_order

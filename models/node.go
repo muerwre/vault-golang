@@ -98,9 +98,9 @@ type Node struct {
 	Description string         `json:"description"`
 	Blocks      NodeBlocks     `gorm:"type:longtext" json:"blocks"`
 	Cover       *File          `gorm:"foreignkey:CoverID" json:"cover"` // on delete null
-	CoverID     uint           `gorm:"column:coverId" json:"-"`
+	CoverID     *uint          `gorm:"column:coverId" json:"-"`
 	User        *User          `json:"user" gorm:"foreignkey:UserID"`
-	UserID      uint           `gorm:"column:userId" json:"-"`
+	UserID      *uint          `gorm:"column:userId" json:"-"`
 	FilesOrder  CommaUintArray `gorm:"column:files_order;type:longtext;" json:"files_order"`
 	Files       []*File        `gorm:"many2many:node_files_file;jointable_foreignkey:nodeId;association_jointable_foreignkey:fileId;" json:"files"`
 	Tags        []*Tag         `gorm:"many2many:node_tags_tag;jointable_foreignkey:nodeId;association_jointable_foreignkey:tagId;" json:"tags"`
@@ -174,11 +174,11 @@ func (n Node) CanBeCommented() bool {
 }
 
 func (n Node) CanBeTaggedBy(user *User) bool {
-	return n.IsFlowType() && (user.Role == USER_ROLES.ADMIN || n.UserID == user.ID)
+	return n.IsFlowType() && (user.Role == USER_ROLES.ADMIN || *n.UserID == user.ID)
 }
 
 func (n Node) CanBeEditedBy(user *User) bool {
-	return n.IsFlowType() && (user.Role == USER_ROLES.ADMIN || n.UserID == user.ID)
+	return n.IsFlowType() && (user.Role == USER_ROLES.ADMIN || *n.UserID == user.ID)
 }
 
 func (n Node) CanBeLiked() bool {

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/lEx0/go-libjpeg-nrgba/jpeg"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"image"
 	"image/gif"
-	"image/jpeg"
 	"image/png"
 	"io"
 	"os"
@@ -23,12 +23,12 @@ type ImagePreset struct {
 }
 
 var ImagePresetList = map[string]*ImagePreset{
-	constants.ImagePreset1600:      &ImagePreset{Width: 1600},
-	constants.ImagePreset600:       &ImagePreset{Width: 600},
-	constants.ImagePreset300:       &ImagePreset{Width: 300},
-	constants.ImagePresetAvatar:    &ImagePreset{Width: 72, Height: 72, Crop: true},
-	constants.ImagePresetCover:     &ImagePreset{Width: 400, Height: 400, Crop: true},
-	constants.ImagePresetSmallHero: &ImagePreset{Width: 800, Height: 300, Crop: true},
+	constants.ImagePreset1600:      {Width: 1600},
+	constants.ImagePreset600:       {Width: 600},
+	constants.ImagePreset300:       {Width: 300},
+	constants.ImagePresetAvatar:    {Width: 72, Height: 72, Crop: true},
+	constants.ImagePresetCover:     {Width: 400, Height: 400, Crop: true},
+	constants.ImagePresetSmallHero: {Width: 800, Height: 300, Crop: true},
 }
 
 func GetImagePresetByName(name string) *ImagePreset {
@@ -46,7 +46,7 @@ func WriteImage(img image.Image, out io.Writer, mime string) (err error) {
 	case constants.FileMimeGif:
 		err = gif.Encode(out, img, nil)
 	case constants.FileMimeJpeg:
-		err = jpeg.Encode(out, img, nil)
+		err = jpeg.Encode(out, img, &jpeg.EncoderOptions{Quality: 100})
 	case constants.FileMimePng:
 		err = png.Encode(out, img)
 	default:
@@ -63,7 +63,7 @@ func ReadImage(img *image.Image, file io.Reader, mime string) (err error) {
 	case constants.FileMimeGif:
 		*img, err = gif.Decode(file)
 	case constants.FileMimeJpeg:
-		*img, err = jpeg.Decode(file)
+		*img, err = jpeg.Decode(file, &jpeg.DecoderOptions{})
 	case constants.FileMimePng:
 		*img, err = png.Decode(file)
 	default:

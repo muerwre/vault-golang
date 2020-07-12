@@ -41,9 +41,7 @@ func (ur UserRepository) GetUserByUsername(n string) (user *models.User, err err
 }
 
 func (ur UserRepository) GenerateTokenFor(u *models.User) *models.Token {
-	token := &models.Token{
-		UserID: u.ID,
-	}
+	token := &models.Token{UserID: &u.ID}
 	token.New(u.Username)
 
 	ur.db.Create(&token)
