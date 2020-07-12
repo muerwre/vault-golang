@@ -118,7 +118,8 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		return
 	}
 
-	pathCategorized := filepath.Join(target, strconv.Itoa(time.Now().Year()), time.Now().Month().String())
+	year, month, _ := time.Now().Date()
+	pathCategorized := filepath.Join("uploads", strconv.Itoa(year), strconv.Itoa(int(month)), fileType)
 	cleanedSafeName := filepath.Base(filepath.Clean(header.Filename))
 	fileExt := filepath.Ext(cleanedSafeName)
 	fileName := cleanedSafeName[:len(cleanedSafeName)-len(fileExt)]

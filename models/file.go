@@ -24,7 +24,7 @@ type File struct {
 
 	Name     string       `json:"name"`
 	OrigName string       `json:"-"`
-	Path     string       `json:"-"`
+	Path     string       `json:"path"`
 	FullPath string       `json:"-"`
 	Url      string       `json:"url"`
 	Size     int          `json:"size"`
