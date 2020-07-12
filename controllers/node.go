@@ -321,7 +321,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		comment.Text = comment.Text[0:2048]
 	}
 
-	if len(comment.Text) < 2 && len(comment.FilesOrder) == 0 {
+	if len(comment.Text) < 1 && len(comment.FilesOrder) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TextRequired})
 		return
 	}
