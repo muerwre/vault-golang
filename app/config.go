@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/spf13/viper"
+	"path/filepath"
 )
 
 type Config struct {
@@ -33,7 +34,7 @@ func InitConfig() (*Config, error) {
 		ResetUrl:        viper.GetString("Frontend.ResetUrl"),
 		PublicHost:      viper.GetString("Frontend.PublicHost"),
 		Protocol:        "http",
-		UploadPath:      viper.GetString("Uploads.Path"),
+		UploadPath:      filepath.Clean(viper.GetString("Uploads.Path")),
 		UploadMaxSizeMb: viper.GetInt("Uploads.MaxSizeMb") * 1024 * 1024,
 	}
 

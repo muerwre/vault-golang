@@ -3,7 +3,9 @@ module github.com/muerwre/vault-golang
 go 1.13
 
 require (
+	github.com/bogem/id3v2 v1.2.0 // indirect
 	github.com/canthefason/go-watcher v0.2.4 // indirect
+	github.com/dhowden/tag v0.0.0-20200412032933-5d76b8eaae27 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.7
@@ -16,6 +18,8 @@ require (
 	github.com/go-playground/validator/v10 v10.0.1
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
+	github.com/goulash/audio v0.0.0-20160617125121-c5582a0542cc
+	github.com/goulash/stat v0.0.0-20160808140053-152dab06d086 // indirect
 	github.com/hashicorp/hcl v1.0.0
 	github.com/inconshreveable/mousetrap v1.0.0
 	github.com/inhies/go-bytesize v0.0.0-20151001220322-5990f52c6ad6
