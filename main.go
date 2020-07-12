@@ -6,6 +6,7 @@ package main
 	-- not working ---
 
 	TODO: update song titles after save
+	TODO: social login
 	TODO: search
 
 	TODO: refactor GetDiff
