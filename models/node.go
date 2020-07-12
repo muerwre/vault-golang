@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"github.com/muerwre/vault-golang/constants"
 	"time"
 
 	"github.com/fatih/structs"
@@ -193,10 +194,10 @@ func (n Node) CanBeHeroedBy(u *User) bool {
 func (n Node) CanHasFile(f File) bool {
 	switch n.Type {
 	case NODE_TYPES.IMAGE:
-		return f.Type == FileTypeImage
+		return f.Type == constants.FileTypeImage
 
 	case NODE_TYPES.AUDIO:
-		return f.Type == FileTypeAudio || f.Type == FileTypeImage
+		return f.Type == constants.FileTypeAudio || f.Type == constants.FileTypeImage
 
 	default:
 		return false
@@ -282,7 +283,7 @@ func (n *Node) UpdateDescription() {
 // UpdateDescription - generates node thumbnail image from node's body
 func (n *Node) UpdateThumbnail() {
 	if n.Type == NODE_TYPES.IMAGE || n.Type == NODE_TYPES.AUDIO {
-		i := n.FirstFileOfType(FileTypeImage)
+		i := n.FirstFileOfType(constants.FileTypeImage)
 
 		if i >= 0 {
 			n.Thumbnail = n.Files[i].Url

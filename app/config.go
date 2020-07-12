@@ -6,6 +6,7 @@ import (
 )
 
 type Config struct {
+	Debug           bool
 	Host            string
 	Port            int
 	TlsFiles        []string
@@ -23,6 +24,7 @@ type Config struct {
 
 func InitConfig() (*Config, error) {
 	config := &Config{
+		Debug:           viper.GetBool("Debug"),
 		Host:            viper.GetString("Host"),
 		Port:            viper.GetInt("Port"),
 		TlsFiles:        viper.GetStringSlice("TlsFiles"),

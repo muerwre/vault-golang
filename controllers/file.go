@@ -5,6 +5,7 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
+	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils"
@@ -71,11 +72,10 @@ func (fc *FileController) FillMetadataImage(f *models.File) error {
 
 func (fc *FileController) FillMetadata(f *models.File) {
 	switch f.Type {
-	case models.FileTypeImage:
-		err := fc.FillMetadataImage(f)
-		println("%+v", err)
+	case constants.FileTypeImage:
+		_ = fc.FillMetadataImage(f)
 		return
-	case models.FileTypeAudio:
+	case constants.FileTypeAudio:
 		_ = fc.FillMetadataAudio(f)
 		return
 	}

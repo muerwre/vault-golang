@@ -20,6 +20,7 @@ type API struct {
 	statsRouter  *routing.StatsRouter
 	flowRouter   *routing.FlowRouter
 	uploadRouter *routing.UploadRouter
+	staticRouter *routing.StaticRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -34,7 +35,12 @@ func New(a *app.App) (api *API, err error) {
 }
 
 func (a *API) Init(r *gin.RouterGroup) {
-	r.Use(a.RecoverMiddleware, a.InjectContextMiddleware, a.OptionsRespondMiddleware)
+	r.Use(a.InjectContextMiddleware, a.OptionsRespondMiddleware)
+
+	if !a.Config.Debug {
+		r.Use(a.RecoverMiddleware)
+	}
+
 	r.OPTIONS("/*path", a.CorsHandler)
 
 	a.nodeRouter = &routing.NodeRouter{}
@@ -52,6 +58,9 @@ func (a *API) Init(r *gin.RouterGroup) {
 	a.uploadRouter = &routing.UploadRouter{}
 	a.uploadRouter.Init(a, a.db, a.Config)
 
+	a.staticRouter = &routing.StaticRouter{}
+	a.staticRouter.Init(a, a.Config)
+
 	a.Handle(r)
 }
 
@@ -61,4 +70,5 @@ func (a *API) Handle(r *gin.RouterGroup) {
 	a.statsRouter.Handle(r.Group("/stats"))
 	a.flowRouter.Handle(r.Group("/flow"))
 	a.uploadRouter.Handle(r.Group("/upload"))
+	a.staticRouter.Handle(r.Group("/static"))
 }

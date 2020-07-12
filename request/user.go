@@ -1,6 +1,7 @@
 package request
 
 import (
+	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/utils/validation"
 	"reflect"
 
@@ -58,7 +59,7 @@ func (upd *UserPatchRequest) Validate(u *models.User, db db.DB) map[string]strin
 
 		db.First(&file, "id = ?", upd.Photo.ID)
 
-		if file == nil || file.UserID != u.ID || file.Type != models.FileTypeImage {
+		if file == nil || file.UserID != u.ID || file.Type != constants.FileTypeImage {
 			errors[upd.GetJsonTagName("Photo")] = codes.ImageConversionFailed
 		}
 
@@ -71,7 +72,7 @@ func (upd *UserPatchRequest) Validate(u *models.User, db db.DB) map[string]strin
 
 		db.First(&file, "id = ?", upd.Photo.ID)
 
-		if file == nil || file.UserID != u.ID || file.Type != models.FileTypeImage {
+		if file == nil || file.UserID != u.ID || file.Type != constants.FileTypeImage {
 			errors[upd.GetJsonTagName("Cover")] = codes.ImageConversionFailed
 		}
 

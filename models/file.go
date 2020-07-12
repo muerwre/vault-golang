@@ -3,11 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-)
-
-const (
-	FileTypeImage string = "image"
-	FileTypeAudio string = "audio"
+	"github.com/muerwre/vault-golang/constants"
 )
 
 type FileMetadata struct {
@@ -51,22 +47,8 @@ func (s FileMetadata) Value() (driver.Value, error) {
 	return string(val), err
 }
 
-const (
-	FileMimeJpeg  string = "image/jpeg"
-	FileMimePng   string = "image/png"
-	FileMimeGif   string = "image/gif"
-	FileMimeMpeg3 string = "audio/mpeg3"
-	FileMimeMpeg  string = "audio/mpeg"
-	FileMimeMp3   string = "audio/mp3"
-)
-
-var FileTypeToMime = map[string][]string{
-	FileTypeImage: {FileMimeJpeg, FileMimePng, FileMimeGif},
-	FileTypeAudio: {FileMimeMp3, FileMimeMpeg, FileMimeMpeg3},
-}
-
 func FileGetTypeByMime(fileMime string) string {
-	for fileType, mimes := range FileTypeToMime {
+	for fileType, mimes := range constants.FileTypeToMime {
 		for _, mimeType := range mimes {
 			if mimeType == fileMime {
 				return fileType

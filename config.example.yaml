@@ -22,3 +22,4 @@ Frontend:
 Uploads:
   Path: /tmp/uploads/here
   MaxSizeMb: 100
+Debug: false

@@ -2,6 +2,7 @@ package validation
 
 import (
 	"errors"
+	"github.com/muerwre/vault-golang/constants"
 
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -16,7 +17,7 @@ var NodeValidators = map[string]func(n *models.Node) error{
 
 // ImageNodeValidator validates node of type image
 func ImageNodeValidator(n *models.Node) error {
-	if n.FirstFileOfType(models.FileTypeImage) < 0 {
+	if n.FirstFileOfType(constants.FileTypeImage) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 
@@ -55,7 +56,7 @@ func AudioNodeValidator(n *models.Node) error {
 		return errors.New(codes.TooShirt)
 	}
 
-	if n.FirstFileOfType(models.FileTypeAudio) < 0 {
+	if n.FirstFileOfType(constants.FileTypeAudio) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 

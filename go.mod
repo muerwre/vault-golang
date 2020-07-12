@@ -6,11 +6,13 @@ require (
 	github.com/bogem/id3v2 v1.2.0
 	github.com/canthefason/go-watcher v0.2.4 // indirect
 	github.com/dhowden/tag v0.0.0-20200412032933-5d76b8eaae27
+	github.com/disintegration/imaging v1.6.2
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gabriel-vasile/mimetype v1.1.1
 	github.com/gin-contrib/sse v0.1.0
+	github.com/gin-contrib/static v0.0.0-20191128031702-f81c604d8ac2 // indirect
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0
@@ -34,6 +36,7 @@ require (
 	github.com/mitranim/gow v0.0.0-20200310140433-1453861c60a5 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pelletier/go-toml v1.6.0
 	github.com/pkg/errors v0.8.0
 	github.com/sirupsen/logrus v1.4.2
@@ -49,6 +52,7 @@ require (
 	github.com/ugorji/go v1.1.7
 	go.mongodb.org/mongo-driver v1.2.0
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c
+	golang.org/x/image v0.0.0-20200618115811-c13761719519 // indirect
 	golang.org/x/sys v0.0.0-20200408040146-ea54a3c99b9b
 	golang.org/x/text v0.3.2
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
