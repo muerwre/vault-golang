@@ -39,6 +39,10 @@ func (fc *FileController) FillMetadataAudio(f *models.File) error {
 	duration := utils.GetAudioDuration(path)
 	artist, title := utils.GetAudioArtistTitle(path)
 
+	if artist == "" && title == "" {
+		title = f.OrigName
+	}
+
 	f.Metadata = models.FileMetadata{
 		Id3title:  artist,
 		Id3artist: title,
