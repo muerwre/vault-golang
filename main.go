@@ -5,13 +5,13 @@ package main
 
 	-- not working ---
 
-	TODO: youtube titles
 	TODO: update song titles after save
 	TODO: search
 
 	TODO: refactor GetDiff
 	TODO: moved all queries to repositories
 
+	DONE: youtube titles
 	DONE: /node POST
 	DONE: /uploads
 	DONE: /related

@@ -82,9 +82,9 @@ func (nc *NodeController) GetNodeComments(c *gin.Context) {
 		order = "DESC"
 	}
 
-	comments := nc.DB.NodeRepository.GetComments(id, take, skip, order)
+	comments, count := nc.DB.NodeRepository.GetComments(id, take, skip, order)
 
-	c.JSON(http.StatusAccepted, gin.H{"comments": comments})
+	c.JSON(http.StatusAccepted, gin.H{"comments": comments, "comment_count": count})
 }
 
 // GetDiff /nodes/diff gets newer and older nodes
