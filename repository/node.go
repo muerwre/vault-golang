@@ -13,15 +13,15 @@ type NodeRepository struct {
 	db *gorm.DB
 }
 
-func (nr *NodeRepository) WhereIsFlowNode(q *gorm.DB) *gorm.DB {
-	return q.Where(
+func (nr *NodeRepository) Init(db *gorm.DB) {
+	nr.db = db
+}
+
+func (nr *NodeRepository) WhereIsFlowNode(d *gorm.DB) *gorm.DB {
+	return d.Where(
 		"deleted_at IS NULL AND is_promoted = 1 AND is_public = 1 AND type IN (?)",
 		structs.Values(models.FLOW_NODE_TYPES),
 	)
-}
-
-func (nr *NodeRepository) Init(db *gorm.DB) {
-	nr.db = db
 }
 
 func (nr NodeRepository) IsNodeLikedBy(node *models.Node, uid uint) bool {

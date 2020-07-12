@@ -20,6 +20,7 @@ type Config struct {
 	PublicHost      string
 	UploadPath      string
 	UploadMaxSizeMb int
+	GoogleApiKey    string
 }
 
 func InitConfig() (*Config, error) {
@@ -38,6 +39,7 @@ func InitConfig() (*Config, error) {
 		Protocol:        "http",
 		UploadPath:      filepath.Clean(viper.GetString("Uploads.Path")),
 		UploadMaxSizeMb: viper.GetInt("Uploads.MaxSizeMb") * 1024 * 1024,
+		GoogleApiKey:    viper.GetString("Google.ApiKey"),
 	}
 
 	if len(config.TlsFiles) == 2 {
