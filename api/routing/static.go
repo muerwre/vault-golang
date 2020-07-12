@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/utils"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 )
 
 type StaticRouter struct {
@@ -39,6 +41,14 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 	dest := filepath.Join("cache", preset, src)
 
 	if _, err := os.Stat(filepath.Join(sr.config.UploadPath, dest)); err == nil {
+		cacheSince := time.Now().Format(http.TimeFormat)
+		cacheUntil := time.Now().AddDate(0, 6, 0).Format(http.TimeFormat)
+		cacheMaxAge := time.Since(time.Now().AddDate(0, 6, 0)).Seconds()
+
+		c.Header("Cache-Control", fmt.Sprintf("max-age: %d, public", -int(cacheMaxAge)))
+		c.Header("Last-Modified", cacheSince)
+		c.Header("Expires", cacheUntil)
+
 		c.Next()
 		return
 	}
