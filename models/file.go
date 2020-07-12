@@ -5,15 +5,10 @@ import (
 	"encoding/json"
 )
 
-type FileTypesStruct struct {
-	IMAGE string
-	AUDIO string
-}
-
-var FileTypes = FileTypesStruct{
-	IMAGE: "image",
-	AUDIO: "audio",
-}
+const (
+	FileTypeImage string = "image"
+	FileTypeAudio string = "audio"
+)
 
 type FileMetadata struct {
 	Width     int    `json:"width"`
@@ -56,29 +51,18 @@ func (s FileMetadata) Value() (driver.Value, error) {
 	return string(val), err
 }
 
-type FileMimeStruct struct {
-	JPEG  string
-	PNG   string
-	GIF   string
-	MPEG3 string
-	MPEG  string
-	MP3   string
-}
+const (
+	FileMimeJpeg  string = "image/jpeg"
+	FileMimePng   string = "image/png"
+	FileMimeGif   string = "image/gif"
+	FileMimeMpeg3 string = "audio/mpeg3"
+	FileMimeMpeg  string = "audio/mpeg"
+	FileMimeMp3   string = "audio/mp3"
+)
 
-var FileMime = FileMimeStruct{
-	JPEG:  "image/jpeg",
-	PNG:   "image/png",
-	GIF:   "image/gif",
-	MPEG3: "audio/mpeg3",
-	MPEG:  "audio/mpeg",
-	MP3:   "audio/mp3",
-}
-
-type FileTypeToMimeStruct map[string][]string
-
-var FileTypeToMime = FileTypeToMimeStruct{
-	FileTypes.IMAGE: {FileMime.JPEG, FileMime.PNG, FileMime.GIF},
-	FileTypes.AUDIO: {FileMime.MP3, FileMime.MPEG, FileMime.MPEG3},
+var FileTypeToMime = map[string][]string{
+	FileTypeImage: {FileMimeJpeg, FileMimePng, FileMimeGif},
+	FileTypeAudio: {FileMimeMp3, FileMimeMpeg, FileMimeMpeg3},
 }
 
 func FileGetTypeByMime(fileMime string) string {
@@ -91,4 +75,23 @@ func FileGetTypeByMime(fileMime string) string {
 	}
 
 	return ""
+}
+
+const (
+	FileTargetNodes    string = "nodes"
+	FileTargetComments string = "comments"
+	FileTargetProfiles string = "profiles"
+	FileTargetOther    string = "other"
+)
+
+var FileTargets = []string{FileTargetComments, FileTargetNodes, FileTargetProfiles, FileTargetOther}
+
+func FileValidateTarget(target string) bool {
+	for _, v := range FileTargets {
+		if target == v {
+			return true
+		}
+	}
+
+	return false
 }

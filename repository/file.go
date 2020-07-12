@@ -45,3 +45,7 @@ func (fr FileRepository) GetFilesByIds(ids []uint) ([]*models.File, error) {
 
 	return files, nil
 }
+
+func (fr FileRepository) Save(f *models.File) {
+	fr.db.Save(&f)
+}

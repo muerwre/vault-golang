@@ -34,7 +34,7 @@ func InitConfig() (*Config, error) {
 		PublicHost:      viper.GetString("Frontend.PublicHost"),
 		Protocol:        "http",
 		UploadPath:      viper.GetString("Uploads.Path"),
-		UploadMaxSizeMb: viper.GetInt("Uploads.MaxSizeMb"),
+		UploadMaxSizeMb: viper.GetInt("Uploads.MaxSizeMb") * 1024 * 1024,
 	}
 
 	if len(config.TlsFiles) == 2 {

@@ -58,7 +58,10 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		return
 	}
 
-	// TODO: check target
+	if !models.FileValidateTarget(target) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
 
 	pathCategorized := fmt.Sprintf("%s/%d/%s", target, time.Now().Year(), time.Now().Month().String())
 	cleanedSafeName := filepath.Base(filepath.Clean(header.Filename))
@@ -95,9 +98,12 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		OrigName: header.Filename,
 		Url:      fmt.Sprintf("REMOTE_CURRENT://%s/%s", pathCategorized, nameUnique),
 		Size:     int(header.Size),
+		Type:     fileType,
 	}
 
-	// TODO: save file at db
+	// todo: get metadata
+
+	fc.db.FileRepository.Save(dbEntry)
 
 	c.JSON(http.StatusOK, gin.H{"file": dbEntry})
 	// TODO: check if it matches old api

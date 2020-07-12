@@ -51,13 +51,10 @@ type NodeFlowDisplay struct {
 	QUADRO     string
 }
 
-var BLOCK_TYPES = struct {
-	TEXT  string
-	VIDEO string
-}{
-	TEXT:  "text",
-	VIDEO: "video",
-}
+const (
+	BlockTypeText  string = "text"
+	BlockTypeVideo string = "video"
+)
 
 var FLOW_NODE_TYPES = FlowNodeTypes{
 	IMAGE: "image",
@@ -196,10 +193,10 @@ func (n Node) CanBeHeroedBy(u *User) bool {
 func (n Node) CanHasFile(f File) bool {
 	switch n.Type {
 	case NODE_TYPES.IMAGE:
-		return f.Type == FileTypes.IMAGE
+		return f.Type == FileTypeImage
 
 	case NODE_TYPES.AUDIO:
-		return f.Type == FileTypes.AUDIO || f.Type == FileTypes.IMAGE
+		return f.Type == FileTypeAudio || f.Type == FileTypeImage
 
 	default:
 		return false
@@ -210,9 +207,9 @@ func (n Node) CanHasFile(f File) bool {
 func (n Node) CanHasBlock(b NodeBlock) bool {
 	switch n.Type {
 	case NODE_TYPES.TEXT:
-		return b.Type == BLOCK_TYPES.TEXT
+		return b.Type == BlockTypeText
 	case NODE_TYPES.VIDEO:
-		return b.Type == BLOCK_TYPES.VIDEO
+		return b.Type == BlockTypeVideo
 	default:
 		return false
 	}
@@ -244,8 +241,8 @@ func (n *Node) ApplyBlocks(blocks []NodeBlock) {
 
 // IsValid - validates node block
 func (b NodeBlock) IsValid() bool {
-	return (b.Type == BLOCK_TYPES.TEXT && len(b.Text) > 0) ||
-		(b.Type == BLOCK_TYPES.VIDEO && len(b.Url) > 0 && utils.GetThumbFromUrl(b.Url) != "")
+	return (b.Type == BlockTypeText && len(b.Text) > 0) ||
+		(b.Type == BlockTypeVideo && len(b.Url) > 0 && utils.GetThumbFromUrl(b.Url) != "")
 }
 
 // FirstBlockOfType - gets block file of type (t)
@@ -273,7 +270,7 @@ func (n Node) FirstFileOfType(t string) int {
 // UpdateDescription - generates node brief description from node's body
 func (n *Node) UpdateDescription() {
 	if n.Type == NODE_TYPES.TEXT {
-		textBlock := n.Blocks[n.FirstBlockOfType(BLOCK_TYPES.TEXT)]
+		textBlock := n.Blocks[n.FirstBlockOfType(BlockTypeText)]
 
 		if len(textBlock.Text) > 64 {
 			n.Description = textBlock.Text
@@ -285,7 +282,7 @@ func (n *Node) UpdateDescription() {
 // UpdateDescription - generates node thumbnail image from node's body
 func (n *Node) UpdateThumbnail() {
 	if n.Type == NODE_TYPES.IMAGE || n.Type == NODE_TYPES.AUDIO {
-		i := n.FirstFileOfType(FileTypes.IMAGE)
+		i := n.FirstFileOfType(FileTypeImage)
 
 		if i >= 0 {
 			n.Thumbnail = n.Files[i].Url
@@ -294,7 +291,7 @@ func (n *Node) UpdateThumbnail() {
 	}
 
 	if n.Type == NODE_TYPES.VIDEO {
-		i := n.FirstBlockOfType(BLOCK_TYPES.VIDEO)
+		i := n.FirstBlockOfType(BlockTypeVideo)
 
 		if url := utils.GetThumbFromUrl(n.Blocks[i].Url); url != "" {
 			n.Thumbnail = url

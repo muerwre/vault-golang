@@ -16,7 +16,7 @@ var NodeValidators = map[string]func(n *models.Node) error{
 
 // ImageNodeValidator validates node of type image
 func ImageNodeValidator(n *models.Node) error {
-	if n.FirstFileOfType(models.FileTypes.IMAGE) < 0 {
+	if n.FirstFileOfType(models.FileTypeImage) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 
@@ -29,7 +29,7 @@ func TextNodeValidator(n *models.Node) error {
 		return errors.New(codes.TooShirt)
 	}
 
-	if n.FirstBlockOfType(models.BLOCK_TYPES.TEXT) < 0 {
+	if n.FirstBlockOfType(models.BlockTypeText) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 
@@ -42,7 +42,7 @@ func VideoNodeValidator(n *models.Node) error {
 		return errors.New(codes.TooShirt)
 	}
 
-	if n.FirstBlockOfType(models.BLOCK_TYPES.VIDEO) < 0 {
+	if n.FirstBlockOfType(models.BlockTypeVideo) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 
@@ -55,7 +55,7 @@ func AudioNodeValidator(n *models.Node) error {
 		return errors.New(codes.TooShirt)
 	}
 
-	if n.FirstFileOfType(models.FileTypes.AUDIO) < 0 {
+	if n.FirstFileOfType(models.FileTypeAudio) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 
