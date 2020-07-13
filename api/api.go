@@ -22,6 +22,7 @@ type API struct {
 	uploadRouter *routing.UploadRouter
 	staticRouter *routing.StaticRouter
 	metaRouter   *routing.MetaRouter
+	oauthRouter  *routing.OauthRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -65,6 +66,9 @@ func (a *API) Init(r *gin.RouterGroup) {
 	a.metaRouter = &routing.MetaRouter{}
 	a.metaRouter.Init(a.Config, a.db)
 
+	a.oauthRouter = &routing.OauthRouter{}
+	a.oauthRouter.Init(a.db, a.Config)
+
 	a.Handle(r)
 }
 
@@ -76,4 +80,5 @@ func (a *API) Handle(r *gin.RouterGroup) {
 	a.uploadRouter.Handle(r.Group("/upload"))
 	a.staticRouter.Handle(r.Group("/static"))
 	a.metaRouter.Handle(r.Group("/meta"))
+	a.oauthRouter.Handle(r.Group("/oauth"))
 }

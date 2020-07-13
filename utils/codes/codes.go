@@ -24,6 +24,7 @@ const (
 	UnexpectedBehavior    string = "Unexpected_Behavior"
 	UnknownFileType       string = "Unknown_File_Type"
 	FilesIsTooBig         string = "File_Is_Too_Big"
+	OAuthCodeIsEmpty      string = "OAuth_Code_Is_Empty"
 )
 
 var ValidationToCode = map[string]string{
