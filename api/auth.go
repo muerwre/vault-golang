@@ -8,7 +8,7 @@ import (
 	"regexp"
 )
 
-func (a *API) AuthRequired(c *gin.Context) {
+func (a API) AuthRequired(c *gin.Context) {
 	re := regexp.MustCompile(`Bearer (.*)`)
 	d := a.db
 
