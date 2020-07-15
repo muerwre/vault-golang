@@ -13,11 +13,11 @@ const (
 	ProviderGoogle string = "google"
 )
 
-func GetOauthVkConfig(id string, secret string, redirect string) *oauth2.Config {
+func GetOauthVkConfig(credentials OAuthCredentials) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     id,
-		ClientSecret: secret,
-		RedirectURL:  redirect,
+		ClientID:     credentials.VkClientId,
+		ClientSecret: credentials.VkClientSecret,
+		RedirectURL:  credentials.VkCallbackUrl,
 		Scopes:       []string{"email"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://oauth.vk.com/authorize",
@@ -26,11 +26,11 @@ func GetOauthVkConfig(id string, secret string, redirect string) *oauth2.Config 
 	}
 }
 
-func GetOauthGoogleConfig(id string, secret string, redirect string) *oauth2.Config {
+func GetOauthGoogleConfig(credentials OAuthCredentials) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     id,
-		ClientSecret: secret,
-		RedirectURL:  redirect,
+		ClientID:     credentials.GoogleClientId,
+		ClientSecret: credentials.GoogleClientSecret,
+		RedirectURL:  credentials.GoogleCallbackUrl,
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
 		Endpoint:     google.Endpoint,
 	}
@@ -61,7 +61,7 @@ func ProcessGoogleData(token *oauth2.Token) (OauthUserData, error) {
 }
 
 type OAuthConfig struct {
-	ConfigCreator func(id string, secret string, redirect string) *oauth2.Config
+	ConfigCreator func(credentials OAuthCredentials) *oauth2.Config
 	Parser        func(token *oauth2.Token) (OauthUserData, error)
 }
 
@@ -86,4 +86,13 @@ func (c OAuthConfigList) GetByName(name string) (*OAuthConfig, error) {
 	}
 
 	return nil, fmt.Errorf(codes.OAuthUnknownProvider)
+}
+
+type OAuthCredentials struct {
+	VkClientId         string
+	VkClientSecret     string
+	VkCallbackUrl      string
+	GoogleClientId     string
+	GoogleClientSecret string
+	GoogleCallbackUrl  string
 }

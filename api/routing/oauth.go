@@ -20,13 +20,15 @@ func (or *OauthRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
 	or.config = config
 	or.controller = &controllers.OAuthController{DB: db, Config: config}
 	or.api = api
+	or.controller.Init()
 }
 
 func (or *OauthRouter) Handle(r *gin.RouterGroup) {
 	router := r.Group("/:provider", or.controller.ProviderMiddleware)
-	router.GET("/:provider/redirect", or.controller.Redirect)
-	router.GET("/:provider/process", or.controller.Process)
 
-	router.POST("/:provider/attach", or.api.AuthRequired, or.controller.Attach)
-	router.POST("/:provider/login", or.api.AuthOptional, or.controller.Login)
+	router.GET("/redirect", or.controller.Redirect)
+	router.GET("/process", or.controller.Process)
+
+	router.POST("/attach", or.api.AuthRequired, or.controller.Attach)
+	router.POST("/login", or.api.AuthOptional, or.controller.Login)
 }

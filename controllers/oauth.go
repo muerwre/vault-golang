@@ -15,6 +15,19 @@ import (
 type OAuthController struct {
 	Config app.Config
 	DB     db.DB
+
+	credentials utils.OAuthCredentials
+}
+
+func (oc *OAuthController) Init() {
+	oc.credentials = utils.OAuthCredentials{
+		VkClientId:         oc.Config.VkClientId,
+		VkClientSecret:     oc.Config.VkClientSecret,
+		VkCallbackUrl:      oc.Config.VkCallbackUrl,
+		GoogleClientId:     oc.Config.GoogleClientId,
+		GoogleClientSecret: oc.Config.GoogleClientSecret,
+		GoogleCallbackUrl:  oc.Config.GoogleCallbackUrl,
+	}
 }
 
 func (oc OAuthController) ProviderMiddleware(c *gin.Context) {
@@ -31,7 +44,7 @@ func (oc OAuthController) ProviderMiddleware(c *gin.Context) {
 
 func (oc OAuthController) Redirect(c *gin.Context) {
 	provider := c.MustGet("Provider").(*utils.OAuthConfig)
-	config := provider.ConfigCreator(oc.Config.VkClientId, oc.Config.VkClientSecret, oc.Config.VkCallbackUrl)
+	config := provider.ConfigCreator(oc.credentials)
 	c.Redirect(http.StatusTemporaryRedirect, config.AuthCodeURL("pseudo-random")) // TODO: pseudo-random can be in payload
 }
 
@@ -45,7 +58,7 @@ func (oc OAuthController) Process(c *gin.Context) {
 		return
 	}
 
-	config := provider.ConfigCreator(oc.Config.VkClientId, oc.Config.VkClientSecret, oc.Config.VkCallbackUrl)
+	config := provider.ConfigCreator(oc.credentials)
 	token, err := config.Exchange(ctx, code)
 
 	if err != nil {
@@ -65,29 +78,30 @@ func (oc OAuthController) Process(c *gin.Context) {
 	return
 }
 
-func (oc OAuthController) ProcessToken(c *gin.Context) {
-	ctx := context.Background()
-	code := c.Query("code")
-
-	if code == "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": codes.OAuthCodeIsEmpty})
-		return
-	}
-
-	config := utils.GetOauthGoogleConfig(oc.Config.GoogleClientId, oc.Config.GoogleClientSecret, oc.Config.GoogleCallbackUrl)
-	token, err := config.Exchange(ctx, code)
-
-	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Failed to get token"})
-		logrus.Infof("Failed to get token: %v", err.Error())
-		return
-	}
-
-	tokenJwt := token.Extra("id_token").(string) // TODO: decode jwt payload, get email, email_verified and name
-
-	c.String(http.StatusOK, fmt.Sprintf("code: %d %s %s", 1, token, tokenJwt))
-	return
-}
+//
+//func (oc OAuthController) ProcessToken(c *gin.Context) {
+//	ctx := context.Background()
+//	code := c.Query("code")
+//
+//	if code == "" {
+//		c.JSON(http.StatusForbidden, gin.H{"error": codes.OAuthCodeIsEmpty})
+//		return
+//	}
+//
+//	config := utils.GetOauthGoogleConfig(oc.credentials)
+//	token, err := config.Exchange(ctx, code)
+//
+//	if err != nil {
+//		c.JSON(http.StatusForbidden, gin.H{"error": "Failed to get token"})
+//		logrus.Infof("Failed to get token: %v", err.Error())
+//		return
+//	}
+//
+//	tokenJwt := token.Extra("id_token").(string) // TODO: decode jwt payload, get email, email_verified and name
+//
+//	c.String(http.StatusOK, fmt.Sprintf("code: %d %s %s", 1, token, tokenJwt))
+//	return
+//}
 
 func (oc OAuthController) Attach(c *gin.Context) {
 	// TODO: get data by token
