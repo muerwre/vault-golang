@@ -25,6 +25,7 @@ const (
 	UnknownFileType       string = "Unknown_File_Type"
 	FilesIsTooBig         string = "File_Is_Too_Big"
 	OAuthCodeIsEmpty      string = "OAuth_Code_Is_Empty"
+	OAuthUnknownProvider  string = "OAuth_Unknown_Provider"
 )
 
 var ValidationToCode = map[string]string{

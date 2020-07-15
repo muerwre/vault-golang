@@ -16,7 +16,7 @@ func (ur *UserRepository) Init(db *gorm.DB) {
 	ur.db = db
 }
 
-func (ur UserRepository) GetUserByToken(t string) (user *models.User, err error) {
+func (ur UserRepository) GetByToken(t string) (user *models.User, err error) {
 	token := &models.Token{}
 
 	ur.db.Preload("User").Preload("User.Photo").Preload("User.Cover").First(&token, "token = ?", t)
@@ -28,10 +28,22 @@ func (ur UserRepository) GetUserByToken(t string) (user *models.User, err error)
 	return token.User, nil
 }
 
-func (ur UserRepository) GetUserByUsername(n string) (user *models.User, err error) {
+func (ur UserRepository) GetByUsername(n string) (user *models.User, err error) {
 	user = &models.User{}
 
 	ur.db.Preload("Photo").Preload("Cover").First(&user, "username = ?", n)
+
+	if user.ID == 0 {
+		return nil, errors.New(codes.UserNotFound)
+	}
+
+	return user, nil
+}
+
+func (ur UserRepository) GetByEmail(n string) (user *models.User, err error) {
+	user = &models.User{}
+
+	ur.db.Preload("Photo").Preload("Cover").First(&user, "email = ?", n)
 
 	if user.ID == 0 {
 		return nil, errors.New(codes.UserNotFound)

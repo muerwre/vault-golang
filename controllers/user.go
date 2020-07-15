@@ -35,7 +35,7 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 	username := c.Param("username")
 	d := uc.DB
 
-	user, err := d.UserRepository.GetUserByUsername(username)
+	user, err := d.UserRepository.GetByUsername(username)
 
 	if err != nil || user.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
@@ -56,7 +56,7 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 	}
 
 	d := uc.DB
-	user, err := d.UserRepository.GetUserByUsername(credentials.Username)
+	user, err := d.UserRepository.GetByUsername(credentials.Username)
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
@@ -228,7 +228,7 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
 	d := uc.DB
 
-	user, err := d.UserRepository.GetUserByUsername(username)
+	user, err := d.UserRepository.GetByUsername(username)
 
 	if err != nil || user.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
@@ -265,7 +265,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
 	d := uc.DB
 
-	user, err := d.UserRepository.GetUserByUsername(username)
+	user, err := d.UserRepository.GetByUsername(username)
 
 	if err != nil || user.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})

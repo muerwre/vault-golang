@@ -67,7 +67,7 @@ func (a *API) Init(r *gin.RouterGroup) {
 	a.metaRouter.Init(a.Config, a.db)
 
 	a.oauthRouter = &routing.OauthRouter{}
-	a.oauthRouter.Init(a.db, a.Config)
+	a.oauthRouter.Init(a, a.db, a.Config)
 
 	a.Handle(r)
 }
