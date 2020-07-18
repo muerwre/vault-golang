@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/bogem/id3v2 v1.2.0
 	github.com/canthefason/go-watcher v0.2.4 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dhowden/tag v0.0.0-20200412032933-5d76b8eaae27
 	github.com/disintegration/imaging v1.6.2
 	github.com/fatih/color v1.9.0 // indirect

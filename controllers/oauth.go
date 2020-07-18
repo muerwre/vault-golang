@@ -69,8 +69,9 @@ func (oc OAuthController) Process(c *gin.Context) {
 
 	data, err := provider.Parser(token)
 
-	if user, _ := oc.DB.UserRepository.GetByEmail(data.Email); user.ID != 0 {
-		c.String(http.StatusOK, fmt.Sprintf("code: %+v", data))
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		logrus.Infof("Failed to get token: %v", err.Error())
 		return
 	}
 
@@ -104,6 +105,11 @@ func (oc OAuthController) Process(c *gin.Context) {
 //}
 
 func (oc OAuthController) Attach(c *gin.Context) {
+	//if user, _ := oc.DB.UserRepository.GetByEmail(data.Email); user.ID != 0 {
+	//	c.String(http.StatusOK, fmt.Sprintf("code: %+v", data))
+	//	return
+	//}
+
 	// TODO: get data by token
 	// TODO: if in base (oauth.account.id AND base.user.id != user.id) OR (user with oauth.account.email and base.user.id !+ user.id) -> error
 	// TODO: create connection

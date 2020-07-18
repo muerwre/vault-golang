@@ -45,9 +45,9 @@ func (a *API) Init(r *gin.RouterGroup) {
 
 	r.OPTIONS("/*path", a.CorsHandler)
 
-	a.nodeRouter = &routing.NodeRouter{}
-	a.nodeRouter.Init(a, a.db)
+	a.nodeRouter = new(routing.NodeRouter).Init(a, a.db).Handle(r.Group("/node"))
 
+	// TODO: do the same for:
 	a.userRouter = &routing.UserRouter{}
 	a.userRouter.Init(a, a.db, a.mailer, a.Config)
 
@@ -73,7 +73,6 @@ func (a *API) Init(r *gin.RouterGroup) {
 }
 
 func (a *API) Handle(r *gin.RouterGroup) {
-	a.nodeRouter.Handle(r.Group("/node"))
 	a.userRouter.Handle(r.Group("/user"))
 	a.statsRouter.Handle(r.Group("/stats"))
 	a.flowRouter.Handle(r.Group("/flow"))

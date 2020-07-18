@@ -12,12 +12,13 @@ type NodeRouter struct {
 	api        utils.AppApi
 }
 
-func (nr *NodeRouter) Init(a utils.AppApi, db db.DB) {
+func (nr *NodeRouter) Init(a utils.AppApi, db db.DB) *NodeRouter {
 	nr.controller = controllers.NodeController{DB: db}
 	nr.api = a
+	return nr
 }
 
-func (nr *NodeRouter) Handle(r *gin.RouterGroup) {
+func (nr *NodeRouter) Handle(r *gin.RouterGroup) *NodeRouter {
 	a := nr.api
 	controller := nr.controller
 
@@ -41,4 +42,6 @@ func (nr *NodeRouter) Handle(r *gin.RouterGroup) {
 		comment.POST("", a.AuthRequired, a.WithUser(false), controller.PostComment)
 		comment.POST("/:cid/lock", a.AuthRequired, a.WithUser(false), controller.LockComment)
 	}
+
+	return nr
 }

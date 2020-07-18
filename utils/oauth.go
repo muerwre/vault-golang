@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -43,8 +44,8 @@ type OauthUserData struct {
 	Token    string
 }
 
-func ProcessVkData(token *oauth2.Token) (OauthUserData, error) {
-	data := OauthUserData{
+func ProcessVkData(token *oauth2.Token) (*OauthUserData, error) {
+	data := &OauthUserData{
 		Provider: ProviderVk,
 		Id:       strconv.Itoa(int(token.Extra("user_id").(float64))),
 		Token:    token.Extra("access_token").(string),
@@ -54,15 +55,36 @@ func ProcessVkData(token *oauth2.Token) (OauthUserData, error) {
 	return data, nil
 }
 
-func ProcessGoogleData(token *oauth2.Token) (OauthUserData, error) {
-	data := OauthUserData{}
+func ProcessGoogleData(token *oauth2.Token) (*OauthUserData, error) {
+	tokenStr := token.Extra("id_token").(string)
+
+	tok, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := tok.Claims.(jwt.MapClaims)
+
+	if !ok || !token.Valid() {
+		return nil, fmt.Errorf(codes.OAuthInvalidData)
+	}
+
+	println(tok, err, claims)
+
+	data := &OauthUserData{
+		Provider: ProviderGoogle,
+		Token:    token.AccessToken,
+		Email:    claims["email"].(string),
+		Id:       claims["email"].(string),
+	}
 
 	return data, nil
 }
 
 type OAuthConfig struct {
 	ConfigCreator func(credentials OAuthCredentials) *oauth2.Config
-	Parser        func(token *oauth2.Token) (OauthUserData, error)
+	Parser        func(token *oauth2.Token) (*OauthUserData, error)
 }
 
 type OAuthConfigList map[string]*OAuthConfig
