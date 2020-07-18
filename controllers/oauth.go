@@ -98,8 +98,8 @@ func (oc OAuthController) Process(target string) gin.HandlerFunc {
 // Attach gets fetched from oauth data and encodes it as JWT to send back to frontend, so it can call AttachConfirm with it
 func (oc OAuthController) Attach(c *gin.Context) {
 	ud := c.MustGet("UserData").(*utils.OauthUserData)
-
-	token, err := utils.EncodeJwtToken(ud)
+	claim := new(utils.OauthUserDataClaim).Init(*ud)
+	token, err := utils.EncodeJwtToken(claim)
 
 	if err != nil {
 		logrus.Warnf("Failed to create attach token: %v", err.Error())
@@ -120,7 +120,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 		return
 	}
 
-	result, err := utils.DecodeJwtToken(req.Token, &utils.OauthUserData{})
+	result, err := utils.DecodeJwtToken(req.Token, &utils.OauthUserDataClaim{})
 
 	if err != nil {
 		logrus.Warnf("Failed to perform attach confirm: %v", err.Error())
@@ -128,10 +128,10 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 		return
 	}
 
-	data := result.(*utils.OauthUserData)
+	claim := result.(*utils.OauthUserDataClaim)
 	u := c.MustGet("User").(*models.User)
 
-	if exist, err := oc.DB.SocialRepository.FindOne(data.Provider, data.Id); err == nil {
+	if exist, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
 		if exist.User.ID == u.ID {
 			c.AbortWithStatusJSON(http.StatusOK, exist)
 			return
@@ -142,10 +142,10 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 	}
 
 	social := &models.Social{
-		Provider:     data.Provider,
-		AccountId:    data.Id,
-		AccountPhoto: data.Fetched.Photo,
-		AccountName:  data.Fetched.Name,
+		Provider:     claim.Data.Provider,
+		AccountId:    claim.Data.Id,
+		AccountPhoto: claim.Data.Fetched.Photo,
+		AccountName:  claim.Data.Fetched.Name,
 		User:         u,
 	}
 

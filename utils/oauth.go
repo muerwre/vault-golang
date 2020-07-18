@@ -18,6 +18,7 @@ const (
 	ProviderGoogle      string = "google"
 	ProcessTargetAttach string = "attach"
 	ProcessTargetLogin  string = "login"
+	ClaimPayloadType    string = "oauth_claim"
 )
 
 type OauthUserData struct {
@@ -28,8 +29,23 @@ type OauthUserData struct {
 	Fetched  *OAuthFetchResult
 }
 
-func (data OauthUserData) Valid() error {
+type OauthUserDataClaim struct {
+	Data OauthUserData
+	Type string
+}
+
+func (d OauthUserDataClaim) Valid() error {
+	if d.Type != ClaimPayloadType {
+		return fmt.Errorf("Invalid claim type.")
+	}
+
 	return nil
+}
+
+func (d *OauthUserDataClaim) Init(data OauthUserData) *OauthUserDataClaim {
+	d.Type = ClaimPayloadType
+	d.Data = data
+	return d
 }
 
 type OAuthConfig struct {
