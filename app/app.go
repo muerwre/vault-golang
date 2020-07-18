@@ -26,8 +26,7 @@ func New() (app *App, err error) {
 	}
 
 	if app.Config.SmtpHost != "" {
-		app.Mailer = &mail.Mailer{}
-		app.Mailer.Init(&mail.MailerConfig{
+		app.Mailer = new(mail.Mailer).Init(&mail.MailerConfig{
 			Host:     app.Config.SmtpHost,
 			Port:     app.Config.SmtpPort,
 			User:     app.Config.SmtpUser,
