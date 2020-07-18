@@ -12,10 +12,11 @@ import (
 type DB struct {
 	*gorm.DB
 
-	NodeRepository *repository.NodeRepository
-	UserRepository *repository.UserRepository
-	FileRepository *repository.FileRepository
-	MetaRepository *repository.MetaRepository
+	NodeRepository   *repository.NodeRepository
+	UserRepository   *repository.UserRepository
+	FileRepository   *repository.FileRepository
+	MetaRepository   *repository.MetaRepository
+	SocialRepository *repository.SocialRepository
 }
 
 func New() (*DB, error) {
@@ -52,21 +53,12 @@ func New() (*DB, error) {
 		&models.Embed{},
 	)
 
-	nr := &repository.NodeRepository{}
-	ur := &repository.UserRepository{}
-	fr := &repository.FileRepository{}
-	mr := &repository.MetaRepository{}
-
-	nr.Init(db)
-	ur.Init(db)
-	fr.Init(db)
-	mr.Init(db)
-
 	return &DB{
-		DB:             db,
-		NodeRepository: nr,
-		UserRepository: ur,
-		FileRepository: fr,
-		MetaRepository: mr,
+		DB:               db,
+		NodeRepository:   new(repository.NodeRepository).Init(db),
+		UserRepository:   new(repository.UserRepository).Init(db),
+		FileRepository:   new(repository.FileRepository).Init(db),
+		MetaRepository:   new(repository.MetaRepository).Init(db),
+		SocialRepository: new(repository.SocialRepository).Init(db),
 	}, nil
 }

@@ -27,6 +27,7 @@ const (
 	OAuthCodeIsEmpty      string = "OAuth_Code_Is_Empty"
 	OAuthUnknownProvider  string = "OAuth_Unknown_Provider"
 	OAuthInvalidData      string = "OAuth_Invalid_Data"
+	OAuthConflict         string = "OAuth_Conflict"
 )
 
 var ValidationToCode = map[string]string{

@@ -26,9 +26,7 @@ func (or *OauthRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
 func (or *OauthRouter) Handle(r *gin.RouterGroup) {
 	router := r.Group("/:provider", or.controller.ProviderMiddleware)
 
-	router.GET("/redirect", or.controller.Redirect)
-	router.GET("/process", or.controller.Process)
-
-	router.POST("/attach", or.api.AuthRequired, or.controller.Attach)
-	router.POST("/login", or.api.AuthOptional, or.controller.Login)
+	router.GET("/redirect/:target", or.controller.Redirect)
+	router.GET("/process/attach", or.controller.Process(utils.ProcessTargetAttach), or.controller.Attach)
+	router.GET("/process/login", or.controller.Process(utils.ProcessTargetLogin), or.controller.Login)
 }

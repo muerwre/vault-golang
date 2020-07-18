@@ -10,11 +10,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 const (
-	ProviderVk     string = "vk"
-	ProviderGoogle string = "google"
+	ProviderVk          string = "vkontakte"
+	ProviderGoogle      string = "google"
+	ProcessTargetAttach string = "attach"
+	ProcessTargetLogin  string = "login"
 )
 
 type OauthUserData struct {
@@ -22,26 +25,27 @@ type OauthUserData struct {
 	Id       string
 	Email    string
 	Token    string
+	Fetched  *OAuthFetchResult
 }
 
 type OAuthConfig struct {
-	ConfigCreator func(credentials OAuthCredentials) *oauth2.Config
+	ConfigCreator func(credentials OAuthCredentials, target string) *oauth2.Config
 	Parser        func(token *oauth2.Token) (*OauthUserData, error)
 	Fetcher       func(token string) (*OAuthFetchResult, error)
 }
 
-type OAuthConfigList map[string]*OAuthConfig
+type oAuthConfigList map[string]*OAuthConfig
 
-var OAuthConfigs = OAuthConfigList{
+var OAuthConfigs = oAuthConfigList{
 	ProviderVk: &OAuthConfig{
-		ConfigCreator: GetOauthVkConfig,
-		Parser:        ProcessVkData,
-		Fetcher:       FetchVkData,
+		ConfigCreator: getOauthVkConfig,
+		Parser:        processVkData,
+		Fetcher:       fetchVkData,
 	},
 	ProviderGoogle: &OAuthConfig{
-		ConfigCreator: GetOauthGoogleConfig,
-		Parser:        ProcessGoogleData,
-		Fetcher:       FetchGoogleData,
+		ConfigCreator: getOauthGoogleConfig,
+		Parser:        processGoogleData,
+		Fetcher:       fetchGoogleData,
 	},
 }
 
@@ -54,13 +58,20 @@ type OAuthCredentials struct {
 	GoogleCallbackUrl  string
 }
 
-type VkResponse struct {
+type vkResponse struct {
 	Response []struct {
 		Id        int    `json:"id"`
 		FirstName string `json:"first_name"`
 		LastName  string `json:"last_name"`
 		Photo     string `json:"photo"`
 	} `json:"response"`
+}
+
+type googleResponse struct {
+	Id      string
+	Email   string
+	Name    string
+	Picture string
 }
 
 type OAuthFetchResult struct {
@@ -70,11 +81,11 @@ type OAuthFetchResult struct {
 	Photo    string
 }
 
-func GetOauthVkConfig(credentials OAuthCredentials) *oauth2.Config {
+func getOauthVkConfig(credentials OAuthCredentials, target string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     credentials.VkClientId,
 		ClientSecret: credentials.VkClientSecret,
-		RedirectURL:  credentials.VkCallbackUrl,
+		RedirectURL:  strings.Join([]string{credentials.VkCallbackUrl, target}, "/"),
 		Scopes:       []string{"email"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://oauth.vk.com/authorize",
@@ -83,17 +94,17 @@ func GetOauthVkConfig(credentials OAuthCredentials) *oauth2.Config {
 	}
 }
 
-func GetOauthGoogleConfig(credentials OAuthCredentials) *oauth2.Config {
+func getOauthGoogleConfig(credentials OAuthCredentials, target string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     credentials.GoogleClientId,
 		ClientSecret: credentials.GoogleClientSecret,
-		RedirectURL:  credentials.GoogleCallbackUrl,
+		RedirectURL:  strings.Join([]string{credentials.GoogleCallbackUrl, target}, "/"),
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
 		Endpoint:     google.Endpoint,
 	}
 }
 
-func ProcessVkData(token *oauth2.Token) (*OauthUserData, error) {
+func processVkData(token *oauth2.Token) (*OauthUserData, error) {
 	data := &OauthUserData{
 		Provider: ProviderVk,
 		Id:       strconv.Itoa(int(token.Extra("user_id").(float64))),
@@ -104,7 +115,7 @@ func ProcessVkData(token *oauth2.Token) (*OauthUserData, error) {
 	return data, nil
 }
 
-func ProcessGoogleData(token *oauth2.Token) (*OauthUserData, error) {
+func processGoogleData(token *oauth2.Token) (*OauthUserData, error) {
 	tokenStr := token.Extra("id_token").(string)
 
 	tok, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
@@ -129,7 +140,7 @@ func ProcessGoogleData(token *oauth2.Token) (*OauthUserData, error) {
 	return data, nil
 }
 
-func (c OAuthConfigList) GetByName(name string) (*OAuthConfig, error) {
+func (c oAuthConfigList) GetByName(name string) (*OAuthConfig, error) {
 	for k, v := range c {
 		if k == name && v != nil {
 			return v, nil
@@ -139,7 +150,7 @@ func (c OAuthConfigList) GetByName(name string) (*OAuthConfig, error) {
 	return nil, fmt.Errorf(codes.OAuthUnknownProvider)
 }
 
-func FetchVkData(code string) (*OAuthFetchResult, error) {
+func fetchVkData(code string) (*OAuthFetchResult, error) {
 	url := fmt.Sprintf(
 		`https://api.vk.com/method/users.get?user_id=%s&fields=photo,email&v=5.67&access_token=%s`,
 		"360004",
@@ -160,7 +171,7 @@ func FetchVkData(code string) (*OAuthFetchResult, error) {
 		return nil, err
 	}
 
-	data := &VkResponse{}
+	data := &vkResponse{}
 	err = json.Unmarshal(contents, &data)
 
 	if err != nil {
@@ -175,7 +186,7 @@ func FetchVkData(code string) (*OAuthFetchResult, error) {
 	}, nil
 }
 
-func FetchGoogleData(code string) (*OAuthFetchResult, error) {
+func fetchGoogleData(code string) (*OAuthFetchResult, error) {
 	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + code)
 
 	if err != nil {
@@ -190,7 +201,19 @@ func FetchGoogleData(code string) (*OAuthFetchResult, error) {
 		return nil, err
 	}
 
-	println(contents)
+	data := &googleResponse{}
+	err = json.Unmarshal(contents, &data)
 
-	return nil, nil
+	if err != nil {
+		return nil, err
+	}
+
+	id, _ := strconv.Atoi(data.Id)
+
+	return &OAuthFetchResult{
+		Provider: ProviderGoogle,
+		Id:       id,
+		Photo:    data.Picture,
+		Name:     data.Name,
+	}, nil
 }

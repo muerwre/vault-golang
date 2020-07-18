@@ -12,8 +12,9 @@ type UserRepository struct {
 	db *gorm.DB
 }
 
-func (ur *UserRepository) Init(db *gorm.DB) {
+func (ur *UserRepository) Init(db *gorm.DB) *UserRepository {
 	ur.db = db
+	return ur
 }
 
 func (ur UserRepository) GetByToken(t string) (user *models.User, err error) {

@@ -13,8 +13,9 @@ type NodeRepository struct {
 	db *gorm.DB
 }
 
-func (nr *NodeRepository) Init(db *gorm.DB) {
+func (nr *NodeRepository) Init(db *gorm.DB) *NodeRepository {
 	nr.db = db
+	return nr
 }
 
 func (nr *NodeRepository) WhereIsFlowNode(d *gorm.DB) *gorm.DB {

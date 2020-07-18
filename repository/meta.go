@@ -9,8 +9,9 @@ type MetaRepository struct {
 	db *gorm.DB
 }
 
-func (mr *MetaRepository) Init(db *gorm.DB) {
+func (mr *MetaRepository) Init(db *gorm.DB) *MetaRepository {
 	mr.db = db
+	return mr
 }
 
 func (mr *MetaRepository) GetEmbedsById(addresses []string, provider string) (map[string]*models.Embed, error) {

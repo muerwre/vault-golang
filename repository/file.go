@@ -9,8 +9,9 @@ type FileRepository struct {
 	db *gorm.DB
 }
 
-func (fr *FileRepository) Init(db *gorm.DB) {
+func (fr *FileRepository) Init(db *gorm.DB) *FileRepository {
 	fr.db = db
+	return fr
 }
 
 func (fr FileRepository) GetTotalCount() (count int) {
