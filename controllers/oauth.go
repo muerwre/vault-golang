@@ -162,6 +162,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 
 	if err == nil {
 		token := oc.DB.UserRepository.GenerateTokenFor(social.User)
+		// TODO: update social info here
 		c.AbortWithStatusJSON(http.StatusOK, gin.H{"token": token.Token})
 		return
 	}

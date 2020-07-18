@@ -36,7 +36,8 @@ func (ml *Mailer) Init(c *MailerConfig) *Mailer {
 }
 
 func (ml *Mailer) Listen() {
-	logrus.Infof("Mailer relay via %s:%d", ml.Config.Host, ml.Config.Port)
+	logrus.Info("Mailer routine started")
+	logrus.Infof("Smtp relay via %s:%d", ml.Config.Host, ml.Config.Port)
 
 	ml.Open = false
 	var err error
@@ -44,8 +45,8 @@ func (ml *Mailer) Listen() {
 	for {
 		select {
 		case m, ok := <-ml.Chan:
-
 			if !ok {
+				logrus.Warnf("Mailer channel closed")
 				return
 			}
 
@@ -58,7 +59,7 @@ func (ml *Mailer) Listen() {
 			}
 
 			if err := gomail.Send(ml.Closer, m); err != nil {
-				fmt.Println(err)
+				logrus.Warnf("Mailer can't send mail: %s", err.Error())
 			}
 
 		case <-time.After(30 * time.Second):
