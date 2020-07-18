@@ -63,7 +63,7 @@ func (oc OAuthController) Process(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Failed to get token"})
-		logrus.Infof("Failed to get token: %v", err.Error())
+		logrus.Warnf("Failed to get token: %v", err.Error())
 		return
 	}
 
@@ -71,7 +71,7 @@ func (oc OAuthController) Process(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		logrus.Infof("Failed to get token: %v", err.Error())
+		logrus.Warnf("Failed to get token: %v", err.Error())
 		return
 	}
 
@@ -79,41 +79,22 @@ func (oc OAuthController) Process(c *gin.Context) {
 	return
 }
 
-//
-//func (oc OAuthController) ProcessToken(c *gin.Context) {
-//	ctx := context.Background()
-//	code := c.Query("code")
-//
-//	if code == "" {
-//		c.JSON(http.StatusForbidden, gin.H{"error": codes.OAuthCodeIsEmpty})
-//		return
-//	}
-//
-//	config := utils.GetOauthGoogleConfig(oc.credentials)
-//	token, err := config.Exchange(ctx, code)
-//
-//	if err != nil {
-//		c.JSON(http.StatusForbidden, gin.H{"error": "Failed to get token"})
-//		logrus.Infof("Failed to get token: %v", err.Error())
-//		return
-//	}
-//
-//	tokenJwt := token.Extra("id_token").(string) // TODO: decode jwt payload, get email, email_verified and name
-//
-//	c.String(http.StatusOK, fmt.Sprintf("code: %d %s %s", 1, token, tokenJwt))
-//	return
-//}
-
 func (oc OAuthController) Attach(c *gin.Context) {
-	//if user, _ := oc.DB.UserRepository.GetByEmail(data.Email); user.ID != 0 {
-	//	c.String(http.StatusOK, fmt.Sprintf("code: %+v", data))
-	//	return
-	//}
+	provider := c.MustGet("Provider").(*utils.OAuthConfig)
+	code := c.Query("code")
+	data, err := provider.Fetcher(code)
+
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		logrus.Warnf("Failed to get token: %v", err.Error())
+		return
+	}
 
 	// TODO: get data by token
 	// TODO: if in base (oauth.account.id AND base.user.id != user.id) OR (user with oauth.account.email and base.user.id !+ user.id) -> error
 	// TODO: create connection
-	c.String(http.StatusOK, "TODO:")
+
+	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
 func (oc OAuthController) Login(c *gin.Context) {
