@@ -1,12 +1,14 @@
 package app
 
 import (
+	"github.com/muerwre/vault-golang/utils"
 	"github.com/spf13/viper"
 	"path/filepath"
 )
 
 type Config struct {
 	Debug              bool
+	ApiDebug           bool
 	Host               string
 	Port               int
 	TlsFiles           []string
@@ -32,6 +34,7 @@ type Config struct {
 func InitConfig() (*Config, error) {
 	config := &Config{
 		Debug:              viper.GetBool("Debug"),
+		ApiDebug:           viper.GetBool("Api.Debug"),
 		Host:               viper.GetString("Host"),
 		Port:               viper.GetInt("Port"),
 		TlsFiles:           viper.GetStringSlice("TlsFiles"),
@@ -57,6 +60,8 @@ func InitConfig() (*Config, error) {
 	if len(config.TlsFiles) == 2 {
 		config.Protocol = "https"
 	}
+
+	utils.InitJwtEngine(viper.GetString("Jwt.Secret"))
 
 	return config, nil
 }

@@ -36,7 +36,14 @@ func New(a *app.App) (api *API, err error) {
 	return &API{app: a, db: *a.DB, Config: *a.Config, mailer: *a.Mailer}, nil
 }
 
-func (a *API) Init(r *gin.RouterGroup) {
+func (a *API) Init() *gin.Engine {
+	if !a.Config.ApiDebug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	router := gin.Default()
+
+	r := router.Group("/")
 	r.Use(a.InjectContextMiddleware, a.OptionsRespondMiddleware)
 
 	if !a.Config.Debug {
@@ -70,6 +77,8 @@ func (a *API) Init(r *gin.RouterGroup) {
 	a.oauthRouter.Init(a, a.db, a.Config)
 
 	a.Handle(r)
+
+	return router
 }
 
 func (a *API) Handle(r *gin.RouterGroup) {

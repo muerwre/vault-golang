@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func (a *API) WithUser(preload bool) func(*gin.Context) {
+func (a *API) WithUser(preloadAvatarAndCover bool) func(*gin.Context) {
 	return func(c *gin.Context) {
 		uid := c.MustGet("UID").(*uint)
 		d := a.db
@@ -20,7 +20,7 @@ func (a *API) WithUser(preload bool) func(*gin.Context) {
 		user := &models.User{}
 		q := d.Model(&user)
 
-		if preload {
+		if preloadAvatarAndCover {
 			q = q.Preload("Photo").Preload("Cover")
 		}
 

@@ -28,6 +28,10 @@ type OauthUserData struct {
 	Fetched  *OAuthFetchResult
 }
 
+func (data OauthUserData) Valid() error {
+	return nil
+}
+
 type OAuthConfig struct {
 	ConfigCreator func(credentials OAuthCredentials, target string) *oauth2.Config
 	Parser        func(token *oauth2.Token) (*OauthUserData, error)

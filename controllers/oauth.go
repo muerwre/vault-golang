@@ -5,6 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
@@ -29,6 +31,7 @@ func (oc *OAuthController) Init() {
 	}
 }
 
+// ProviderMiddleware generates Provider context by :provider url param
 func (oc OAuthController) ProviderMiddleware(c *gin.Context) {
 	provider := c.Param("provider")
 	current, err := utils.OAuthConfigs.GetByName(provider)
@@ -41,6 +44,7 @@ func (oc OAuthController) ProviderMiddleware(c *gin.Context) {
 	c.Set("Provider", current)
 }
 
+// Redirect redirects user to oauth endpoint, that redirects back to /process/:target?code= urls
 func (oc OAuthController) Redirect(c *gin.Context) {
 	provider := c.MustGet("Provider").(*utils.OAuthConfig)
 	target := c.Param("target")
@@ -49,6 +53,7 @@ func (oc OAuthController) Redirect(c *gin.Context) {
 	return
 }
 
+// Process is a middleware, that fetches oauth data from provider and passes it further
 func (oc OAuthController) Process(target string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := context.Background()
@@ -90,20 +95,66 @@ func (oc OAuthController) Process(target string) gin.HandlerFunc {
 	}
 }
 
+// Attach gets fetched from oauth data and encodes it as JWT to send back to frontend, so it can call AttachConfirm with it
 func (oc OAuthController) Attach(c *gin.Context) {
 	ud := c.MustGet("UserData").(*utils.OauthUserData)
 
-	if _, err := oc.DB.SocialRepository.FindOne(ud.Provider, ud.Id); err == nil {
-		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.UserExist})
+	token, err := utils.EncodeJwtToken(ud)
+
+	if err != nil {
+		logrus.Warnf("Failed to create attach token: %v", err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// TODO: create jwt token with attach pair
-
-	c.AbortWithStatusJSON(http.StatusOK, gin.H{"data": ud})
-	return
+	c.AbortWithStatusJSON(http.StatusOK, gin.H{"token": token})
 }
 
+// AttachConfirm gets user oauth data from token and creates social connection for it
+func (oc OAuthController) AttachConfirm(c *gin.Context) {
+	req := &request.OAuthAttachConfirmRequest{}
+
+	if err := c.BindJSON(&req); err != nil {
+		logrus.Warnf("Failed to perform attach confirm: %v", err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
+		return
+	}
+
+	result, err := utils.DecodeJwtToken(req.Token, &utils.OauthUserData{})
+
+	if err != nil {
+		logrus.Warnf("Failed to perform attach confirm: %v", err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
+		return
+	}
+
+	data := result.(*utils.OauthUserData)
+	u := c.MustGet("User").(*models.User)
+
+	if exist, err := oc.DB.SocialRepository.FindOne(data.Provider, data.Id); err == nil {
+		if exist.User.ID == u.ID {
+			c.AbortWithStatusJSON(http.StatusOK, exist)
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExist})
+		return
+	}
+
+	social := &models.Social{
+		Provider:     data.Provider,
+		AccountId:    data.Id,
+		AccountPhoto: data.Fetched.Photo,
+		AccountName:  data.Fetched.Name,
+		User:         u,
+	}
+
+	oc.DB.SocialRepository.Create(social)
+
+	c.AbortWithStatusJSON(http.StatusOK, social)
+}
+
+// Login logs user in or registers account
 func (oc OAuthController) Login(c *gin.Context) {
 	ud := c.MustGet("UserData").(*utils.OauthUserData)
 
@@ -115,6 +166,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 		return
 	}
 
+	// TODO: check email and ask to login+connect manualy if any
 	// TODO: create user
 	// TODO: upload photo
 	// TODO: create social

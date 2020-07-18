@@ -1,8 +1,8 @@
 package models
 
 type Social struct {
-	ID           uint
-	Provider     string `json:"-"`
+	ID           uint   `json:"-"`
+	Provider     string `json:"provider"`
 	AccountId    string `gorm:"column:account_id" json:"-"`
 	AccountName  string `json:"name"`
 	AccountPhoto string `json:"photo"`

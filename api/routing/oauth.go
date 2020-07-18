@@ -24,6 +24,13 @@ func (or *OauthRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
 }
 
 func (or *OauthRouter) Handle(r *gin.RouterGroup) {
+	r.POST(
+		"/attach/confirm",
+		or.api.AuthRequired,
+		or.api.WithUser(false),
+		or.controller.AttachConfirm,
+	)
+
 	router := r.Group("/:provider", or.controller.ProviderMiddleware)
 
 	router.GET("/redirect/:target", or.controller.Redirect)

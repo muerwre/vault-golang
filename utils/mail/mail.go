@@ -2,6 +2,7 @@ package mail
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
@@ -35,7 +36,7 @@ func (ml *Mailer) Init(c *MailerConfig) *Mailer {
 }
 
 func (ml *Mailer) Listen() {
-	fmt.Println("MAILER STARTED")
+	logrus.Infof("Mailer relay via %s:%d", ml.Config.Host, ml.Config.Port)
 
 	ml.Open = false
 	var err error
