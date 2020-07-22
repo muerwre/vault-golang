@@ -1,4 +1,4 @@
-This is [Vault48.org](https://vault48.org) backend, written in golang.
+This is [vault48.org](https://vault48.org) backend, written in golang.
 
 ### Installation
 1. Clone this repo `git clone git@github.com:muerwre/vault-golang.git`
