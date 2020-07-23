@@ -4,10 +4,13 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
+	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/muerwre/vault-golang/utils/passwords"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -16,7 +19,8 @@ type OAuthController struct {
 	Config app.Config
 	DB     db.DB
 
-	credentials utils.OAuthCredentials
+	credentials    utils.OAuthCredentials
+	fileController FileController
 }
 
 func (oc *OAuthController) Init() {
@@ -102,7 +106,7 @@ func (oc OAuthController) Attach(c *gin.Context) {
 
 	if err != nil {
 		logrus.Warnf("Failed to create attach token: %v", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
 		return
 	}
 
@@ -121,14 +125,16 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 	}
 
 	if exist, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
+		// TODO: check it
 		// User already has this social account
 		if exist.User.ID == u.ID {
 			c.AbortWithStatusJSON(http.StatusOK, gin.H{"social": exist})
 			return
 		}
 
+		// TODO: check it
 		// Another user has it
-		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExist})
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExistWithSocial})
 		return
 	}
 
@@ -167,6 +173,18 @@ func (oc OAuthController) Login(c *gin.Context) {
 }
 
 func (oc OAuthController) Register(c *gin.Context) {
+	req := &request.OAuthRegisterRequest{}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
+
+	if err := req.Valid(); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	claim, err := utils.DecodeOauthClaimFromRequest(c)
 
 	if err != nil {
@@ -177,18 +195,53 @@ func (oc OAuthController) Register(c *gin.Context) {
 
 	// Check if there's no account with this email
 	if _, err := oc.DB.UserRepository.GetByEmail(claim.Data.Email); err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExist})
+		// TODO: check it
+		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithEmail})
+		return
+	}
+
+	// Check if there's no account with this email
+	if _, err := oc.DB.UserRepository.GetByUsername(req.Username); err == nil {
+		// TODO: check it
+		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithUsername})
 		return
 	}
 
 	// Check if any user has this social
 	if _, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
-		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExist})
+		// TODO: check it
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExistWithSocial})
 		return
 	}
 
-	// TODO: upload photo
-	// TODO: create user
-	// TODO: create social
-	// TODO: generate token
+	password, err := passwords.HashPassword(req.Password)
+
+	user := &models.User{
+		Fullname: claim.Data.Fetched.Name,
+		Username: req.Username,
+		Password: password,
+		Email:    claim.Data.Email,
+	}
+
+	oc.DB.UserRepository.Create(user)
+
+	if url := claim.Data.Fetched.Photo; url != "" {
+		// TODO: check it
+		if photo, err := oc.fileController.UploadRemotePic(url, models.FileTargetProfiles, constants.FileTypeImage, user); err == nil {
+			user.Photo = photo
+			oc.DB.UserRepository.Save(user)
+		}
+	}
+
+	social := &models.Social{
+		Provider:     claim.Data.Provider,
+		AccountId:    claim.Data.Id,
+		AccountPhoto: claim.Data.Fetched.Photo,
+		AccountName:  claim.Data.Fetched.Name,
+		User:         user,
+	}
+
+	oc.DB.SocialRepository.Create(social)
+	token := oc.DB.UserRepository.GenerateTokenFor(social.User)
+	c.JSON(http.StatusOK, gin.H{"token": token.Token, "user": user})
 }

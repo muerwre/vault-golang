@@ -17,6 +17,16 @@ func (ur *UserRepository) Init(db *gorm.DB) *UserRepository {
 	return ur
 }
 
+func (ur UserRepository) Create(user *models.User) (err error) {
+	ur.db.Create(&user)
+	return nil
+}
+
+func (ur UserRepository) Save(user *models.User) (err error) {
+	ur.db.Save(&user)
+	return nil
+}
+
 func (ur UserRepository) GetByToken(t string) (user *models.User, err error) {
 	token := &models.Token{}
 

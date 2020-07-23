@@ -28,6 +28,11 @@ const (
 	OAuthUnknownProvider  string = "OAuth_Unknown_Provider"
 	OAuthInvalidData      string = "OAuth_Invalid_Data"
 	OAuthConflict         string = "OAuth_Conflict"
+	UsernameIsShort       string = "Username_Is_Short"
+	PasswordIsShort       string = "Password_Is_Short"
+	UserExistWithEmail    string = "User_Exist_With_Email"
+	UserExistWithSocial   string = "User_Exist_With_Social"
+	UserExistWithUsername string = "User_Exist_With_Username"
 )
 
 var ValidationToCode = map[string]string{
