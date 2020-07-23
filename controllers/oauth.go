@@ -113,19 +113,13 @@ func (oc OAuthController) Attach(c *gin.Context) {
 	token, err := utils.EncodeJwtToken(claim)
 
 	if err != nil {
+		// TODO: replace with html
 		logrus.Warnf("Failed to create attach token: %v", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
 		return
 	}
 
-	c.HTML(
-		http.StatusOK,
-		"templates/oauth_login.tmpl",
-		gin.H{
-			"type":  EventTypeAttach,
-			"token": token,
-		},
-	)
+	utils.ReplytHtmlWithToken(c, EventTypeAttach, token)
 }
 
 // AttachConfirm gets user oauth data from token and creates social connection for it
@@ -178,15 +172,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 
 		// TODO: update social info here
 
-		c.HTML(
-			http.StatusOK,
-			"templates/oauth_login.tmpl",
-			gin.H{
-				"type":  EventTypeLogin,
-				"token": token.Token,
-			},
-		)
-
+		utils.ReplytHtmlWithToken(c, EventTypeLogin, token.Token)
 		return
 	}
 
@@ -194,15 +180,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 	token, err := utils.EncodeJwtToken(claim)
 
 	// Send user a token to register
-	c.HTML(
-		http.StatusOK,
-		"templates/oauth_login.tmpl",
-		gin.H{
-			"type":  EventTypeRegister,
-			"token": token,
-		},
-	)
-
+	utils.ReplytHtmlWithToken(c, EventTypeRegister, token)
 	return
 }
 
@@ -210,11 +188,13 @@ func (oc OAuthController) Register(c *gin.Context) {
 	req := &request.OAuthRegisterRequest{}
 
 	if err := c.BindJSON(&req); err != nil {
+		// TODO: replace with html
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	if err := req.Valid(); err != nil {
+		// TODO: replace with html
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -222,6 +202,7 @@ func (oc OAuthController) Register(c *gin.Context) {
 	claim, err := utils.DecodeOauthClaimFromRequest(c)
 
 	if err != nil {
+		// TODO: replace with html
 		logrus.Warnf("Failed to perform login confirm: %v", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
 		return
@@ -230,6 +211,7 @@ func (oc OAuthController) Register(c *gin.Context) {
 	// Check if there's no account with this email
 	if _, err := oc.DB.UserRepository.GetByEmail(claim.Data.Email); err == nil {
 		// TODO: check it
+		// TODO: replace with html
 		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithEmail})
 		return
 	}
@@ -237,6 +219,7 @@ func (oc OAuthController) Register(c *gin.Context) {
 	// Check if there's no account with this email
 	if _, err := oc.DB.UserRepository.GetByUsername(req.Username); err == nil {
 		// TODO: check it
+		// TODO: replace with html
 		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithUsername})
 		return
 	}
@@ -244,6 +227,7 @@ func (oc OAuthController) Register(c *gin.Context) {
 	// Check if any user has this social
 	if _, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
 		// TODO: check it
+		// TODO: replace with html
 		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExistWithSocial})
 		return
 	}
@@ -279,12 +263,5 @@ func (oc OAuthController) Register(c *gin.Context) {
 	token := oc.DB.UserRepository.GenerateTokenFor(social.User)
 
 	// Send user a token to login
-	c.HTML(
-		http.StatusOK,
-		"templates/oauth_login.tmpl",
-		gin.H{
-			"type":  EventTypeLogin,
-			"token": token.Token,
-		},
-	)
+	utils.ReplytHtmlWithToken(c, EventTypeLogin, token.Token)
 }

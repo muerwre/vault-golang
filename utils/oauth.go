@@ -258,3 +258,14 @@ func DecodeOauthClaimFromRequest(c *gin.Context) (*OauthUserDataClaim, error) {
 
 	return result.(*OauthUserDataClaim), nil
 }
+
+func ReplytHtmlWithToken(c *gin.Context, eventType string, token string) {
+	c.HTML(
+		http.StatusOK,
+		"templates/oauth_login.tmpl",
+		gin.H{
+			"type":  eventType,
+			"token": token,
+		},
+	)
+}
