@@ -29,6 +29,8 @@ type OAuthController struct {
 	fileController FileController
 }
 
+// TODO: reply to errors via c.HTML in endpoints, which opened in modals
+
 func (oc *OAuthController) Init() {
 	oc.credentials = utils.OAuthCredentials{
 		VkClientId:         oc.Config.VkClientId,
@@ -58,7 +60,7 @@ func (oc OAuthController) Redirect(c *gin.Context) {
 	provider := c.MustGet("Provider").(*utils.OAuthConfig)
 	target := c.Param("target")
 	config := provider.ConfigCreator(oc.credentials, target)
-	c.Redirect(http.StatusTemporaryRedirect, config.AuthCodeURL("pseudo-random")) // TODO: pseudo-random can be in payload
+	c.Redirect(http.StatusTemporaryRedirect, config.AuthCodeURL("pseudo-random"))
 	return
 }
 
