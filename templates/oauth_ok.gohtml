@@ -1,0 +1,20 @@
+{{ define "templates/oauth_ok.gohtml" }}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <script>
+          if (window.opener) {
+            window.opener.postMessage({
+              type: '{{ .type }}',
+            }, '*');
+          }
+
+          window.close();
+        </script>
+    </head>
+    <body>
+
+    </body>
+    </html>
+{{ end }}

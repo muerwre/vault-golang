@@ -1,0 +1,23 @@
+{{ define "templates/oauth_error.gohtml" }}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <script>
+          if (window.opener) {
+            window.opener.postMessage({
+              type: '{{ .type }}',
+              payload: {
+                error: '{{ .error }}',
+              }
+            }, '*');
+          }
+
+          window.close();
+        </script>
+    </head>
+    <body>
+
+    </body>
+    </html>
+{{ end }}

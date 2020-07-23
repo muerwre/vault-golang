@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	EventTypeLogin    string = "oauth_login"
-	EventTypeRegister string = "oauth_register"
-	EventTypeAttach   string = "oauth_attach"
+	eventTypeLogin    string = "oauth_login"
+	eventTypeRegister string = "oauth_register"
+	eventTypeAttach   string = "oauth_attach"
+	eventTypeError    string = "oauth_error"
 )
 
 type OAuthController struct {
@@ -113,13 +114,12 @@ func (oc OAuthController) Attach(c *gin.Context) {
 	token, err := utils.EncodeJwtToken(claim)
 
 	if err != nil {
-		// TODO: replace with html
 		logrus.Warnf("Failed to create attach token: %v", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
+		utils.ReplyHtmlEventWithError(c, eventTypeError, codes.OAuthInvalidData)
 		return
 	}
 
-	utils.ReplytHtmlWithToken(c, EventTypeAttach, token)
+	utils.ReplytHtmlEventWithToken(c, eventTypeAttach, token)
 }
 
 // AttachConfirm gets user oauth data from token and creates social connection for it
@@ -137,7 +137,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 		// TODO: check it
 		// User already has this social account
 		if exist.User.ID == u.ID {
-			c.AbortWithStatusJSON(http.StatusOK, gin.H{"social": exist})
+			c.AbortWithStatusJSON(http.StatusOK, gin.H{"account": exist})
 			return
 		}
 
@@ -157,7 +157,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 
 	oc.DB.SocialRepository.Create(social)
 
-	c.AbortWithStatusJSON(http.StatusOK, social)
+	c.AbortWithStatusJSON(http.StatusOK, gin.H{"account": social})
 }
 
 // Login logs user in or registers account
@@ -172,7 +172,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 
 		// TODO: update social info here
 
-		utils.ReplytHtmlWithToken(c, EventTypeLogin, token.Token)
+		utils.ReplytHtmlEventWithToken(c, eventTypeLogin, token.Token)
 		return
 	}
 
@@ -180,7 +180,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 	token, err := utils.EncodeJwtToken(claim)
 
 	// Send user a token to register
-	utils.ReplytHtmlWithToken(c, EventTypeRegister, token)
+	utils.ReplytHtmlEventWithToken(c, eventTypeRegister, token)
 	return
 }
 
@@ -188,13 +188,11 @@ func (oc OAuthController) Register(c *gin.Context) {
 	req := &request.OAuthRegisterRequest{}
 
 	if err := c.BindJSON(&req); err != nil {
-		// TODO: replace with html
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	if err := req.Valid(); err != nil {
-		// TODO: replace with html
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -202,7 +200,6 @@ func (oc OAuthController) Register(c *gin.Context) {
 	claim, err := utils.DecodeOauthClaimFromRequest(c)
 
 	if err != nil {
-		// TODO: replace with html
 		logrus.Warnf("Failed to perform login confirm: %v", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
 		return
@@ -211,7 +208,6 @@ func (oc OAuthController) Register(c *gin.Context) {
 	// Check if there's no account with this email
 	if _, err := oc.DB.UserRepository.GetByEmail(claim.Data.Email); err == nil {
 		// TODO: check it
-		// TODO: replace with html
 		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithEmail})
 		return
 	}
@@ -219,7 +215,6 @@ func (oc OAuthController) Register(c *gin.Context) {
 	// Check if there's no account with this email
 	if _, err := oc.DB.UserRepository.GetByUsername(req.Username); err == nil {
 		// TODO: check it
-		// TODO: replace with html
 		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithUsername})
 		return
 	}
@@ -227,7 +222,6 @@ func (oc OAuthController) Register(c *gin.Context) {
 	// Check if any user has this social
 	if _, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
 		// TODO: check it
-		// TODO: replace with html
 		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExistWithSocial})
 		return
 	}
@@ -263,5 +257,5 @@ func (oc OAuthController) Register(c *gin.Context) {
 	token := oc.DB.UserRepository.GenerateTokenFor(social.User)
 
 	// Send user a token to login
-	utils.ReplytHtmlWithToken(c, EventTypeLogin, token.Token)
+	c.JSON(http.StatusOK, gin.H{"token": token.Token})
 }
