@@ -17,6 +17,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -101,11 +102,55 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		return
 	}
 
+	dbEntry, err, details := fc.SaveFile(file, target, fileType, header.Filename, user)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "details": details.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, dbEntry)
+}
+
+func (fc *FileController) UploadRemotePic(url string, target string, fileType string, user *models.User) (*models.File, error) {
+	resp, err := http.Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	name := path.Base(url)
+
+	result, err, _ := fc.SaveFile(
+		resp.Body,
+		target,
+		fileType,
+		name,
+		user,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (fc *FileController) SaveFile(
+	reader io.Reader,
+	target string,
+	fileType string,
+	name string,
+	user *models.User,
+) (result *models.File, error error, details error) {
 	content := strings.Builder{}
 
-	if _, err = io.Copy(&content, file); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.EmptyRequest})
-		return
+	size, err := io.Copy(&content, reader)
+
+	if err != nil {
+		return nil, fmt.Errorf(codes.EmptyRequest), nil
 	}
 
 	mime := mimetype.Detect([]byte(content.String()))
@@ -113,39 +158,34 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 
 	// check type
 	if inferredType == "" || inferredType != fileType {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.UnknownFileType})
-		return
+		return nil, fmt.Errorf(codes.UnknownFileType), nil
 	}
 
 	if !models.FileValidateTarget(target) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
-		return
+		return nil, fmt.Errorf(codes.IncorrectData), nil
 	}
 
 	year, month, _ := time.Now().Date()
 	pathCategorized := filepath.Join("uploads", strconv.Itoa(year), strconv.Itoa(int(month)), fileType)
-	cleanedSafeName := filepath.Base(filepath.Clean(header.Filename))
+	cleanedSafeName := filepath.Base(filepath.Clean(name))
 	fileExt := filepath.Ext(cleanedSafeName)
 	fileName := cleanedSafeName[:len(cleanedSafeName)-len(fileExt)]
 	nameUnique := fmt.Sprintf("%s-%d%s", fileName, time.Now().Unix(), fileExt)
 	fsFullDir := filepath.Join(fc.config.UploadPath, pathCategorized)
 
 	// recursively create destination folder
-	if err = os.MkdirAll(fsFullDir, os.ModePerm); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
-		return
+	if err := os.MkdirAll(fsFullDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf(codes.IncorrectData), err
 	}
 
 	// create dir and write file
 	if out, err := os.Create(filepath.Join(fsFullDir, nameUnique)); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
-		return
+		return nil, fmt.Errorf(codes.IncorrectData), err
 	} else {
 		defer out.Close()
 
 		if _, err = out.WriteString(content.String()); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData, "details": err.Error()})
-			return
+			return nil, fmt.Errorf(codes.IncorrectData), err
 		}
 	}
 
@@ -155,15 +195,14 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		FullPath: filepath.Join(pathCategorized, nameUnique),
 		Name:     nameUnique,
 		Path:     pathCategorized,
-		OrigName: header.Filename,
+		OrigName: name,
 		Url:      fmt.Sprintf("REMOTE_CURRENT://%s/%s", pathCategorized, nameUnique),
-		Size:     int(header.Size),
+		Size:     int(size),
 		Type:     fileType,
 	}
 
 	fc.FillMetadata(dbEntry)
-
 	fc.db.FileRepository.Save(dbEntry)
 
-	c.JSON(http.StatusCreated, dbEntry)
+	return dbEntry, nil, nil
 }
