@@ -6,7 +6,6 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
@@ -112,15 +111,8 @@ func (oc OAuthController) Attach(c *gin.Context) {
 
 // AttachConfirm gets user oauth data from token and creates social connection for it
 func (oc OAuthController) AttachConfirm(c *gin.Context) {
-	req := &request.OAuthAttachConfirmRequest{}
-
-	if err := c.BindJSON(&req); err != nil {
-		logrus.Warnf("Failed to perform attach confirm: %v", err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
-		return
-	}
-
-	result, err := utils.DecodeJwtToken(req.Token, &utils.OauthUserDataClaim{})
+	u := c.MustGet("User").(*models.User)
+	claim, err := utils.DecodeOauthClaimFromRequest(c)
 
 	if err != nil {
 		logrus.Warnf("Failed to perform attach confirm: %v", err.Error())
@@ -128,15 +120,14 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 		return
 	}
 
-	claim := result.(*utils.OauthUserDataClaim)
-	u := c.MustGet("User").(*models.User)
-
 	if exist, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
+		// User already has this social account
 		if exist.User.ID == u.ID {
-			c.AbortWithStatusJSON(http.StatusOK, exist)
+			c.AbortWithStatusJSON(http.StatusOK, gin.H{"social": exist})
 			return
 		}
 
+		// Another user has it
 		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExist})
 		return
 	}
@@ -160,6 +151,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 
 	social, err := oc.DB.SocialRepository.FindOne(ud.Provider, ud.Id)
 
+	// Social exist, login user
 	if err == nil {
 		token := oc.DB.UserRepository.GenerateTokenFor(social.User)
 		// TODO: update social info here
@@ -167,12 +159,36 @@ func (oc OAuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// TODO: check email and ask to login+connect manualy if any
-	// TODO: create user
+	claim := new(utils.OauthUserDataClaim).Init(*ud)
+	token, err := utils.EncodeJwtToken(claim)
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
+	return
+}
+
+func (oc OAuthController) Register(c *gin.Context) {
+	claim, err := utils.DecodeOauthClaimFromRequest(c)
+
+	if err != nil {
+		logrus.Warnf("Failed to perform login confirm: %v", err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
+		return
+	}
+
+	// Check if there's no account with this email
+	if _, err := oc.DB.UserRepository.GetByEmail(claim.Data.Email); err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExist})
+		return
+	}
+
+	// Check if any user has this social
+	if _, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExist})
+		return
+	}
+
 	// TODO: upload photo
+	// TODO: create user
 	// TODO: create social
 	// TODO: generate token
-
-	c.String(http.StatusOK, "TODO:")
-	return
 }

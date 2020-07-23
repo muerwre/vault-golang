@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
+	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -236,4 +238,20 @@ func fetchGoogleData(code string) (*OAuthFetchResult, error) {
 		Photo:    data.Picture,
 		Name:     data.Name,
 	}, nil
+}
+
+func DecodeOauthClaimFromRequest(c *gin.Context) (*OauthUserDataClaim, error) {
+	req := &request.OAuthAttachConfirmRequest{}
+
+	if err := c.BindJSON(&req); err != nil {
+		return nil, err
+	}
+
+	result, err := DecodeJwtToken(req.Token, &OauthUserDataClaim{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*OauthUserDataClaim), nil
 }
