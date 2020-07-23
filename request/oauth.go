@@ -8,7 +8,3 @@ type VkApiRequest struct {
 		Photo     string `json:"photo"`
 	} `json:"response"`
 }
-
-type OAuthAttachConfirmRequest struct {
-	Token string `json:"token"`
-}

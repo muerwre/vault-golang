@@ -37,11 +37,14 @@ func New(a *app.App) (api *API, err error) {
 }
 
 func (a *API) Init() *gin.Engine {
+	var router *gin.Engine
+
 	if !a.Config.ApiDebug {
 		gin.SetMode(gin.ReleaseMode)
+		router = gin.New()
+	} else {
+		router = gin.Default()
 	}
-
-	router := gin.Default()
 
 	r := router.Group("/")
 	r.Use(a.InjectContextMiddleware, a.OptionsRespondMiddleware)

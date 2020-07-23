@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -34,6 +33,10 @@ type OauthUserData struct {
 type OauthUserDataClaim struct {
 	Data OauthUserData
 	Type string
+}
+
+type OAuthAttachConfirmData struct {
+	Token string `json:"token"`
 }
 
 func (d OauthUserDataClaim) Valid() error {
@@ -241,7 +244,7 @@ func fetchGoogleData(code string) (*OAuthFetchResult, error) {
 }
 
 func DecodeOauthClaimFromRequest(c *gin.Context) (*OauthUserDataClaim, error) {
-	req := &request.OAuthAttachConfirmRequest{}
+	req := &OAuthAttachConfirmData{}
 
 	if err := c.BindJSON(&req); err != nil {
 		return nil, err
