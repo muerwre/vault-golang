@@ -15,6 +15,12 @@ import (
 	"net/http"
 )
 
+const (
+	EventTypeLogin    string = "oauth_login"
+	EventTypeRegister string = "oauth_register"
+	EventTypeAttach   string = "oauth_attach"
+)
+
 type OAuthController struct {
 	Config app.Config
 	DB     db.DB
@@ -110,7 +116,14 @@ func (oc OAuthController) Attach(c *gin.Context) {
 		return
 	}
 
-	c.AbortWithStatusJSON(http.StatusOK, gin.H{"token": token})
+	c.HTML(
+		http.StatusOK,
+		"templates/oauth_login.tmpl",
+		gin.H{
+			"type":  EventTypeAttach,
+			"token": token,
+		},
+	)
 }
 
 // AttachConfirm gets user oauth data from token and creates social connection for it
@@ -160,15 +173,34 @@ func (oc OAuthController) Login(c *gin.Context) {
 	// Social exist, login user
 	if err == nil {
 		token := oc.DB.UserRepository.GenerateTokenFor(social.User)
+
 		// TODO: update social info here
-		c.AbortWithStatusJSON(http.StatusOK, gin.H{"token": token.Token})
+
+		c.HTML(
+			http.StatusOK,
+			"templates/oauth_login.tmpl",
+			gin.H{
+				"type":  EventTypeLogin,
+				"token": token.Token,
+			},
+		)
+
 		return
 	}
 
 	claim := new(utils.OauthUserDataClaim).Init(*ud)
 	token, err := utils.EncodeJwtToken(claim)
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	// Send user a token to register
+	c.HTML(
+		http.StatusOK,
+		"templates/oauth_login.tmpl",
+		gin.H{
+			"type":  EventTypeRegister,
+			"token": token,
+		},
+	)
+
 	return
 }
 
@@ -243,5 +275,14 @@ func (oc OAuthController) Register(c *gin.Context) {
 
 	oc.DB.SocialRepository.Create(social)
 	token := oc.DB.UserRepository.GenerateTokenFor(social.User)
-	c.JSON(http.StatusOK, gin.H{"token": token.Token, "user": user})
+
+	// Send user a token to login
+	c.HTML(
+		http.StatusOK,
+		"templates/oauth_login.tmpl",
+		gin.H{
+			"type":  EventTypeLogin,
+			"token": token.Token,
+		},
+	)
 }

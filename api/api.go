@@ -46,6 +46,7 @@ func (a *API) Init() *gin.Engine {
 		router = gin.Default()
 	}
 
+	router.LoadHTMLGlob("templates/*")
 	r := router.Group("/")
 	r.Use(a.InjectContextMiddleware, a.OptionsRespondMiddleware)
 
