@@ -39,3 +39,8 @@ func (sr *SocialRepository) OfUser(id uint) ([]*models.Social, error) {
 	sr.db.Model(&list).Where("userId = ?", id).Scan(&list)
 	return list, nil
 }
+
+func (sr *SocialRepository) DeleteOfUser(uid uint, provider string, id string) error {
+	sr.db.Delete(&models.Social{}, "userId = ? AND provider = ? AND id = ?", uid, provider, id)
+	return nil
+}
