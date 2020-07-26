@@ -259,3 +259,16 @@ func (oc OAuthController) Register(c *gin.Context) {
 	// Send user a token to login
 	c.JSON(http.StatusOK, gin.H{"token": token.Token})
 }
+
+// List returns users social accounts
+func (oc OAuthController) List(c *gin.Context) {
+	uid := c.MustGet("UID").(*uint)
+	list, err := oc.DB.SocialRepository.OfUser(*uid)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"accounts": list})
+}

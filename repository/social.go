@@ -33,3 +33,9 @@ func (sr *SocialRepository) FindOne(provider string, id string) (social *models.
 func (sr *SocialRepository) Create(social *models.Social) {
 	sr.db.Create(&social)
 }
+
+func (sr *SocialRepository) OfUser(id uint) ([]*models.Social, error) {
+	list := make([]*models.Social, 0)
+	sr.db.Model(&list).Where("userId = ?", id).Scan(&list)
+	return list, nil
+}

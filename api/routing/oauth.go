@@ -32,8 +32,14 @@ func (or *OauthRouter) Handle(r *gin.RouterGroup) {
 	)
 
 	router := r.Group("/:provider", or.controller.ProviderMiddleware)
+	{
+		router.GET("/redirect/:target", or.controller.Redirect)
+		router.GET("/process/attach", or.controller.Process(utils.ProcessTargetAttach), or.controller.Attach)
+		router.GET("/process/login", or.controller.Process(utils.ProcessTargetLogin), or.controller.Login)
+	}
 
-	router.GET("/redirect/:target", or.controller.Redirect)
-	router.GET("/process/attach", or.controller.Process(utils.ProcessTargetAttach), or.controller.Attach)
-	router.GET("/process/login", or.controller.Process(utils.ProcessTargetLogin), or.controller.Login)
+	authenticated := r.Group("/", or.api.AuthRequired)
+	{
+		authenticated.GET("/", or.controller.List)
+	}
 }
