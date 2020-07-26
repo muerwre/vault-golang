@@ -41,6 +41,6 @@ func (sr *SocialRepository) OfUser(id uint) ([]*models.Social, error) {
 }
 
 func (sr *SocialRepository) DeleteOfUser(uid uint, provider string, id string) error {
-	sr.db.Delete(&models.Social{}, "userId = ? AND provider = ? AND id = ?", uid, provider, id)
+	sr.db.Delete(&models.Social{}, "userId = ? AND provider = ? AND account_id = ?", uid, provider, id)
 	return nil
 }
