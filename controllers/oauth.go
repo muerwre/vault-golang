@@ -131,14 +131,12 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 	}
 
 	if exist, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
-		// TODO: check it
 		// User already has this social account
 		if exist.User.ID == u.ID {
 			c.AbortWithStatusJSON(http.StatusOK, gin.H{"account": exist})
 			return
 		}
 
-		// TODO: check it
 		// Another user has it
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.UserExistWithSocial})
 		return
