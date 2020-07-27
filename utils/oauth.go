@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -54,7 +53,7 @@ func (d *OauthUserDataClaim) Init(data OauthUserData) *OauthUserDataClaim {
 }
 
 type OAuthConfig struct {
-	ConfigCreator func(credentials OAuthCredentials, target string) *oauth2.Config
+	ConfigCreator func(credentials OAuthCredentials) *oauth2.Config
 	Parser        func(token *oauth2.Token) (*OauthUserData, error)
 	Fetcher       func(token string) (*OAuthFetchResult, error)
 }
@@ -106,11 +105,11 @@ type OAuthFetchResult struct {
 	Photo    string
 }
 
-func getOauthVkConfig(credentials OAuthCredentials, target string) *oauth2.Config {
+func getOauthVkConfig(credentials OAuthCredentials) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     credentials.VkClientId,
 		ClientSecret: credentials.VkClientSecret,
-		RedirectURL:  strings.Join([]string{credentials.VkCallbackUrl, target}, "/"),
+		RedirectURL:  credentials.VkCallbackUrl,
 		Scopes:       []string{"email"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://oauth.vk.com/authorize",
@@ -119,11 +118,11 @@ func getOauthVkConfig(credentials OAuthCredentials, target string) *oauth2.Confi
 	}
 }
 
-func getOauthGoogleConfig(credentials OAuthCredentials, target string) *oauth2.Config {
+func getOauthGoogleConfig(credentials OAuthCredentials) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     credentials.GoogleClientId,
 		ClientSecret: credentials.GoogleClientSecret,
-		RedirectURL:  strings.Join([]string{credentials.GoogleCallbackUrl, target}, "/"),
+		RedirectURL:  credentials.GoogleCallbackUrl,
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
 		Endpoint:     google.Endpoint,
 	}

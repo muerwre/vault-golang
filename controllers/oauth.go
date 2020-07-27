@@ -16,10 +16,8 @@ import (
 )
 
 const (
-	eventTypeLogin    string = "oauth_login"
-	eventTypeRegister string = "oauth_register"
-	eventTypeAttach   string = "oauth_attach"
-	eventTypeError    string = "oauth_error"
+	eventTypeProcessed string = "oauth_processed"
+	eventTypeError     string = "oauth_error"
 )
 
 type OAuthController struct {
@@ -59,14 +57,13 @@ func (oc OAuthController) ProviderMiddleware(c *gin.Context) {
 // Redirect redirects user to oauth endpoint, that redirects back to /process/:target?code= urls
 func (oc OAuthController) Redirect(c *gin.Context) {
 	provider := c.MustGet("Provider").(*utils.OAuthConfig)
-	target := c.Param("target")
-	config := provider.ConfigCreator(oc.credentials, target)
+	config := provider.ConfigCreator(oc.credentials)
 	c.Redirect(http.StatusTemporaryRedirect, config.AuthCodeURL("pseudo-random"))
 	return
 }
 
-// Process is a middleware, that fetches oauth data from provider and passes it further
-func (oc OAuthController) Process(target string) gin.HandlerFunc {
+// GetRedirectData is a middleware, that fetches oauth data from provider and passes it further
+func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := context.Background()
 		provider := c.MustGet("Provider").(*utils.OAuthConfig)
@@ -77,7 +74,7 @@ func (oc OAuthController) Process(target string) gin.HandlerFunc {
 			return
 		}
 
-		config := provider.ConfigCreator(oc.credentials, target)
+		config := provider.ConfigCreator(oc.credentials)
 		token, err := config.Exchange(ctx, code)
 
 		if err != nil {
@@ -107,8 +104,8 @@ func (oc OAuthController) Process(target string) gin.HandlerFunc {
 	}
 }
 
-// Attach gets fetched from oauth data and encodes it as JWT to send back to frontend, so it can call AttachConfirm with it
-func (oc OAuthController) Attach(c *gin.Context) {
+// Process gets fetched from oauth data and encodes it as JWT to send back to frontend, so it can call AttachConfirm with it
+func (oc OAuthController) Process(c *gin.Context) {
 	ud := c.MustGet("UserData").(*utils.OauthUserData)
 	claim := new(utils.OauthUserDataClaim).Init(*ud)
 	token, err := utils.EncodeJwtToken(claim)
@@ -119,7 +116,7 @@ func (oc OAuthController) Attach(c *gin.Context) {
 		return
 	}
 
-	utils.ReplytHtmlEventWithToken(c, eventTypeAttach, token)
+	utils.ReplytHtmlEventWithToken(c, eventTypeProcessed, token)
 }
 
 // AttachConfirm gets user oauth data from token and creates social connection for it
@@ -143,7 +140,13 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 
 		// TODO: check it
 		// Another user has it
-		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExistWithSocial})
+		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.UserExistWithSocial})
+		return
+	}
+
+	// Another user has it
+	if user, err := oc.DB.UserRepository.GetByEmail(claim.Data.Email); err == nil && user.ID != u.ID {
+		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.UserExistWithEmail})
 		return
 	}
 
@@ -160,31 +163,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, gin.H{"account": social})
 }
 
-// Login logs user in or registers account
 func (oc OAuthController) Login(c *gin.Context) {
-	ud := c.MustGet("UserData").(*utils.OauthUserData)
-
-	social, err := oc.DB.SocialRepository.FindOne(ud.Provider, ud.Id)
-
-	// Social exist, login user
-	if err == nil {
-		token := oc.DB.UserRepository.GenerateTokenFor(social.User)
-
-		// TODO: update social info here
-
-		utils.ReplytHtmlEventWithToken(c, eventTypeLogin, token.Token)
-		return
-	}
-
-	claim := new(utils.OauthUserDataClaim).Init(*ud)
-	token, err := utils.EncodeJwtToken(claim)
-
-	// Send user a token to register
-	utils.ReplytHtmlEventWithToken(c, eventTypeRegister, token)
-	return
-}
-
-func (oc OAuthController) Register(c *gin.Context) {
 	req := &request.OAuthRegisterRequest{}
 
 	if err := c.BindJSON(&req); err != nil {
@@ -200,8 +179,18 @@ func (oc OAuthController) Register(c *gin.Context) {
 	claim, err := utils.DecodeOauthClaimFromRequest(c)
 
 	if err != nil {
-		logrus.Warnf("Failed to perform login confirm: %v", err.Error())
+		logrus.Warnf("Failed to perform login: %v", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
+		return
+	}
+
+	// Social exist, login user
+	if social, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
+		token := oc.DB.UserRepository.GenerateTokenFor(social.User)
+
+		// TODO: update social info here
+
+		c.JSON(http.StatusOK, gin.H{"token": token.Token})
 		return
 	}
 
@@ -222,7 +211,7 @@ func (oc OAuthController) Register(c *gin.Context) {
 	// Check if any user has this social
 	if _, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
 		// TODO: check it
-		c.AbortWithStatusJSON(http.StatusOK, gin.H{"error": codes.UserExistWithSocial})
+		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.UserExistWithSocial})
 		return
 	}
 
