@@ -249,8 +249,8 @@ func (oc OAuthController) Login(c *gin.Context) {
 
 // List returns users social accounts
 func (oc OAuthController) List(c *gin.Context) {
-	uid := c.MustGet("UID").(*uint)
-	list, err := oc.DB.SocialRepository.OfUser(*uid)
+	uid := c.MustGet("UID").(uint)
+	list, err := oc.DB.SocialRepository.OfUser(uid)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -261,11 +261,11 @@ func (oc OAuthController) List(c *gin.Context) {
 }
 
 func (oc OAuthController) Delete(c *gin.Context) {
-	uid := c.MustGet("UID").(*uint)
+	uid := c.MustGet("UID").(uint)
 	id := c.Param("id")
 	provider := c.Param("provider")
 
-	err := oc.DB.SocialRepository.DeleteOfUser(*uid, provider, id)
+	err := oc.DB.SocialRepository.DeleteOfUser(uid, provider, id)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

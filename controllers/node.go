@@ -25,7 +25,7 @@ type NodeController struct {
 
 // GetNode /node:id - returns single node with tags, likes count and files
 func (nc *NodeController) GetNode(c *gin.Context) {
-	uid := c.MustGet("UID").(*uint)
+	uid := c.MustGet("UID").(uint)
 	u := c.MustGet("User").(*models.User)
 	d := nc.DB
 
@@ -43,8 +43,8 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	if *uid != 0 {
-		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, *uid)
+	if uid != 0 {
+		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, uid)
 	}
 
 	node.LikeCount = d.NodeRepository.GetNodeLikeCount(node)
@@ -92,7 +92,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	params := &request.NodeDiffParams{}
 	err := c.Bind(&params)
 	d := nc.DB
-	uid := c.MustGet("UID").(*uint)
+	uid := c.MustGet("UID").(uint)
 
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": codes.IncorrectData})
@@ -140,7 +140,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	}()
 
 	go func() {
-		if *uid != 0 && params.WithUpdated {
+		if uid != 0 && params.WithUpdated {
 			q.Order("created_at DESC").
 				Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
 				Where("node_view.visited < node.commented_at").

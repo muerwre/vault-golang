@@ -6,11 +6,12 @@ package main
 	-- not working ---
 
 	TODO: social login (vk, google)
+	TODO: node view not updated?
 	TODO: update song titles after save
 	TODO: search
 
 	TODO: refactor GetDiff
-	TODO: moved all queries to repositories
+	TODO: move all queries to repositories
 
 	DONE: youtube titles
 	DONE: /node POST
