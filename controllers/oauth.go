@@ -70,7 +70,8 @@ func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 		code := c.Query("code")
 
 		if code == "" {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": codes.OAuthCodeIsEmpty})
+			utils.ReplyHtmlEventWithError(c, eventTypeError, codes.OAuthCodeIsEmpty)
+			c.Abort()
 			return
 		}
 
@@ -79,7 +80,8 @@ func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 
 		if err != nil {
 			logrus.Warnf("Failed to get token: %v", err.Error())
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Failed to get token"})
+			utils.ReplyHtmlEventWithError(c, eventTypeError, codes.OAuthInvalidData)
+			c.Abort()
 			return
 		}
 
@@ -87,7 +89,8 @@ func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 
 		if err != nil {
 			logrus.Warnf("Failed to get token: %v", err.Error())
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			utils.ReplyHtmlEventWithError(c, eventTypeError, err.Error())
+			c.Abort()
 			return
 		}
 
@@ -95,7 +98,8 @@ func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 
 		if err != nil {
 			logrus.Warnf("Failed to get token: %v", err.Error())
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			utils.ReplyHtmlEventWithError(c, eventTypeError, err.Error())
+			c.Abort()
 			return
 		}
 
@@ -169,11 +173,6 @@ func (oc OAuthController) Login(c *gin.Context) {
 		return
 	}
 
-	if err := req.Valid(); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
 	claim, err := utils.DecodeOauthClaimFromRequest(c)
 
 	if err != nil {
@@ -192,6 +191,8 @@ func (oc OAuthController) Login(c *gin.Context) {
 		return
 	}
 
+	// Procceed with registration
+
 	// Check if there's no account with this email
 	if _, err := oc.DB.UserRepository.GetByEmail(claim.Data.Email); err == nil {
 		// TODO: check it
@@ -199,17 +200,16 @@ func (oc OAuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Check if there's no account with this email
-	if _, err := oc.DB.UserRepository.GetByUsername(req.Username); err == nil {
-		// TODO: check it
-		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithUsername})
+	// Validate data
+	if err := req.Valid(); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error(), "needs_register": true})
 		return
 	}
 
-	// Check if any user has this social
-	if _, err := oc.DB.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
+	// Check if there's no account with this username
+	if _, err := oc.DB.UserRepository.GetByUsername(req.Username); err == nil {
 		// TODO: check it
-		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.UserExistWithSocial})
+		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithUsername})
 		return
 	}
 

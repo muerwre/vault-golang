@@ -29,7 +29,7 @@ func (a API) AuthRequired(c *gin.Context) {
 		return
 	}
 
-	c.Set("UID", token.UserID)
+	c.Set("UID", *token.UserID)
 	c.Next()
 }
 
@@ -55,6 +55,6 @@ func (a *API) AuthOptional(c *gin.Context) {
 		return
 	}
 
-	c.Set("UID", token.UserID)
+	c.Set("UID", *token.UserID)
 	c.Next()
 }
