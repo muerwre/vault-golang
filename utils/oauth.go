@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -245,7 +246,7 @@ func fetchGoogleData(code string) (*OAuthFetchResult, error) {
 func DecodeOauthClaimFromRequest(c *gin.Context) (*OauthUserDataClaim, error) {
 	req := &OAuthAttachConfirmData{}
 
-	if err := c.BindJSON(&req); err != nil {
+	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
 		return nil, err
 	}
 

@@ -6,7 +6,7 @@ package main
 	-- not working ---
 
 	TODO: social login (vk, google)
-	TODO: node view not updated?
+	TODO: node view not updated? (actually, not getting last_seen_boris property for user)
 	TODO: update song titles after save
 	TODO: search
 

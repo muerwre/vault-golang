@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/db"
@@ -166,13 +167,6 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 }
 
 func (oc OAuthController) Login(c *gin.Context) {
-	req := &request.OAuthRegisterRequest{}
-
-	if err := c.BindJSON(&req); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
-		return
-	}
-
 	claim, err := utils.DecodeOauthClaimFromRequest(c)
 
 	if err != nil {
@@ -192,6 +186,12 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	// Procceed with registration
+	req := &request.OAuthRegisterRequest{}
+
+	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
 
 	// Check if there's no account with this email
 	if _, err := oc.DB.UserRepository.GetByEmail(claim.Data.Email); err == nil {
