@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/response"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"sync"
 )
@@ -48,7 +49,7 @@ func (nr NodeRepository) GetNodeAlbumRelated(
 ) {
 	d := nr.db
 	rows := &[]models.NodeRelatedItem{}
-	albums := make(map[string][]models.NodeRelatedItem)
+	albums := make(map[string][]models.NodeRelatedItem, 0)
 
 	d.Table("`node_tags_tag` `tags`").
 		Select("`tag`.`title` AS `album`, `node`.`thumbnail`, `node`.`id`, `node`.`title`").
@@ -182,4 +183,45 @@ func (nr NodeRepository) GetComments(id int, take int, skip int, order string) (
 	}
 
 	return comments, count
+}
+
+func (nr NodeRepository) GetRelated(nid uint) (*response.NodeRelatedResponse, error) {
+	related := &response.NodeRelatedResponse{
+		Albums:  map[string][]models.NodeRelatedItem{},
+		Similar: []models.NodeRelatedItem{},
+	}
+
+	node := &models.Node{}
+	nr.db.Preload("Tags").First(&node, "id = ?", nid)
+
+	if node == nil || node.ID == 0 || node.DeletedAt != nil || !node.IsFlowType() || len(node.Tags) == 0 {
+		return related, nil
+	}
+
+	var tagSimilarIds []uint
+	var tagAlbumIds []uint
+
+	for _, v := range node.Tags {
+		if v.Title[:1] == "/" {
+			tagAlbumIds = append(tagAlbumIds, v.ID)
+		} else {
+			tagSimilarIds = append(tagSimilarIds, v.ID)
+		}
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	albumsChan := make(chan map[string][]models.NodeRelatedItem)
+	similarChan := make(chan []models.NodeRelatedItem)
+
+	go nr.GetNodeAlbumRelated(tagAlbumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
+	go nr.GetNodeSimilarRelated(tagSimilarIds, []uint{node.ID}, node.Type, &wg, similarChan)
+
+	wg.Wait()
+
+	related.Albums = <-albumsChan
+	related.Similar = <-similarChan
+
+	return related, nil
 }

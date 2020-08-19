@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 	"github.com/muerwre/vault-golang/request"
-	"github.com/muerwre/vault-golang/response"
 	"net/http"
 	"strconv"
 	"strings"
@@ -453,11 +452,6 @@ func (nc NodeController) PostLock(c *gin.Context) {
 
 	node := &models.Node{}
 
-	if nid == 0 || err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
-		return
-	}
-
 	d.Unscoped().First(&node, "id = ?", nid)
 
 	if node == nil || node.ID == 0 || !node.CanBeEditedBy(u) {
@@ -481,17 +475,12 @@ func (nc NodeController) PostHeroic(c *gin.Context) {
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
-	if err != nil {
+	if err != nil || nid == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	node := &models.Node{}
-
-	if nid == 0 || err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
-		return
-	}
 
 	d.First(&node, "id = ?", nid)
 
@@ -548,66 +537,14 @@ func (nc NodeController) PostCellView(c *gin.Context) {
 
 // GetRelated - GET /node/:id/related - gets related nodes
 func (nc NodeController) GetRelated(c *gin.Context) {
-	d := nc.DB
-
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
-	if err != nil {
+	if err != nil || nid == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	if nid == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
-		return
-	}
-
-	node := &models.Node{}
-
-	d.Preload("Tags").First(&node, "id = ?", nid)
-
-	if node == nil || node.ID == 0 || node.DeletedAt != nil {
-		c.JSON(http.StatusNotFound, gin.H{"related": &response.NodeRelatedResponse{}})
-		return
-	}
-
-	if !node.IsFlowType() {
-		c.JSON(http.StatusOK, gin.H{"related": &response.NodeRelatedResponse{}})
-		return
-	}
-
-	if len(node.Tags) == 0 {
-		c.JSON(http.StatusOK, gin.H{"related": &response.NodeRelatedResponse{}})
-		return
-	}
-
-	var tagSimilarIds []uint
-	var tagAlbumIds []uint
-
-	for _, v := range node.Tags {
-		if v.Title[:1] == "/" {
-			tagAlbumIds = append(tagAlbumIds, v.ID)
-		} else {
-			tagSimilarIds = append(tagSimilarIds, v.ID)
-		}
-	}
-
-	related := &response.NodeRelatedResponse{}
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	albumsChan := make(chan map[string][]models.NodeRelatedItem)
-	similarChan := make(chan []models.NodeRelatedItem)
-
-	go d.NodeRepository.GetNodeAlbumRelated(tagAlbumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
-	go d.NodeRepository.GetNodeSimilarRelated(tagSimilarIds, []uint{node.ID}, node.Type, &wg, similarChan)
-
-	wg.Wait()
-
-	related.Albums = <-albumsChan
-	related.Similar = <-similarChan
-
+	related, err := nc.DB.NodeRepository.GetRelated(uint(nid))
 	c.JSON(http.StatusOK, gin.H{"related": related})
 }
 
