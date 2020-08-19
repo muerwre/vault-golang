@@ -203,7 +203,7 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 
 	err := c.BindJSON(&params)
 
-	if err == nil {
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
@@ -225,7 +225,7 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 		d.Delete(&comment)
 	} else {
 		comment.DeletedAt = nil
-		d.Unscoped().Update(&comment)
+		d.Model(&comment).Unscoped().Where("id = ?", comment.ID).Update("deletedAt", nil)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})

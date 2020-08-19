@@ -8,7 +8,6 @@ package main
 	TODO: social login (vk, google)
 	TODO: update song titles after save
 	TODO: search
-	TODO: comment deletion not working
 
 	TODO: refactor GetDiff
 	TODO: move all queries to repositories
