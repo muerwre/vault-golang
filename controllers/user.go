@@ -28,7 +28,7 @@ func (uc *UserController) CheckCredentials(c *gin.Context) {
 	user := c.MustGet("User").(*models.User)
 	lastSeenBoris := time.Now()
 
-	if view, err := uc.DB.NodeViewRepository.GetOne(user.ID, constants.BorisNodeId); err != nil && view != nil {
+	if view, err := uc.DB.NodeViewRepository.GetOne(user.ID, constants.BorisNodeId); err == nil && view != nil {
 		lastSeenBoris = view.Visited
 	}
 
