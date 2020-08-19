@@ -641,6 +641,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		node.Type = params.Node.Type
 		node.IsPublic = true
 		node.IsPromoted = true
+		node.Tags = make([]*models.Tag, 0)
 	}
 
 	if params.Node.Type == "" || !models.FLOW_NODE_TYPES.Contains(params.Node.Type) {
@@ -678,6 +679,10 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	params.Node.FilesOrder = make(models.CommaUintArray, 0)
 
 	for _, v := range params.Node.Files {
+		if v == nil {
+			continue
+		}
+
 		params.Node.FilesOrder = append(node.FilesOrder, v.ID)
 	}
 
