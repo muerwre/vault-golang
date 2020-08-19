@@ -8,7 +8,8 @@ package main
 	TODO: social login (vk, google)
 	TODO: update song titles after save
 	TODO: search
-	TODO: remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
+	TODO: can't get related of deleted node
+	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 Э
 	TODO: refactor GetDiff
 	TODO: move all queries to repositories
