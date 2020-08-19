@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/response"
 	"net/http"
@@ -25,10 +26,17 @@ type UserController struct {
 
 func (uc *UserController) CheckCredentials(c *gin.Context) {
 	user := c.MustGet("User").(*models.User)
+	lastSeenBoris := time.Now()
+
+	if view, err := uc.DB.NodeViewRepository.GetOne(user.ID, constants.BorisNodeId); err != nil && view != nil {
+		lastSeenBoris = view.Visited
+	}
+
+	resp := new(response.UserCheckCredentialsResponse).Init(user, lastSeenBoris)
 
 	uc.DB.UserRepository.UpdateLastSeen(user)
 
-	c.JSON(http.StatusOK, gin.H{"user": &user})
+	c.JSON(http.StatusOK, gin.H{"user": &resp})
 }
 
 func (uc *UserController) GetUserProfile(c *gin.Context) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fatih/structs"
 	"github.com/jinzhu/gorm"
+	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"sync"
@@ -96,7 +97,7 @@ func (nr NodeRepository) GetNodeSimilarRelated(
 }
 
 func (nr NodeRepository) GetNodeBoris() (node models.Node, err error) {
-	nr.db.Where("id = ?", 696).First(&node)
+	nr.db.Where("id = ?", constants.BorisNodeId).First(&node)
 
 	return node, nil
 }
