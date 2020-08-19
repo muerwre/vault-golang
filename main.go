@@ -8,10 +8,11 @@ package main
 	TODO: social login (vk, google)
 	TODO: update song titles after save
 	TODO: search
-	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
-Э
+	TODO: comment deletion not working
+
 	TODO: refactor GetDiff
 	TODO: move all queries to repositories
+	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 
 	DONE: node view not updated? (actually, not getting last_seen_boris property for user)
 	DONE: youtube titles
