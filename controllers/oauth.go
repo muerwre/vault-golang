@@ -201,8 +201,12 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	// Validate data
-	if err := req.Valid(); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error(), "needs_register": true})
+	if errors, err := req.Valid(); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error":          err.Error(),
+			"errors":         errors,
+			"needs_register": true,
+		})
 		return
 	}
 
