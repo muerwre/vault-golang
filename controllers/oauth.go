@@ -26,12 +26,12 @@ type OAuthController struct {
 	DB     db.DB
 
 	credentials    utils.OAuthCredentials
-	fileController FileController
+	fileController *FileController
 }
 
 // TODO: reply to errors via c.HTML in endpoints, which opened in modals
 
-func (oc *OAuthController) Init() {
+func (oc *OAuthController) Init(db db.DB, config app.Config) *OAuthController {
 	oc.credentials = utils.OAuthCredentials{
 		VkClientId:         oc.Config.VkClientId,
 		VkClientSecret:     oc.Config.VkClientSecret,
@@ -40,6 +40,12 @@ func (oc *OAuthController) Init() {
 		GoogleClientSecret: oc.Config.GoogleClientSecret,
 		GoogleCallbackUrl:  oc.Config.GoogleCallbackUrl,
 	}
+
+	oc.DB = db
+	oc.Config = config
+	oc.fileController = new(FileController).Init(db, config)
+
+	return oc
 }
 
 // ProviderMiddleware generates Provider context by :provider url param
@@ -226,6 +232,11 @@ func (oc OAuthController) Login(c *gin.Context) {
 
 	password, err := passwords.HashPassword(req.Password)
 
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	user := &models.User{
 		Fullname:    claim.Data.Fetched.Name,
 		Username:    req.Username,
@@ -236,14 +247,6 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	oc.DB.UserRepository.Create(user)
-
-	if url := claim.Data.Fetched.Photo; url != "" {
-		// TODO: check it
-		if photo, err := oc.fileController.UploadRemotePic(url, models.FileTargetProfiles, constants.FileTypeImage, user); err == nil {
-			user.Photo = photo
-			oc.DB.UserRepository.Save(user)
-		}
-	}
 
 	social := &models.Social{
 		Provider:     claim.Data.Provider,
@@ -258,6 +261,13 @@ func (oc OAuthController) Login(c *gin.Context) {
 
 	// Send user a token to login
 	c.JSON(http.StatusOK, gin.H{"token": token.Token})
+
+	if url := claim.Data.Fetched.Photo; url != "" {
+		// TODO: check it
+		if photo, err := oc.fileController.UploadRemotePic(url, models.FileTargetProfiles, constants.FileTypeImage, user); err == nil {
+			oc.DB.UserRepository.UpdatePhoto(user.ID, photo.ID)
+		}
+	}
 }
 
 // List returns users social accounts

@@ -9,15 +9,14 @@ import (
 )
 
 type UploadRouter struct {
-	controller controllers.FileController
+	controller *controllers.FileController
 	db         db.DB
 	config     app.Config
 	api        utils.AppApi
 }
 
 func (ur *UploadRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
-	ur.controller = controllers.FileController{}
-	ur.controller.Init(db, config)
+	ur.controller = new(controllers.FileController).Init(db, config)
 	ur.api = api
 	ur.db = db
 	ur.config = config

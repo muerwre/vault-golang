@@ -29,9 +29,11 @@ type FileController struct {
 	config app.Config
 }
 
-func (fc *FileController) Init(db db.DB, config app.Config) {
+func (fc *FileController) Init(db db.DB, config app.Config) *FileController {
 	fc.db = db
 	fc.config = config
+
+	return fc
 }
 
 func (fc *FileController) FillMetadataAudio(f *models.File) error {
@@ -189,7 +191,7 @@ func (fc *FileController) SaveFile(
 		}
 	}
 
-	dbEntry := &models.File{
+	dbEntry := models.File{
 		User:     user,
 		Mime:     mime.String(),
 		FullPath: filepath.Join(pathCategorized, nameUnique),
@@ -201,8 +203,8 @@ func (fc *FileController) SaveFile(
 		Type:     fileType,
 	}
 
-	fc.FillMetadata(dbEntry)
-	fc.db.FileRepository.Save(dbEntry)
+	fc.FillMetadata(&dbEntry)
+	fc.db.FileRepository.Save(&dbEntry)
 
-	return dbEntry, nil, nil
+	return &dbEntry, nil, nil
 }

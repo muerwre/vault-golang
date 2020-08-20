@@ -18,9 +18,8 @@ type OauthRouter struct {
 func (or *OauthRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
 	or.db = db
 	or.config = config
-	or.controller = &controllers.OAuthController{DB: db, Config: config}
+	or.controller = new(controllers.OAuthController).Init(db, config)
 	or.api = api
-	or.controller.Init()
 }
 
 func (or *OauthRouter) Handle(r *gin.RouterGroup) {

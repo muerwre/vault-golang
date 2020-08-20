@@ -119,3 +119,7 @@ func (ur UserRepository) UpdateLastSeen(user *models.User) {
 	user.LastSeen = time.Now()
 	ur.db.Save(&user)
 }
+
+func (ur UserRepository) UpdatePhoto(uid uint, photoId uint) {
+	ur.db.Model(&models.User{}).Where("id = ?", uid).Update("photoId", photoId)
+}
