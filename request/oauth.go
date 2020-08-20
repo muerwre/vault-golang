@@ -22,19 +22,18 @@ type OAuthRegisterRequest struct {
 	Token    string `json:"string"`
 }
 
-func (req *OAuthRegisterRequest) Valid() (map[string]error, error) {
-	errors := map[string]error{}
+func (req *OAuthRegisterRequest) Valid() (map[string]string, error) {
+	errors := map[string]string{}
 	usernameRegexp := regexp.MustCompile(constants.UsernameRegexp)
 
 	switch {
 	case len(req.Username) < 2:
-		errors["username"] = fmt.Errorf(codes.UsernameIsShort)
-		fallthrough
+		errors["username"] = codes.UsernameIsShort
 	case !usernameRegexp.MatchString(req.Username):
-		errors["username"] = fmt.Errorf(codes.UsernameContainsInvalidChars)
+		errors["username"] = codes.UsernameContainsInvalidChars
 		fallthrough
 	case len(req.Password) < 6:
-		errors["password"] = fmt.Errorf(codes.PasswordIsShort)
+		errors["password"] = codes.PasswordIsShort
 		fallthrough
 	default:
 	}

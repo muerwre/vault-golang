@@ -213,17 +213,26 @@ func (oc OAuthController) Login(c *gin.Context) {
 	// Check if there's no account with this username
 	if _, err := oc.DB.UserRepository.GetByUsername(req.Username); err == nil {
 		// TODO: check it
-		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithUsername})
+		c.JSON(
+			http.StatusConflict,
+			gin.H{
+				"error": codes.UserExistWithUsername,
+				"errors": map[string]string{
+					"username": codes.UserExistWithUsername,
+				},
+			})
 		return
 	}
 
 	password, err := passwords.HashPassword(req.Password)
 
 	user := &models.User{
-		Fullname: claim.Data.Fetched.Name,
-		Username: req.Username,
-		Password: password,
-		Email:    claim.Data.Email,
+		Fullname:    claim.Data.Fetched.Name,
+		Username:    req.Username,
+		Password:    password,
+		Email:       claim.Data.Email,
+		Role:        models.USER_ROLES.USER,
+		IsActivated: "1",
 	}
 
 	oc.DB.UserRepository.Create(user)
