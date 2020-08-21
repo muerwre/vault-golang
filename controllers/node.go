@@ -271,26 +271,22 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 	}
 
 	nc.UpdateCommentFiles(data, comment)
-	nc.UpdateCommentText(data, comment)
-
-	if len(comment.Text) < 1 && len(comment.FilesOrder) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TextRequired})
+	if err := nc.UpdateCommentText(data, comment); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Updating node brief
 	nc.UpdateBriefFromComment(node, comment)
 
-	comment, err = nc.DB.NodeRepository.SaveCommentWithFiles(comment)
-
-	if err != nil {
+	if comment, err = nc.DB.NodeRepository.SaveCommentWithFiles(comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
 		return
 	}
 
 	nc.DB.FileRepository.UpdateTargetForIds(comment.FilesOrder, "comment")
 
-	// TODO: update comment mp3 titles
+	// TODO: update metadata for mp3s
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 }
@@ -685,12 +681,18 @@ func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *model
 	}
 }
 
-func (nc *NodeController) UpdateCommentText(data *models.Comment, comment *models.Comment) {
+func (nc *NodeController) UpdateCommentText(data *models.Comment, comment *models.Comment) error {
 	comment.Text = data.Text
 
 	if len(comment.Text) > 2048 {
 		comment.Text = comment.Text[0:2048]
 	}
+
+	if len(comment.Text) < 1 && len(comment.FilesOrder) == 0 {
+		return fmt.Errorf(codes.TextRequired)
+	}
+
+	return nil
 }
 
 func (nc *NodeController) LoadCommentFromData(id uint, node *models.Node, user *models.User) (*models.Comment, error) {
