@@ -23,6 +23,7 @@ type API struct {
 	staticRouter *routing.StaticRouter
 	metaRouter   *routing.MetaRouter
 	oauthRouter  *routing.OauthRouter
+	searchRouter *routing.SearchRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -57,11 +58,10 @@ func (a *API) Init() *gin.Engine {
 	r.OPTIONS("/*path", a.CorsHandler)
 
 	a.nodeRouter = new(routing.NodeRouter).Init(a, a.db).Handle(r.Group("/node"))
+	a.userRouter = new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
+	a.searchRouter = new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
 
 	// TODO: do the same for:
-	a.userRouter = &routing.UserRouter{}
-	a.userRouter.Init(a, a.db, a.mailer, a.Config)
-
 	a.statsRouter = &routing.StatsRouter{}
 	a.statsRouter.Init(a, a.db)
 
@@ -86,7 +86,6 @@ func (a *API) Init() *gin.Engine {
 }
 
 func (a *API) Handle(r *gin.RouterGroup) {
-	a.userRouter.Handle(r.Group("/user"))
 	a.statsRouter.Handle(r.Group("/stats"))
 	a.flowRouter.Handle(r.Group("/flow"))
 	a.uploadRouter.Handle(r.Group("/upload"))

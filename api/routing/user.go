@@ -14,13 +14,15 @@ type UserRouter struct {
 	api        utils.AppApi
 }
 
-func (ur *UserRouter) Init(a utils.AppApi, db db.DB, mailer mail.Mailer, conf app.Config) {
+func (ur *UserRouter) Init(a utils.AppApi, db db.DB, mailer mail.Mailer, conf app.Config) *UserRouter {
 	ur.controller = controllers.UserController{Mailer: mailer, DB: db, Config: conf}
 	ur.api = a
+
+	return ur
 }
 
 // UserRouter for /user/*
-func (ur *UserRouter) Handle(r *gin.RouterGroup) {
+func (ur *UserRouter) Handle(r *gin.RouterGroup) *UserRouter {
 	r.POST("/login", ur.controller.LoginUser)
 
 	r.GET("/restore/:id", ur.controller.GetRestoreCode)
@@ -41,4 +43,6 @@ func (ur *UserRouter) Handle(r *gin.RouterGroup) {
 		required.PATCH("/", ur.api.WithUser(false), ur.controller.PatchUser) // TODO: not working
 		required.GET("/updates", ur.api.WithUser(true), ur.controller.GetUpdates)
 	}
+
+	return ur
 }
