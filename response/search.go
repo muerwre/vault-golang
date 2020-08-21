@@ -17,7 +17,7 @@ type SearchNodeResponseNode struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (n *SearchNodeResponseNode) fromNode(node *models.Node) *SearchNodeResponseNode {
+func (n *SearchNodeResponseNode) FromNode(node models.Node) *SearchNodeResponseNode {
 	n.Id = node.ID
 	n.Thumbnail = node.Thumbnail
 	n.Title = node.Title
