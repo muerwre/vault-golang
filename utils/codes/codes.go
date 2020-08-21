@@ -34,6 +34,7 @@ const (
 	UserExistWithEmail           string = "User_Exist_With_Email"
 	UserExistWithSocial          string = "User_Exist_With_Social"
 	UserExistWithUsername        string = "User_Exist_With_Username"
+	CantSaveComment              string = "CantSaveComment"
 )
 
 var ValidationToCode = map[string]string{

@@ -50,3 +50,9 @@ func (fr FileRepository) GetFilesByIds(ids []uint) ([]*models.File, error) {
 func (fr FileRepository) Save(f *models.File) {
 	fr.db.Save(&f)
 }
+
+func (fr FileRepository) UpdateTargetForIds(ids []uint, target string) {
+	if len(ids) > 0 {
+		fr.db.Model(&models.File{}).Where("id IN (?)", ids).Update("Target", target)
+	}
+}

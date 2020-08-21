@@ -247,3 +247,20 @@ func (nr NodeRepository) GetForSearch(
 
 	return res, count
 }
+
+func (nr NodeRepository) GetById(id uint) (*models.Node, error) {
+	node := &models.Node{}
+	query := nr.db.First(&node, "id = ?", id)
+
+	return node, query.Error
+}
+
+func (nr NodeRepository) SaveCommentWithFiles(comment *models.Comment) (*models.Comment, error) {
+	query := nr.db.Set("gorm:association_autoupdate", false).
+		Set("gorm:association_save_reference", false).
+		Save(&comment).
+		Association("Files").
+		Replace(comment.Files)
+
+	return comment, query.Error
+}
