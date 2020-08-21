@@ -4,8 +4,8 @@ package main
 /*
 
 	-- before release --
+	TODO: search count
 	TODO: update song titles after save
-	TODO: search
 	TODO: setup deploy
 
 	-- after release --
@@ -14,6 +14,7 @@ package main
 	TODO: move all queries to repositories
 	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 
+	DONE: search
 	DONE: social login (vk, google)
 	DONE: node view not updated? (actually, not getting last_seen_boris property for user)
 	DONE: youtube titles
