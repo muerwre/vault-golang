@@ -4,7 +4,6 @@ package main
 /*
 
 	-- before release --
-	TODO: search count
 	TODO: update song titles after save
 	TODO: setup deploy
 
