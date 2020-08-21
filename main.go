@@ -3,16 +3,18 @@ package main
 // https://aaf.engineering/go-web-application-structure-part-2/
 /*
 
-	-- not working ---
-
-	TODO: social login (vk, google)
+	-- before release --
 	TODO: update song titles after save
 	TODO: search
+	TODO: setup deploy
 
+	-- after release --
+	TODO: test social login
 	TODO: refactor GetDiff
 	TODO: move all queries to repositories
 	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 
+	DONE: social login (vk, google)
 	DONE: node view not updated? (actually, not getting last_seen_boris property for user)
 	DONE: youtube titles
 	DONE: /node POST
