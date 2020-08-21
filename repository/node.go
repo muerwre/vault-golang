@@ -237,8 +237,8 @@ func (nr NodeRepository) GetForSearch(
 		Where("(title like concat('%', ?, '%') OR description like concat('%', ?, '%'))", text, text).
 		Limit(take).
 		Offset(skip).
-		//Order(fmt.Sprintf("title LIKE concat('%s', '%%') DESC", escapedText)).
-		//Order(fmt.Sprintf("description LIKE concat('%s', '%%') DESC", escapedText)).
+		Order(fmt.Sprintf("title LIKE concat('%s', '%%') DESC", text)).
+		Order(fmt.Sprintf("description LIKE concat('%s', '%%') DESC", text)).
 		Order("created_at DESC ")
 
 	query = nr.WhereIsFlowNode(query)

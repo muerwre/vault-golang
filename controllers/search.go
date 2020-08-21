@@ -33,6 +33,13 @@ func (sc SearchController) SearchNodes(c *gin.Context) {
 		return
 	}
 
+	req.Sanitize()
+
+	if len(req.Text) == 0 {
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+
 	nodes := sc.db.NodeRepository.GetForSearch(req.Text, req.Take, req.Skip)
 
 	for _, v := range nodes {
