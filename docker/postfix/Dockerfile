@@ -20,7 +20,7 @@ RUN \
  postconf -e "smtp_use_tls = yes" && \
  postconf -e "tls_high_cipherlist = ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK" && \
  postconf -e "smtp_tls_mandatory_protocols = !SSLv2, !SSLv3" && \
- postconf -e "smtp_tls_session_cache_database = btree:\${data_directory}/smtp_scache"
+ postconf -e "smtp_tls_session_cache_database = btree:\${data_directory}/smtp_scache" && \
  postconf -e milter_default_action=accept && \
  postconf -e milter_protocol=2 && \
  postconf -e smtpd_milters=inet:localhost:8891 && \
