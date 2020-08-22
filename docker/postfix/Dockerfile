@@ -1,7 +1,7 @@
-FROM bionuc
+FROM debian:buster
 
 WORKDIR /etc
-RUN apt-get update && apt-get install -y postfix opendkim opendmarc
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y postfix opendkim opendmarc
 
 COPY /etc/default/opendkim ./default/opendkim
 COPY /etc/opendkim/. ./opendkim/.
