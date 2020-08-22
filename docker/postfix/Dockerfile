@@ -1,3 +1,4 @@
+# https://community.vscale.io/hc/ru/community/posts/211887505-%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-Docker-Docker-Compose-Postfix-OpenDKIM-%D0%BD%D0%B0-Debian-%D0%B2-VScale-%D0%B4%D0%BB%D1%8F-%D0%BE%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D0%B8-e-mail-%D1%81-%D0%BF%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D1%8C%D1%8E
 FROM debian:jessie
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -26,6 +27,7 @@ RUN \
 RUN \
  mkdir /etc/opendkim/ && \
  opendkim-genkey -D /etc/opendkim/ -d $DKIM_DOMAIN -s $DKIM_SELECTOR && \
+ cat /etc/opendkim/$DKIM_SELECTOR.private && \
  cat /etc/opendkim/$DKIM_SELECTOR.txt && \
  printf "\
 KeyTable file:/etc/opendkim/keytable \n\
@@ -36,8 +38,8 @@ LogWhy yes \n\
 X-Header yes \n\
 SyslogSuccess yes \n" >> /etc/opendkim.conf && \
  printf "$DKIM_INTERNAL\n" >> /etc/opendkim/internal && \
- printf "$DKIM_SELECTOR._domainkey.$DKIM_DOMAIN $DKIM_DOMAIN:$DKIM_SELECTOR.$DKIM_DOMAIN:/etc/opendkim/$DKIM_SELECTOR.private\n" >> /etc/opendkim/keytable && \
- printf "$DKIM_SELECTOR.$DKIM_DOMAIN $DKIM_SELECTOR.$DKIM_DOMAIN._domainkey\n" >> /etc/opendkim/signingtable && \
+ printf "$DKIM_SELECTOR._domainkey.$DKIM_DOMAIN $DKIM_DOMAIN:$DKIM_SELECTOR:/etc/opendkim/$DKIM_SELECTOR.private\n" >> /etc/opendkim/keytable && \
+ printf "* mail._domainkey.$DKIM_DOMAIN\n" >> /etc/opendkim/signingtable && \
  printf "SOCKET=\"inet:8891@0.0.0.0\"\n" >> /etc/default/opendkim
 
 # Разрешаем читать ключ только владельцу

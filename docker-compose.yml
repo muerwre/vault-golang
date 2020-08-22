@@ -32,14 +32,14 @@ services:
       context: ./docker/postfix
       args:
         - POSTFIX_MYNETWORKS=127.0.0.1
-        - DKIM_DOMAIN=org
-        - DKIM_SELECTOR=vault48
+        - DKIM_DOMAIN=vault48.org
+        - DKIM_SELECTOR=mail
         - DKIM_INTERNAL=127.0.0.1
     expose:
       - "25"
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ./dkim.private:/etc/opendkim/vault48.private:ro
-      - ./dkim.txt:/etc/opendkim/vault48.txt:ro
+      - /etc/localtime:/etc/localtime
+      - ./dkim.private:/etc/opendkim/mail.private
+      - ./dkim.txt:/etc/opendkim/mail.txt
 volumes:
   node_modules:
