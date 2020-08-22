@@ -27,12 +27,19 @@ services:
     entrypoint: ./wait-for-it.sh -t 90 db:3306 -- ./vault serve
     depends_on:
       - db
-  mail:
-    restart: always
+  postfix:
     build:
-      context: .
-      dockerfile: docker/postfix/Dockerfile
+      context: ./docker/postfix
+      args:
+        - POSTFIX_MYNETWORKS=127.0.0.1
+        - DKIM_DOMAIN=org
+        - DKIM_SELECTOR=vault48
+        - DKIM_INTERNAL=127.0.0.1
+    expose:
+      - "25"
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - ./dkim.private:/etc/opendkim/vault48.private:ro
+      - ./dkim.txt:/etc/opendkim/vault48.txt:ro
 volumes:
   node_modules:
