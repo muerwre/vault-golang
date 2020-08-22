@@ -21,6 +21,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - .:/go
+      - /var/bbs/:/var/bbs/
     environment:
       EXPOSE: ${EXPOSE}
     entrypoint: ./wait-for-it.sh -t 90 db:3306 -- ./vault serve
