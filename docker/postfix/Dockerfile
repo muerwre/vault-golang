@@ -1,4 +1,5 @@
 # https://community.vscale.io/hc/ru/community/posts/211887505-%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-Docker-Docker-Compose-Postfix-OpenDKIM-%D0%BD%D0%B0-Debian-%D0%B2-VScale-%D0%B4%D0%BB%D1%8F-%D0%BE%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D0%B8-e-mail-%D1%81-%D0%BF%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D1%8C%D1%8E
+# use ssl https://upcloud.com/community/tutorials/secure-postfix-using-lets-encrypt/
 FROM debian:jessie
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -10,7 +11,7 @@ ARG DKIM_DOMAIN
 ARG DKIM_SELECTOR
 ARG DKIM_INTERNAL
 
-RUN apt-get update && apt-get install -y postfix rsyslog opendkim opendkim-tools openssl
+RUN apt-get update && apt-get install -y postfix rsyslog opendkim opendkim-tools openssl opendmarc
 
 # Конфигурация postfix для обработки писем через opendkim и создание лог-файла
 
@@ -23,8 +24,8 @@ RUN \
  postconf -e "smtp_tls_session_cache_database = btree:\${data_directory}/smtp_scache" && \
  postconf -e milter_default_action=accept && \
  postconf -e milter_protocol=2 && \
- postconf -e smtpd_milters=inet:localhost:8891 && \
- postconf -e non_smtpd_milters=inet:localhost:8891 && \
+ postconf -e "smtpd_milters=inet:localhost:8891, unix:/run/opendmarc/opendmarc.sock" && \
+ postconf -e "non_smtpd_milters=inet:localhost:8891, unix:/run/opendmarc/opendmarc.sock" && \
  touch /var/log/mail.log
 
 COPY ./dkim.private /etc/opendkim/$DKIM_SELECTOR.private
@@ -51,4 +52,13 @@ SyslogSuccess yes \n" >> /etc/opendkim.conf && \
 # Разрешаем читать ключ только владельцу
 RUN chown opendkim /etc/opendkim/$DKIM_SELECTOR.private && chmod 600 /etc/opendkim/$DKIM_SELECTOR.private
 
-CMD service rsyslog start && service opendkim start && service postfix start && tail -f /var/log/mail.log
+#opendmarc
+printf "\
+AuthservID HOSTNAME \n\
+IgnoreAuthenticatedClients true \n\
+Socket unix:/var/spool/opendmarc/opendmarc.sock \n\
+SPFSelfValidate true \n\
+Socket unix:/run/opendmarc/opendmarc.sock \n\
+" >> /etc/opendmarc/opendmarc.conf
+
+CMD service rsyslog start && service opendkim start && service opendmarc start && service postfix start && tail -f /var/log/mail.log
