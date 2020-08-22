@@ -32,8 +32,6 @@ services:
       build:
         context: .
         dockerfile: docker/postfix/Dockerfile
-      ports:
-        - 25:25
       volumes:
         - /etc/localtime:/etc/localtime:ro
 volumes:
