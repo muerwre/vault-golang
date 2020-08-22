@@ -29,7 +29,8 @@ services:
       - db
   postfix:
     build:
-      context: ./docker/postfix
+      context: .
+      dockerfile: docker/postfix/Dockerfile
       args:
         - POSTFIX_MYNETWORKS=127.0.0.1
         - DKIM_DOMAIN=vault48.org

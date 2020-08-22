@@ -23,12 +23,14 @@ RUN \
  postconf -e non_smtpd_milters=inet:localhost:8891 && \
  touch /var/log/mail.log
 
+COPY ./dkim.private /etc/opendkim/$DKIM_SELECTOR.private
+COPY ./dkim.txt /etc/opendkim/$DKIM_SELECTOR.txt
+
 # Создаем ключи и добавляем конфигурацию OpenDKIM, создаем лог файл. Также выводим на экран открытый ключ для добавления в TXT запись нашего домена.
 RUN \
- mkdir /etc/opendkim/ && \
- opendkim-genkey -D /etc/opendkim/ -d $DKIM_DOMAIN -s $DKIM_SELECTOR && \
- cat /etc/opendkim/$DKIM_SELECTOR.private && \
- cat /etc/opendkim/$DKIM_SELECTOR.txt && \
+# opendkim-genkey -D /etc/opendkim/ -d $DKIM_DOMAIN -s $DKIM_SELECTOR && \
+# cat /etc/opendkim/$DKIM_SELECTOR.private && \
+# cat /etc/opendkim/$DKIM_SELECTOR.txt && \
  printf "\
 KeyTable file:/etc/opendkim/keytable \n\
 SigningTable file:/etc/opendkim/signingtable \n\
