@@ -4,8 +4,10 @@ package main
 /*
 
 	-- before release --
+	TODO: frontend: mark account add button as type="button"
 	TODO: update song titles after save
 	TODO: setup deploy
+	TODO: optimize build with https://medium.com/@petomalina/using-go-mod-download-to-speed-up-golang-docker-builds-707591336888
 
 	-- after release --
 	TODO: test social login
