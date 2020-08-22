@@ -40,7 +40,5 @@ services:
       - "25"
     volumes:
       - /etc/localtime:/etc/localtime
-      - ./dkim.private:/etc/opendkim/mail.private
-      - ./dkim.txt:/etc/opendkim/mail.txt
 volumes:
   node_modules:
