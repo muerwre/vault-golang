@@ -1,0 +1,32 @@
+version: '3'
+services:
+  db:
+    restart: always
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: "password"
+      MYSQL_USER: 'user'
+      MYSQL_PASS: 'pass'
+      MYSQL_DATABASE: 'vault'
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - 3307:3306
+    volumes:
+      - ${MYSQL_VOLUME}:/var/lib/mysql
+  app:
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/vault/Dockerfile
+    ports:
+      - ${EXPOSE}:${EXPOSE}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - .:/go
+    environment:
+      EXPOSE: ${EXPOSE}
+    entrypoint: ./wait-for-it.sh -t 90 db:3306 -- ./vault serve
+    depends_on:
+      - db
+volumes:
+  node_modules:
