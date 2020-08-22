@@ -8,6 +8,7 @@ import (
 	"github.com/lEx0/go-libjpeg-nrgba/jpeg"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/sirupsen/logrus"
 	"image"
 	"image/gif"
 	"image/png"
@@ -75,6 +76,11 @@ func ReadImage(img *image.Image, file io.Reader, mime string) (err error) {
 
 func CreateScaledImage(src string, dest string, presetName string) (*bytes.Buffer, error) {
 	file, err := os.Open(src)
+
+	if err != nil {
+		logrus.Warnf("Can't open file for cache transform: %s %s", src, err.Error())
+		return nil, err
+	}
 
 	mime, err := mimetype.DetectFile(src)
 

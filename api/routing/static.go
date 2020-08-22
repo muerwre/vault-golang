@@ -6,6 +6,7 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/utils"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,8 +37,8 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		return
 	}
 
-	preset := string(matches[1])
-	src := string(matches[2])
+	preset, _ := url.QueryUnescape(string(matches[1]))
+	src, _ := url.QueryUnescape(string(matches[2]))
 	dest := filepath.Join("cache", preset, src)
 
 	if _, err := os.Stat(filepath.Join(sr.config.UploadPath, dest)); err == nil {
