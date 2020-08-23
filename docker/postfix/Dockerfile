@@ -26,6 +26,7 @@ postconf -e milter_default_action=accept && \
 postconf -e milter_protocol=2 && \
 postconf -e "smtpd_milters=inet:localhost:8891, unix:/run/opendmarc/opendmarc.sock" && \
 postconf -e "non_smtpd_milters=inet:localhost:8891, unix:/run/opendmarc/opendmarc.sock" && \
+postconf -e "myorigin = $DKIM_DOMAIN"
 touch /var/log/mail.log
 
 COPY ./dkim.private /etc/opendkim/$DKIM_SELECTOR.private
