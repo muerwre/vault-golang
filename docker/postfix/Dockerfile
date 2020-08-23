@@ -27,6 +27,7 @@ postconf -e milter_protocol=2 && \
 postconf -e "smtpd_milters=inet:localhost:8891, inet:localhost:9999" && \
 postconf -e "non_smtpd_milters=inet:localhost:8891, inet:localhost:9999" && \
 postconf -e "myorigin = $DKIM_DOMAIN" && \
+postconf -e "smtp_tls_security_level = may" && \
 touch /var/log/mail.log
 
 COPY ./dkim.private /etc/opendkim/$DKIM_SELECTOR.private
