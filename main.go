@@ -4,6 +4,7 @@ package main
 /*
 
 	-- before release --
+	TODO: PostComment should update node commented at!
 	TODO: frontend: update translations
 	TODO: frontend: mark account add button as type="button"
 	TODO: update song titles after save
