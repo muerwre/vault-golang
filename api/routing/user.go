@@ -27,7 +27,7 @@ func (ur *UserRouter) Handle(r *gin.RouterGroup) *UserRouter {
 
 	r.GET("/restore/:id", ur.controller.GetRestoreCode)
 	r.POST("/restore/:id", ur.controller.PostRestoreCode)
-	r.POST("/restore", ur.controller.CreateRestoreCode)
+	r.POST("/restore/", ur.controller.CreateRestoreCode)
 
 	optional := r.Group("/").Use(ur.api.AuthOptional)
 	{
