@@ -24,8 +24,8 @@ postconf -e "smtp_tls_mandatory_protocols = !SSLv2, !SSLv3" && \
 postconf -e "smtp_tls_session_cache_database = btree:\${data_directory}/smtp_scache" && \
 postconf -e milter_default_action=accept && \
 postconf -e milter_protocol=2 && \
-postconf -e "smtpd_milters=inet:localhost:8891, unix:/run/opendmarc/opendmarc.sock" && \
-postconf -e "non_smtpd_milters=inet:localhost:8891, unix:/run/opendmarc/opendmarc.sock" && \
+postconf -e "smtpd_milters=inet:localhost:8891, inet:localhost:9999" && \
+postconf -e "non_smtpd_milters=inet:localhost:8891, inet:localhost:9999" && \
 postconf -e "myorigin = $DKIM_DOMAIN" && \
 touch /var/log/mail.log
 
@@ -57,9 +57,11 @@ RUN chown opendkim /etc/opendkim/$DKIM_SELECTOR.private && chmod 600 /etc/opendk
 RUN printf "\
 AuthservID HOSTNAME \n\
 IgnoreAuthenticatedClients true \n\
-Socket unix:/var/spool/opendmarc/opendmarc.sock \n\
+Socket inet:9999@0.0.0.0 \n\
 SPFSelfValidate true \n\
 Socket unix:/run/opendmarc/opendmarc.sock \n\
 " >> /etc/opendmarc.conf
+
+# Socket unix:/var/spool/opendmarc/opendmarc.sock \n\
 
 CMD service rsyslog start && service opendkim start && service opendmarc start && service postfix start && tail -f /var/log/mail.log
