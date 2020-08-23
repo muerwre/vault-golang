@@ -44,6 +44,8 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 
 	if uid != 0 {
 		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, uid)
+
+		nc.DB.NodeViewRepository.UpdateView(uid, node.ID)
 	}
 
 	node.LikeCount = d.NodeRepository.GetNodeLikeCount(node)
