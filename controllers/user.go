@@ -226,7 +226,7 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 		Model(&models.User{}).Where("id = ?", code.UserID).
 		Update("password", password)
 
-	d.Delete(&code)
+	d.Delete(&code, "id = ?", code.ID)
 
 	token := d.UserRepository.GenerateTokenFor(code.User)
 
