@@ -11,7 +11,7 @@ ARG DKIM_DOMAIN
 ARG DKIM_SELECTOR
 ARG DKIM_INTERNAL
 
-RUN apt-get update && apt-get install -y postfix rsyslog opendkim opendkim-tools openssl opendmarc
+RUN apt-get update && apt-get install -y postfix rsyslog opendmarc opendkim opendkim-tools openssl
 
 # Конфигурация postfix для обработки писем через opendkim и создание лог-файла
 
@@ -60,6 +60,6 @@ IgnoreAuthenticatedClients true \n\
 Socket unix:/var/spool/opendmarc/opendmarc.sock \n\
 SPFSelfValidate true \n\
 Socket unix:/run/opendmarc/opendmarc.sock \n\
-" >> /etc/opendmarc/opendmarc.conf
+" >> /etc/opendmarc.conf
 
 CMD service rsyslog start && service opendkim start && service opendmarc start && service postfix start && tail -f /var/log/mail.log
