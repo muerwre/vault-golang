@@ -676,7 +676,8 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	d.Set("gorm:association_autoupdate", false).
 		Set("gorm:association_save_reference", false).
 		Save(&node).
-		Association("Files").Replace(node.Files)
+		Association("Files").
+		Replace(node.Files)
 
 	// Node not saved
 	if node.ID == 0 {

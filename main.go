@@ -4,9 +4,9 @@ package main
 /*
 
 	-- before release --
+	TODO: frontend: update translations
 	TODO: frontend: mark account add button as type="button"
 	TODO: update song titles after save
-	TODO: setup deploy
 	TODO: optimize build with https://medium.com/@petomalina/using-go-mod-download-to-speed-up-golang-docker-builds-707591336888
 
 	-- after release --
@@ -15,6 +15,7 @@ package main
 	TODO: move all queries to repositories
 	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 
+	DONE: setup deploy
 	DONE: search
 	DONE: social login (vk, google)
 	DONE: node view not updated? (actually, not getting last_seen_boris property for user)

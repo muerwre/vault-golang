@@ -1,27 +1,33 @@
 Port: 7777
 Host: localhost
 DB: 
-  URI: login:password@tcp(127.0.0.1)/database?parseTime=true
+  URI: login:password@tcp(db)/database?parseTime=true
   Debug: true
 Vk:
   ClientId: 123456
   ClientSecret: SECRET_API_KEY_FROM_VK
+  CallbackUrl: http://localhost:7777/oauth/vkontakte/process/
 API:
   Debug: false
   TlsFiles: []
   Host: 
 Smtp:
-  Host: hostname.org
+  Host: postfix # docker setup
   Port: 25
-  User: user
-  Password: password
-  From: Robot Mailer <robot@hostname.org>
+  User: # empty for docker
+  Password: # empty for docker
+  From: Robot Mailer <robot@vault48.org>
 Frontend:
   ResetUrl: /restore/
   PublicHost: localhost
 Uploads:
   Path: /tmp/uploads/here
-  MaxSizeMb: 100
+  MaxSizeMb: 200
 Google:
-  ApiKey: SomeKeyHere
+  ApiKey: YouTubeApiKeyHere
+  ClientId: 123456123123-someScrambledC0deHere.apps.googleusercontent.com
+  ClientSecret: sEcr-ETAPIkeYFROMGoogle
+  CallbackUrl: http://localhost:7777/oauth/google/process
+JWT:
+  Secret: CHANGE_ME!!!
 Debug: false
