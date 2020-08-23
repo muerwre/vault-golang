@@ -11,11 +11,11 @@ package main
 	TODO: optimize build with https://medium.com/@petomalina/using-go-mod-download-to-speed-up-golang-docker-builds-707591336888
 
 	-- after release --
-	TODO: test social login
 	TODO: refactor GetDiff
 	TODO: move all queries to repositories
 	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 
+	DONE: test social login
 	DONE: setup deploy
 	DONE: search
 	DONE: social login (vk, google)

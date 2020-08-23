@@ -1,8 +1,12 @@
-FROM golang:1.15
+FROM golang:1.15 AS build-env
+
+RUN apt-get update && apt-get install -y libjpeg-dev -q
 
 WORKDIR /usr/src/app
-RUN apt-get update && apt-get install -y libjpeg-dev
-COPY ./. .
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
 
 RUN make build
 
