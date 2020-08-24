@@ -267,6 +267,9 @@ func (nr NodeRepository) SaveCommentWithFiles(comment *models.Comment) error {
 		nr.db.Model(&models.File{}).
 			Where("id IN (?)", []uint(comment.FilesOrder)).
 			Update("Target", "comment")
+	} else {
+		// TODO: remove this after moving to CommentResponse
+		comment.Files = make([]*models.File, 0) // pass empty array to response
 	}
 
 	return query.Error
