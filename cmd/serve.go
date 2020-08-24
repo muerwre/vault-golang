@@ -23,7 +23,7 @@ func serveAPI(ctx context.Context, api *api.API) {
 	hasCerts := len(api.Config.TlsFiles) == 2
 
 	s := &http.Server{
-		Addr:        fmt.Sprintf("%s:%d", api.Config.Host, api.Config.Port),
+		Addr:        fmt.Sprintf(":%d", api.Config.Port),
 		Handler:     router,
 		ReadTimeout: 2 * time.Minute,
 	}

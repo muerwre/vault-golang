@@ -4,4 +4,4 @@ import (
 	"github.com/go-playground/validator"
 )
 
-var On *validator.Validate = validator.New()
+var On = validator.New()

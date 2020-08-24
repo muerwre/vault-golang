@@ -12,7 +12,7 @@ check: prepare_linter
 
 .PHONY: build
 build: clean
-	CGO_ENABLED=0 GOOS=${GOOS} go build -o bin/${APP} \
+	CGO_ENABLED=1 GOOS=${GOOS} go build -o bin/${APP} \
 		-ldflags "-X main.version=${RELEASE} -X main.commit=${COMMIT} -X main.buildTime=${BUILD_TIME}" \
 
 .PHONY: clean
