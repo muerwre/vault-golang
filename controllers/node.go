@@ -271,6 +271,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
+	// TODO: unset comment and node files in defer
 	nc.UpdateCommentFiles(data, comment)
 
 	if err := nc.UpdateCommentText(data, comment); err != nil {
@@ -507,22 +508,22 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
+	data := params.Node
 	node := &models.Node{}
 
-	if params.Node.ID != 0 {
-		d.First(&node, "id = ?", params.Node.ID)
+	if data.ID != 0 {
+		d.First(&node, "id = ?", data.ID)
 		node.Cover = nil
-		//node.CoverID = 0
 	} else {
 		node.User = u
 		node.UserID = &u.ID
-		node.Type = params.Node.Type
+		node.Type = data.Type
 		node.IsPublic = true
 		node.IsPromoted = true
 		node.Tags = make([]*models.Tag, 0)
 	}
 
-	if params.Node.Type == "" || !models.FLOW_NODE_TYPES.Contains(params.Node.Type) {
+	if data.Type == "" || !models.FLOW_NODE_TYPES.Contains(data.Type) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectType})
 		return
 	}
@@ -533,44 +534,37 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	}
 
 	// Update previous node cover target to be null if its changed
-	if node.Cover != nil &&
-		//node.CoverID != 0 &&
-		(params.Node.Cover == nil || params.Node.Cover.ID == 0 || params.Node.Cover.ID != *node.CoverID) {
-		d.Model(&node.Files).Where("id IN (?)", node.CoverID).Update("target", nil)
-	}
+	nc.UpdateNodeCoverIfChanged(&data, node)
 
-	// Validate node cover
-	if params.Node.Cover != nil && params.Node.Cover.ID != 0 {
-		if node.Cover == nil {
-			node.Cover = &models.File{}
+	// Clear previous cover target if succeeded
+	defer func() {
+		if node.Cover != nil && (data.Cover == nil || data.Cover.ID == 0 || data.Cover.ID != *node.CoverID) {
+			nc.DB.Model(&node.Files).Where("id IN (?)", node.CoverID).Update("target", nil)
 		}
-
-		d.First(&models.File{}, "id = ?", params.Node.Cover.ID).Scan(&node.Cover)
-		*node.CoverID = params.Node.Cover.ID
-	}
+	}()
 
 	// Finding out valid comment attaches and sorting them according to files_order
 	originFiles := make([]uint, len(node.FilesOrder))
 	copy(originFiles, node.FilesOrder)
 
 	// Setting FilesOrder based on sorted Files array of input data
-	params.Node.FilesOrder = make(models.CommaUintArray, 0)
+	data.FilesOrder = make(models.CommaUintArray, 0)
 
-	for _, v := range params.Node.Files {
+	for _, v := range data.Files {
 		if v == nil {
 			continue
 		}
 
-		params.Node.FilesOrder = append(node.FilesOrder, v.ID)
+		data.FilesOrder = append(node.FilesOrder, v.ID)
 	}
 
-	if len(params.Node.FilesOrder) > 0 {
-		ids, _ := params.Node.FilesOrder.Value()
+	if len(data.FilesOrder) > 0 {
+		ids, _ := data.FilesOrder.Value()
 
 		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
-			Find(&params.Node.Files, "id IN (?)", []uint(params.Node.FilesOrder))
+			Find(&data.Files, "id IN (?)", []uint(data.FilesOrder))
 
-		node.ApplyFiles(params.Node.Files)
+		node.ApplyFiles(data.Files)
 	} else {
 		node.Files = make([]*models.File, 0)
 		node.FilesOrder = make(models.CommaUintArray, 0)
@@ -590,13 +584,9 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		d.Model(&node.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
 	}
 
-	node.Title = params.Node.Title
+	nc.UpdateNodeTitle(&data, node)
 
-	if len(node.Title) > 64 {
-		node.Title = node.Title[:64]
-	}
-
-	node.ApplyBlocks(params.Node.Blocks)
+	node.ApplyBlocks(data.Blocks)
 
 	if val, ok := validation.NodeValidators[node.Type]; ok {
 		err = val(node)
@@ -611,7 +601,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	node.UpdateDescription()
 	node.UpdateThumbnail()
 
-	nc.UpdateFilesMetadata(params.Node.Files, node.Files)
+	nc.UpdateFilesMetadata(data.Files, node.Files)
 
 	// Save node and its files
 	d.Set("gorm:association_autoupdate", false).
@@ -627,7 +617,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 
 	// Updating current files target
 	if len(node.FilesOrder) > 0 {
-		d.Model(&node.Files).Where("id IN (?)", []uint(node.FilesOrder)).Update("Target", "node")
+		d.Model(&models.File{}).Where("id IN (?)", node.FilesOrder).Update("Target", "node")
 	}
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
@@ -733,5 +723,21 @@ func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*mod
 				break
 			}
 		}
+	}
+}
+
+func (nc NodeController) UpdateNodeCoverIfChanged(data *models.Node, node *models.Node) {
+	// Validate node cover
+	if data.Cover != nil && data.Cover.ID != 0 {
+		nc.DB.First(&models.File{}, "id = ?", data.Cover.ID).Scan(&node.Cover)
+		*node.CoverID = data.Cover.ID
+	}
+}
+
+func (nc NodeController) UpdateNodeTitle(data *models.Node, node *models.Node) {
+	node.Title = data.Title
+
+	if len(node.Title) > 64 {
+		node.Title = node.Title[:64]
 	}
 }

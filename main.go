@@ -8,6 +8,8 @@ package main
 	TODO: move everything to cases on PostNode
 	TODO: node not added?
 	TODO: load comment user after saving it
+	TODO: load node user after saving it
+	TODO: unset comment and node files in defer
 	TODO: audio node with only mp3s threaten as empty?
 	TODO: update song titles after save
 	TODO: setup deploy
