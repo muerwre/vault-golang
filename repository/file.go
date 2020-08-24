@@ -52,5 +52,5 @@ func (fr FileRepository) Save(f *models.File) {
 }
 
 func (fr FileRepository) UpdateMetadata(f *models.File, m models.FileMetadata) {
-	fr.db.Where("id = ?", f.ID).Set("metadata", m).Save(&f)
+	fr.db.Model(&f).Update("metadata", m)
 }

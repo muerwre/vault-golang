@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/request"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -610,6 +611,8 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	node.UpdateDescription()
 	node.UpdateThumbnail()
 
+	nc.UpdateFilesMetadata(params.Node.Files, node.Files)
+
 	// Save node and its files
 	d.Set("gorm:association_autoupdate", false).
 		Set("gorm:association_save_reference", false).
@@ -718,12 +721,17 @@ func (nc *NodeController) LoadCommentFromData(id uint, node *models.Node, user *
 }
 
 func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*models.File) {
-	// TODO: load metadata from data
-	//for _, v := range data.Files {
-	//	if v.Type != constants.FileTypeAudio {
-	//		continue
-	//	}
-	//
-	//	nc.DB.FileRepository.UpdateMetadata(v, v.Metadata)
-	//}
+	for _, df := range data {
+		if df.Type != constants.FileTypeAudio {
+			continue
+		}
+
+		for _, cf := range comment {
+			if cf.ID == df.ID && cf.Metadata.Title != df.Metadata.Title {
+				cf.Metadata.Title = df.Metadata.Title
+				nc.DB.FileRepository.UpdateMetadata(cf, cf.Metadata)
+				break
+			}
+		}
+	}
 }
