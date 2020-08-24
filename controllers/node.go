@@ -236,6 +236,7 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 // PostComment - /node/:id/comment saving and creating comments
 func (nc *NodeController) PostComment(c *gin.Context) {
 	data := &models.Comment{}
+
 	u := c.MustGet("User").(*models.User)
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
@@ -246,20 +247,16 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 
 	node, err := nc.DB.NodeRepository.GetById(uint(nid))
 
-	if err != nil {
-		logrus.Warnf(err.Error())
+	if err != nil || node.Type == "" || !node.CanBeCommented() {
+		if err != nil {
+			logrus.Warnf(err.Error())
+		}
+
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	if node.Type == "" || !node.CanBeCommented() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
-		return
-	}
-
-	err = c.BindJSON(&data)
-
-	if err != nil {
+	if err = c.BindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
@@ -271,23 +268,23 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	// TODO: unset comment and node files in defer
-	nc.UpdateCommentFiles(data, comment)
+	lostFiles := nc.UpdateCommentFiles(data, comment)
 
 	if err := nc.UpdateCommentText(data, comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Updating node brief
-	nc.UpdateBriefFromComment(node, comment)
-
-	if comment, err = nc.DB.NodeRepository.SaveCommentWithFiles(comment); err != nil {
+	if err = nc.DB.NodeRepository.SaveCommentWithFiles(comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
 		return
 	}
 
-	nc.UpdateFilesMetadata(data.Files, comment.Files)
+	defer func() {
+		nc.UnsetFilesTarget(lostFiles)
+		nc.UpdateBriefFromComment(node, comment)
+		nc.UpdateFilesMetadata(data.Files, comment.Files)
+	}()
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 }
@@ -512,7 +509,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	node := &models.Node{}
 
 	if data.ID != 0 {
-		d.First(&node, "id = ?", data.ID)
+		d.Preload("User").Preload("User.Photo").First(&node, "id = ?", data.ID)
 		node.Cover = nil
 	} else {
 		node.User = u
@@ -632,7 +629,7 @@ func (nc NodeController) UpdateBriefFromComment(node *models.Node, comment *mode
 
 // TODO: Move everything below this line to usecase:
 
-func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *models.Comment) {
+func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *models.Comment) []uint {
 	// Setting FilesOrder based on sorted Files array of input data
 	data.FilesOrder = make(models.CommaUintArray, 0)
 
@@ -651,8 +648,14 @@ func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *model
 	if len(data.FilesOrder) > 0 {
 		ids, _ := data.FilesOrder.Value()
 
-		nc.DB.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
-			Find(&comment.Files, "id IN (?) AND TYPE IN (?)", []uint(data.FilesOrder), structs.Names(models.COMMENT_FILE_TYPES))
+		nc.DB.
+			Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
+			Find(
+				&comment.Files,
+				"id IN (?) AND TYPE IN (?)",
+				[]uint(data.FilesOrder),
+				structs.Names(models.COMMENT_FILE_TYPES),
+			)
 
 		for i := 0; i < len(comment.Files); i += 1 { // TODO: limit files count
 			comment.FilesOrder = append(comment.FilesOrder, comment.Files[i].ID)
@@ -669,9 +672,18 @@ func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *model
 		}
 	}
 
-	// Unsetting them
-	if len(lostFiles) > 0 {
-		nc.DB.Model(&comment.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
+	return lostFiles
+}
+
+func (nc *NodeController) SetFilesTarget(files []uint, target string) {
+	if len(files) > 0 {
+		nc.DB.Model(&models.File{}).Where("id IN (?)", []uint(files)).Update("target", target)
+	}
+}
+
+func (nc *NodeController) UnsetFilesTarget(files []uint) {
+	if len(files) > 0 {
+		nc.DB.Model(&models.File{}).Where("id IN (?)", files).Update("target", nil)
 	}
 }
 
@@ -695,7 +707,7 @@ func (nc *NodeController) LoadCommentFromData(id uint, node *models.Node, user *
 	}
 
 	if id != 0 {
-		nc.DB.First(&comment, "id = ?", id)
+		nc.DB.Preload("User").Preload("User.Photo").First(&comment, "id = ?", id)
 	} else {
 		comment.Node = node
 		comment.NodeID = &node.ID

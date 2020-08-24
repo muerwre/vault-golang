@@ -255,16 +255,19 @@ func (nr NodeRepository) GetById(id uint) (*models.Node, error) {
 	return node, query.Error
 }
 
-func (nr NodeRepository) SaveCommentWithFiles(comment *models.Comment) (*models.Comment, error) {
-	query := nr.db.Set("gorm:association_autoupdate", false).
+func (nr NodeRepository) SaveCommentWithFiles(comment *models.Comment) error {
+	query := nr.db.
+		Set("gorm:association_autoupdate", false).
 		Set("gorm:association_save_reference", false).
 		Save(&comment).
 		Association("Files").
 		Replace(comment.Files)
 
 	if len(comment.FilesOrder) > 0 {
-		nr.db.Model(&models.File{}).Where("id IN (?)", []uint(comment.FilesOrder)).Update("Target", "comment")
+		nr.db.Model(&models.File{}).
+			Where("id IN (?)", []uint(comment.FilesOrder)).
+			Update("Target", "comment")
 	}
 
-	return comment, query.Error
+	return query.Error
 }

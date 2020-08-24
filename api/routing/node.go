@@ -22,7 +22,7 @@ func (nr *NodeRouter) Handle(r *gin.RouterGroup) *NodeRouter {
 	a := nr.api
 	controller := nr.controller
 
-	r.POST("/", a.AuthRequired, a.WithUser(false), controller.PostNode)
+	r.POST("/", a.AuthRequired, a.WithUser(true), controller.PostNode)
 
 	node := r.Group("/:id")
 	{
@@ -39,7 +39,7 @@ func (nr *NodeRouter) Handle(r *gin.RouterGroup) *NodeRouter {
 	comment := r.Group("/:id/comment")
 	{
 		comment.GET("", controller.GetNodeComments)
-		comment.POST("", a.AuthRequired, a.WithUser(false), controller.PostComment)
+		comment.POST("", a.AuthRequired, a.WithUser(true), controller.PostComment)
 		comment.POST("/:cid/lock", a.AuthRequired, a.WithUser(false), controller.LockComment)
 	}
 
