@@ -271,6 +271,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 	}
 
 	nc.UpdateCommentFiles(data, comment)
+
 	if err := nc.UpdateCommentText(data, comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -284,9 +285,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	nc.DB.FileRepository.UpdateTargetForIds(comment.FilesOrder, "comment")
-
-	// TODO: update metadata for mp3s
+	nc.UpdateFilesMetadata(data.Files, comment.Files)
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 }
@@ -638,6 +637,8 @@ func (nc NodeController) UpdateBriefFromComment(node *models.Node, comment *mode
 	}
 }
 
+// TODO: Move everything below this line to usecase:
+
 func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *models.Comment) {
 	// Setting FilesOrder based on sorted Files array of input data
 	data.FilesOrder = make(models.CommaUintArray, 0)
@@ -714,4 +715,15 @@ func (nc *NodeController) LoadCommentFromData(id uint, node *models.Node, user *
 	}
 
 	return comment, nil
+}
+
+func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*models.File) {
+	// TODO: load metadata from data
+	//for _, v := range data.Files {
+	//	if v.Type != constants.FileTypeAudio {
+	//		continue
+	//	}
+	//
+	//	nc.DB.FileRepository.UpdateMetadata(v, v.Metadata)
+	//}
 }

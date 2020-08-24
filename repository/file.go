@@ -51,8 +51,6 @@ func (fr FileRepository) Save(f *models.File) {
 	fr.db.Save(&f)
 }
 
-func (fr FileRepository) UpdateTargetForIds(ids []uint, target string) {
-	if len(ids) > 0 {
-		fr.db.Model(&models.File{}).Where("id IN (?)", ids).Update("Target", target)
-	}
+func (fr FileRepository) UpdateMetadata(f *models.File, m models.FileMetadata) {
+	fr.db.Where("id = ?", f.ID).Set("metadata", m).Save(&f)
 }

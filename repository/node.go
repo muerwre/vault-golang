@@ -262,5 +262,9 @@ func (nr NodeRepository) SaveCommentWithFiles(comment *models.Comment) (*models.
 		Association("Files").
 		Replace(comment.Files)
 
+	if len(comment.FilesOrder) > 0 {
+		nr.db.Model(&models.File{}).Where("id IN (?)", comment.FilesOrder).Update("Target", "comment")
+	}
+
 	return comment, query.Error
 }
