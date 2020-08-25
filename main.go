@@ -4,6 +4,7 @@ package main
 /*
 
 	-- before release --
+	TODO: comment mp3's title not updating immediately
 	TODO: flow node doesn't have title sometimes
 	TODO: move everything to cases on PostNode
 	TODO: load comment user after saving it
