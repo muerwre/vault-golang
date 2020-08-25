@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/goulash/audio"
+	"github.com/sirupsen/logrus"
 	"github.com/tcolgate/mp3"
 	"io"
 	"os"
@@ -25,7 +25,8 @@ func GetAudioDuration(path string) int {
 			if err == io.EOF {
 				break
 			}
-			fmt.Println(err)
+
+			logrus.Warnf(err.Error())
 			return 0
 		}
 
