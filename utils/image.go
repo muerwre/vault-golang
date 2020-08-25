@@ -78,7 +78,7 @@ func CreateScaledImage(src string, dest string, presetName string) (*bytes.Buffe
 	file, err := os.Open(src)
 
 	if err != nil {
-		logrus.Warnf("Can't open file for cache transform: %s %s", src, err.Error())
+		logrus.Infof("Can't open file for cache transform: %s %s", src, err.Error())
 		return nil, err
 	}
 

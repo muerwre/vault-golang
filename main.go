@@ -4,12 +4,7 @@ package main
 /*
 
 	-- before release --
-	TODO: posting audio node with two songs creates node with only one
-	TODO: flow node doesn't have title sometimes
 	TODO: move everything to cases on PostNode
-	TODO: load comment user after saving it
-	TODO: load node user after saving it
-	TODO: unset comment and node files in defer
 
 	-- after release --
 	TODO: refactor GetDiff
