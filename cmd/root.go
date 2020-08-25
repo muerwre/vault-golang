@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
 
@@ -42,7 +41,7 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Unable to read config: %v\n", err)
+		logrus.Warnf("Unable to read config: %v\n", err)
 		os.Exit(1)
 	}
 }

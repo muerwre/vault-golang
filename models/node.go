@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"github.com/muerwre/vault-golang/constants"
 	"time"
 
@@ -304,10 +303,6 @@ func (n *Node) SortFiles() {
 	for i := 0; i < len(n.Files); i += 1 {
 		k := n.Files[i]
 		filesWithIds[k.ID] = k
-	}
-
-	for k, v := range filesWithIds {
-		fmt.Printf("%+v: %+v\n", k, v)
 	}
 
 	for i := 0; i < len(n.FilesOrder); i += 1 {
