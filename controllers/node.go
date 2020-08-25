@@ -505,7 +505,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.LoadNodeFromData(&data, user)
+	node, err := nc.LoadNodeFromData(data, user)
 
 	if err != nil {
 		logrus.Warnf("Can't load node from data: %s\nData:\n%+v", err.Error(), data)
@@ -580,6 +580,8 @@ func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *model
 	// Loading that files
 	if len(data.FilesOrder) > 0 {
 		ids, _ := data.FilesOrder.Value()
+
+		comment.Files = make([]*models.File, 0)
 
 		query := nc.DB.
 			Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
@@ -661,12 +663,12 @@ func (nc *NodeController) LoadCommentFromData(id uint, node *models.Node, user *
 
 func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*models.File) {
 	for _, df := range data {
-		if df.Type != constants.FileTypeAudio {
+		if df == nil || df.Type != constants.FileTypeAudio {
 			continue
 		}
 
 		for _, cf := range comment {
-			if cf.ID == df.ID && cf.Metadata.Title != df.Metadata.Title {
+			if cf != nil && cf.ID == df.ID && cf.Metadata.Title != df.Metadata.Title {
 				cf.Metadata.Title = df.Metadata.Title
 
 				if err := nc.DB.FileRepository.UpdateMetadata(cf, cf.Metadata); err != nil {
@@ -718,7 +720,7 @@ func (nc NodeController) UpdateNodeBlocks(data models.Node, node *models.Node) e
 	return nil
 }
 
-func (nc NodeController) LoadNodeFromData(data *models.Node, u *models.User) (*models.Node, error) {
+func (nc NodeController) LoadNodeFromData(data models.Node, u *models.User) (*models.Node, error) {
 	node := &models.Node{}
 
 	if data.ID != 0 {
@@ -757,11 +759,13 @@ func (nc NodeController) UpdateNodeFiles(data models.Node, node *models.Node) ([
 			continue
 		}
 
-		data.FilesOrder = append(node.FilesOrder, v.ID)
+		data.FilesOrder = append(data.FilesOrder, v.ID)
 	}
 
 	if len(data.FilesOrder) > 0 {
 		ids, _ := data.FilesOrder.Value()
+
+		data.Files = make([]*models.File, 0)
 
 		query := nc.DB.
 			Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).

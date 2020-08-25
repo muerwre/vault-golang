@@ -281,7 +281,8 @@ func (nr NodeRepository) SaveCommentWithFiles(comment *models.Comment) error {
 
 func (nr NodeRepository) SaveNodeWithFiles(node *models.Node) error {
 	// Save node and its files
-	query := nr.db.Set("gorm:association_autoupdate", false).
+	query := nr.db.
+		Set("gorm:association_autoupdate", false).
 		Set("gorm:association_save_reference", false).
 		Save(&node).
 		Association("Files").
