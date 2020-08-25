@@ -8,12 +8,12 @@ import (
 )
 
 type NodeRouter struct {
-	controller controllers.NodeController
+	controller *controllers.NodeController
 	api        utils.AppApi
 }
 
 func (nr *NodeRouter) Init(a utils.AppApi, db db.DB) *NodeRouter {
-	nr.controller = controllers.NodeController{DB: db}
+	nr.controller = new(controllers.NodeController).Init(db)
 	nr.api = a
 	return nr
 }
