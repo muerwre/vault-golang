@@ -5,6 +5,7 @@ package main
 
 	-- before release --
 	TODO: move everything to cases on PostNode
+	TODO: frontend hide image view if image is null for audio nodes
 
 	-- after release --
 	TODO: refactor GetDiff
