@@ -4,7 +4,7 @@ package main
 /*
 
 	-- before release --
-	TODO: flow node doesn't have user
+	TODO: flow node doesn't have title sometimes
 	TODO: move everything to cases on PostNode
 	TODO: load comment user after saving it
 	TODO: load node user after saving it

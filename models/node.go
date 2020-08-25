@@ -113,16 +113,6 @@ type Node struct {
 	LikeCount   int            `json:"like_count" gorm:"-" sql:"-"`
 }
 
-type FlowNode struct {
-	*Model
-	Title       string    `json:"title"`
-	Type        string    `json:"type"`
-	Thumbnail   string    `json:"thumbnail"`
-	Description string    `json:"description"`
-	CommentedAt time.Time `json:"commented_at" gorm:"column:commented_at"`
-	Flow        NodeFlow  `json:"flow" gorm:"column:flow"`
-}
-
 func (Node) TableName() string {
 	return "node"
 }

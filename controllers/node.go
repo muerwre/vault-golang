@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/request"
+	"github.com/muerwre/vault-golang/response"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
@@ -108,9 +109,10 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	heroes := &[]models.Node{}
 	updated := &[]models.Node{}
 	recent := &[]models.Node{}
+
 	valid := []uint{}
 
-	q := nc.DB.Model(&models.Node{}).Preload("User")
+	q := nc.DB.Preload("User").Preload("User.Photo").Model(&models.Node{})
 	// TODO: move to repo
 	nc.DB.NodeRepository.WhereIsFlowNode(q)
 
@@ -121,20 +123,20 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	go func() {
 		q.Where("created_at > ?", params.Start).
 			Order("created_at DESC").
-			Scan(&before)
+			Find(&before)
 
 		q.Where("created_at < ?", params.End).
 			Order("created_at DESC").
 			Offset(0).
 			Limit(params.Take).
-			Scan(&after)
+			Find(&after)
 
 		if params.WithHeroes {
 			q.Order("RAND()").
 				Where("type = ? AND is_heroic = ?", "image", true).
 				Offset(0).
 				Limit(20).
-				Scan(&heroes)
+				Find(&heroes)
 		}
 
 		wg.Done()
@@ -146,7 +148,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 				Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
 				Where("node_view.visited < node.commented_at").
 				Limit(10).
-				Scan(&updated)
+				Find(&updated)
 		}
 
 		exclude := make([]uint, len(*updated)+1)
@@ -160,7 +162,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 			q.Order("created_at DESC").
 				Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
 				Limit(16).
-				Scan(&recent)
+				Find(&recent)
 		}
 
 		if params.WithValid {
@@ -186,14 +188,9 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 	wg.Wait()
 
-	c.JSON(http.StatusOK, gin.H{
-		"before":  before,
-		"after":   after,
-		"heroes":  heroes,
-		"updated": updated,
-		"recent":  recent,
-		"valid":   valid,
-	})
+	resp := new(response.FlowResponse).Init(*before, *after, *heroes, *updated, *recent, valid)
+
+	c.JSON(http.StatusOK, resp)
 }
 
 func (nc *NodeController) LockComment(c *gin.Context) {
