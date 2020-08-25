@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"github.com/muerwre/vault-golang/constants"
 	"time"
 
@@ -111,16 +110,6 @@ type Node struct {
 	Flow        NodeFlow       `json:"flow" gorm:"column:flow"`
 	IsLiked     bool           `json:"is_liked" gorm:"-" sql:"-"`
 	LikeCount   int            `json:"like_count" gorm:"-" sql:"-"`
-}
-
-type FlowNode struct {
-	*Model
-	Title       string    `json:"title"`
-	Type        string    `json:"type"`
-	Thumbnail   string    `json:"thumbnail"`
-	Description string    `json:"description"`
-	CommentedAt time.Time `json:"commented_at" gorm:"column:commented_at"`
-	Flow        NodeFlow  `json:"flow" gorm:"column:flow"`
 }
 
 func (Node) TableName() string {
@@ -314,10 +303,6 @@ func (n *Node) SortFiles() {
 	for i := 0; i < len(n.Files); i += 1 {
 		k := n.Files[i]
 		filesWithIds[k.ID] = k
-	}
-
-	for k, v := range filesWithIds {
-		fmt.Printf("%+v: %+v\n", k, v)
 	}
 
 	for i := 0; i < len(n.FilesOrder); i += 1 {

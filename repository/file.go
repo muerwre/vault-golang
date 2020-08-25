@@ -50,3 +50,7 @@ func (fr FileRepository) GetFilesByIds(ids []uint) ([]*models.File, error) {
 func (fr FileRepository) Save(f *models.File) {
 	fr.db.Save(&f)
 }
+
+func (fr FileRepository) UpdateMetadata(f *models.File, m models.FileMetadata) {
+	fr.db.Model(&f).Update("metadata", m)
+}

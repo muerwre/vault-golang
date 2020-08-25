@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		logrus.Warnf(err.Error())
 		os.Exit(1)
 	}
 }
@@ -41,7 +41,7 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Unable to read config: %v\n", err)
+		logrus.Warnf("Unable to read config: %v\n", err)
 		os.Exit(1)
 	}
 }

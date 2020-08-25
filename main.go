@@ -4,11 +4,11 @@ package main
 /*
 
 	-- before release --
-	TODO: PostComment should update node commented at!
-	TODO: frontend: update translations
-	TODO: frontend: mark account add button as type="button"
-	TODO: update song titles after save
-	TODO: optimize build with https://medium.com/@petomalina/using-go-mod-download-to-speed-up-golang-docker-builds-707591336888
+	TODO: flow node doesn't have title sometimes
+	TODO: move everything to cases on PostNode
+	TODO: load comment user after saving it
+	TODO: load node user after saving it
+	TODO: unset comment and node files in defer
 
 	-- after release --
 	TODO: refactor GetDiff

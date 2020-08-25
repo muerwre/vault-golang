@@ -2,7 +2,10 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/request"
+	"github.com/muerwre/vault-golang/response"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"strings"
@@ -92,7 +95,6 @@ func (nc *NodeController) GetNodeComments(c *gin.Context) {
 func (nc *NodeController) GetDiff(c *gin.Context) {
 	params := &request.NodeDiffParams{}
 	err := c.Bind(&params)
-	d := nc.DB
 	uid := c.MustGet("UID").(uint)
 
 	if err != nil {
@@ -104,15 +106,17 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 		params.Take = 40
 	}
 
-	before := &[]models.FlowNode{}
-	after := &[]models.FlowNode{}
-	heroes := &[]models.FlowNode{}
-	updated := &[]models.FlowNode{}
-	recent := &[]models.FlowNode{}
+	before := &[]models.Node{}
+	after := &[]models.Node{}
+	heroes := &[]models.Node{}
+	updated := &[]models.Node{}
+	recent := &[]models.Node{}
+
 	valid := []uint{}
 
+	q := nc.DB.Preload("User").Preload("User.Photo").Model(&models.Node{})
 	// TODO: move to repo
-	q := nc.DB.NodeRepository.WhereIsFlowNode(d.Model(&models.Node{}))
+	nc.DB.NodeRepository.WhereIsFlowNode(q)
 
 	var wg sync.WaitGroup
 
@@ -121,20 +125,20 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	go func() {
 		q.Where("created_at > ?", params.Start).
 			Order("created_at DESC").
-			Scan(&before)
+			Find(&before)
 
 		q.Where("created_at < ?", params.End).
 			Order("created_at DESC").
 			Offset(0).
-			Limit(params.Take).Scan(&after)
+			Limit(params.Take).
+			Find(&after)
 
 		if params.WithHeroes {
-			d.Model(&models.Node{}).
+			q.Order("RAND()").
 				Where("type = ? AND is_heroic = ?", "image", true).
-				Order("RAND()").
 				Offset(0).
 				Limit(20).
-				Scan(&heroes)
+				Find(&heroes)
 		}
 
 		wg.Done()
@@ -146,7 +150,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 				Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
 				Where("node_view.visited < node.commented_at").
 				Limit(10).
-				Scan(&updated)
+				Find(&updated)
 		}
 
 		exclude := make([]uint, len(*updated)+1)
@@ -158,10 +162,9 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 		if params.WithRecent {
 			q.Order("created_at DESC").
-				Preload("User").
 				Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
 				Limit(16).
-				Scan(&recent)
+				Find(&recent)
 		}
 
 		if params.WithValid {
@@ -187,14 +190,9 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 	wg.Wait()
 
-	c.JSON(http.StatusOK, gin.H{
-		"before":  before,
-		"after":   after,
-		"heroes":  heroes,
-		"updated": updated,
-		"recent":  recent,
-		"valid":   valid,
-	})
+	resp := new(response.FlowResponse).Init(*before, *after, *heroes, *updated, *recent, valid)
+
+	c.JSON(http.StatusOK, resp)
 }
 
 func (nc *NodeController) LockComment(c *gin.Context) {
@@ -233,12 +231,10 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
 }
 
-// PostComment - /node/:id/comment savng and creating comments
+// PostComment - /node/:id/comment saving and creating comments
 func (nc *NodeController) PostComment(c *gin.Context) {
-	comment := &models.Comment{}
 	data := &models.Comment{}
-	node := &models.Node{}
-	d := nc.DB
+
 	u := c.MustGet("User").(*models.User)
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
@@ -247,109 +243,46 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	d.First(&node, "id = ?", nid)
+	node, err := nc.DB.NodeRepository.GetById(uint(nid))
 
-	if node.Type == "" || !node.CanBeCommented() {
+	if err != nil || node.Type == "" || !node.CanBeCommented() {
+		if err != nil {
+			logrus.Warnf(err.Error())
+		}
+
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	err = c.BindJSON(&data)
-
-	if err != nil {
+	if err = c.BindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	if data.ID != 0 {
-		d.First(&comment, "id = ?", data.ID)
-	} else {
-		comment.Node = node
-		comment.NodeID = &node.ID
-		comment.User = u
-		comment.UserID = &u.ID
-	}
+	comment, err := nc.LoadCommentFromData(data.ID, node, u)
 
-	if *comment.NodeID != node.ID || !comment.CanBeEditedBy(u) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NotEnoughRights})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Setting FilesOrder based on sorted Files array of input data
-	data.FilesOrder = make(models.CommaUintArray, 0)
+	lostFiles := nc.UpdateCommentFiles(data, comment)
 
-	for _, v := range data.Files {
-		data.FilesOrder = append(data.FilesOrder, v.ID)
-	}
-
-	// Finding out valid comment attaches and sorting them according to files_order
-	originFiles := make([]uint, len(comment.FilesOrder))
-	copy(originFiles, comment.FilesOrder)
-
-	lostFiles := make(models.CommaUintArray, 0)
-	comment.FilesOrder = make(models.CommaUintArray, 0)
-
-	// Loading that files
-	if len(data.FilesOrder) > 0 {
-		ids, _ := data.FilesOrder.Value()
-
-		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
-			Find(&comment.Files, "id IN (?) AND TYPE IN (?)", []uint(data.FilesOrder), structs.Names(models.COMMENT_FILE_TYPES))
-
-		for i := 0; i < len(comment.Files); i += 1 { // TODO: limit files count
-			comment.FilesOrder = append(comment.FilesOrder, comment.Files[i].ID)
-		}
-	} else {
-		comment.Files = make([]*models.File, 0)
-		comment.FilesOrder = make(models.CommaUintArray, 0)
-	}
-
-	// Detecting lost files
-	for _, v := range originFiles {
-		if !comment.FilesOrder.Contains(v) {
-			lostFiles = append(lostFiles, v)
-		}
-	}
-
-	// Unsetting them
-	if len(lostFiles) > 0 {
-		d.Model(&comment.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
-	}
-
-	comment.Text = data.Text
-
-	if len(comment.Text) > 2048 {
-		comment.Text = comment.Text[0:2048]
-	}
-
-	if len(comment.Text) < 1 && len(comment.FilesOrder) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TextRequired})
+	if err := nc.UpdateCommentText(data, comment); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Updating node brief
-	if node.Description == "" && *comment.UserID == *node.UserID && len(comment.Text) >= 64 {
-		node.Description = comment.Text
-		d.Save(&node)
+	if err = nc.DB.NodeRepository.SaveCommentWithFiles(comment); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
+		return
 	}
-
-	d.Set("gorm:association_autoupdate", false).
-		Set("gorm:association_save_reference", false).
-		Save(&comment).Association("Files").
-		Replace(comment.Files)
-
-	if comment.Files == nil {
-		comment.Files = make([]*models.File, 0)
-	}
-
-	// Updating current files target
-	if len(comment.FilesOrder) > 0 {
-		d.Model(&comment.Files).Where("id IN (?)", []uint(comment.FilesOrder)).Update("Target", "comment")
-	}
-
-	// TODO: update comment mp3 titles
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
+
+	nc.UnsetFilesTarget(lostFiles)
+	nc.UpdateBriefFromComment(node, comment)
+	nc.UpdateFilesMetadata(data.Files, comment.Files)
 }
 
 // PostTags - POST /node/:id/tags - updates node tags
@@ -568,22 +501,22 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
+	data := params.Node
 	node := &models.Node{}
 
-	if params.Node.ID != 0 {
-		d.First(&node, "id = ?", params.Node.ID)
+	if data.ID != 0 {
+		d.Preload("User").Preload("User.Photo").First(&node, "id = ?", data.ID)
 		node.Cover = nil
-		//node.CoverID = 0
 	} else {
 		node.User = u
 		node.UserID = &u.ID
-		node.Type = params.Node.Type
+		node.Type = data.Type
 		node.IsPublic = true
 		node.IsPromoted = true
 		node.Tags = make([]*models.Tag, 0)
 	}
 
-	if params.Node.Type == "" || !models.FLOW_NODE_TYPES.Contains(params.Node.Type) {
+	if data.Type == "" || !models.FLOW_NODE_TYPES.Contains(data.Type) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectType})
 		return
 	}
@@ -594,44 +527,37 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	}
 
 	// Update previous node cover target to be null if its changed
-	if node.Cover != nil &&
-		//node.CoverID != 0 &&
-		(params.Node.Cover == nil || params.Node.Cover.ID == 0 || params.Node.Cover.ID != *node.CoverID) {
-		d.Model(&node.Files).Where("id IN (?)", node.CoverID).Update("target", nil)
-	}
+	nc.UpdateNodeCoverIfChanged(&data, node)
 
-	// Validate node cover
-	if params.Node.Cover != nil && params.Node.Cover.ID != 0 {
-		if node.Cover == nil {
-			node.Cover = &models.File{}
+	// Clear previous cover target if succeeded
+	defer func() {
+		if node.Cover != nil && (data.Cover == nil || data.Cover.ID == 0 || data.Cover.ID != *node.CoverID) {
+			nc.DB.Model(&node.Files).Where("id IN (?)", node.CoverID).Update("target", nil)
 		}
-
-		d.First(&models.File{}, "id = ?", params.Node.Cover.ID).Scan(&node.Cover)
-		*node.CoverID = params.Node.Cover.ID
-	}
+	}()
 
 	// Finding out valid comment attaches and sorting them according to files_order
 	originFiles := make([]uint, len(node.FilesOrder))
 	copy(originFiles, node.FilesOrder)
 
 	// Setting FilesOrder based on sorted Files array of input data
-	params.Node.FilesOrder = make(models.CommaUintArray, 0)
+	data.FilesOrder = make(models.CommaUintArray, 0)
 
-	for _, v := range params.Node.Files {
+	for _, v := range data.Files {
 		if v == nil {
 			continue
 		}
 
-		params.Node.FilesOrder = append(node.FilesOrder, v.ID)
+		data.FilesOrder = append(node.FilesOrder, v.ID)
 	}
 
-	if len(params.Node.FilesOrder) > 0 {
-		ids, _ := params.Node.FilesOrder.Value()
+	if len(data.FilesOrder) > 0 {
+		ids, _ := data.FilesOrder.Value()
 
 		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
-			Find(&params.Node.Files, "id IN (?)", []uint(params.Node.FilesOrder))
+			Find(&data.Files, "id IN (?)", []uint(data.FilesOrder))
 
-		node.ApplyFiles(params.Node.Files)
+		node.ApplyFiles(data.Files)
 	} else {
 		node.Files = make([]*models.File, 0)
 		node.FilesOrder = make(models.CommaUintArray, 0)
@@ -651,13 +577,9 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		d.Model(&node.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
 	}
 
-	node.Title = params.Node.Title
+	nc.UpdateNodeTitle(&data, node)
 
-	if len(node.Title) > 64 {
-		node.Title = node.Title[:64]
-	}
-
-	node.ApplyBlocks(params.Node.Blocks)
+	node.ApplyBlocks(data.Blocks)
 
 	if val, ok := validation.NodeValidators[node.Type]; ok {
 		err = val(node)
@@ -671,6 +593,8 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	// Update node metadata
 	node.UpdateDescription()
 	node.UpdateThumbnail()
+
+	nc.UpdateFilesMetadata(data.Files, node.Files)
 
 	// Save node and its files
 	d.Set("gorm:association_autoupdate", false).
@@ -687,8 +611,142 @@ func (nc NodeController) PostNode(c *gin.Context) {
 
 	// Updating current files target
 	if len(node.FilesOrder) > 0 {
-		d.Model(&node.Files).Where("id IN (?)", []uint(node.FilesOrder)).Update("Target", "node")
+		d.Model(&models.File{}).Where("id IN (?)", node.FilesOrder).Update("Target", "node")
 	}
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
+}
+
+func (nc NodeController) UpdateBriefFromComment(node *models.Node, comment *models.Comment) {
+	if node.Description == "" && *comment.UserID == *node.UserID && len(comment.Text) >= 64 {
+		node.Description = comment.Text
+		nc.DB.Save(&node)
+	}
+}
+
+// TODO: Move everything below this line to usecase:
+
+func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *models.Comment) []uint {
+	// Setting FilesOrder based on sorted Files array of input data
+	data.FilesOrder = make(models.CommaUintArray, 0)
+
+	for _, v := range data.Files {
+		data.FilesOrder = append(data.FilesOrder, v.ID)
+	}
+
+	// Finding out valid comment attaches and sorting them according to files_order
+	originFiles := make([]uint, len(comment.FilesOrder))
+	copy(originFiles, comment.FilesOrder)
+
+	lostFiles := make(models.CommaUintArray, 0)
+	comment.FilesOrder = make(models.CommaUintArray, 0)
+
+	// Loading that files
+	if len(data.FilesOrder) > 0 {
+		ids, _ := data.FilesOrder.Value()
+
+		nc.DB.
+			Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
+			Find(
+				&comment.Files,
+				"id IN (?) AND TYPE IN (?)",
+				[]uint(data.FilesOrder),
+				structs.Names(models.COMMENT_FILE_TYPES),
+			)
+
+		for i := 0; i < len(comment.Files); i += 1 { // TODO: limit files count
+			comment.FilesOrder = append(comment.FilesOrder, comment.Files[i].ID)
+		}
+	} else {
+		comment.Files = make([]*models.File, 0)
+		comment.FilesOrder = make(models.CommaUintArray, 0)
+	}
+
+	// Detecting lost files
+	for _, v := range originFiles {
+		if !comment.FilesOrder.Contains(v) {
+			lostFiles = append(lostFiles, v)
+		}
+	}
+
+	return lostFiles
+}
+
+func (nc *NodeController) SetFilesTarget(files []uint, target string) {
+	if len(files) > 0 {
+		nc.DB.Model(&models.File{}).Where("id IN (?)", []uint(files)).Update("target", target)
+	}
+}
+
+func (nc *NodeController) UnsetFilesTarget(files []uint) {
+	if len(files) > 0 {
+		nc.DB.Model(&models.File{}).Where("id IN (?)", files).Update("target", nil)
+	}
+}
+
+func (nc *NodeController) UpdateCommentText(data *models.Comment, comment *models.Comment) error {
+	comment.Text = data.Text
+
+	if len(comment.Text) > 2048 {
+		comment.Text = comment.Text[0:2048]
+	}
+
+	if len(comment.Text) < 1 && len(comment.FilesOrder) == 0 {
+		return fmt.Errorf(codes.TextRequired)
+	}
+
+	return nil
+}
+
+func (nc *NodeController) LoadCommentFromData(id uint, node *models.Node, user *models.User) (*models.Comment, error) {
+	comment := &models.Comment{
+		Files: make([]*models.File, 0),
+	}
+
+	if id != 0 {
+		nc.DB.Preload("User").Preload("User.Photo").First(&comment, "id = ?", id)
+	} else {
+		comment.Node = node
+		comment.NodeID = &node.ID
+		comment.User = user
+		comment.UserID = &user.ID
+	}
+
+	if *comment.NodeID != node.ID || !comment.CanBeEditedBy(user) {
+		return nil, fmt.Errorf(codes.NotEnoughRights)
+	}
+
+	return comment, nil
+}
+
+func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*models.File) {
+	for _, df := range data {
+		if df.Type != constants.FileTypeAudio {
+			continue
+		}
+
+		for _, cf := range comment {
+			if cf.ID == df.ID && cf.Metadata.Title != df.Metadata.Title {
+				cf.Metadata.Title = df.Metadata.Title
+				nc.DB.FileRepository.UpdateMetadata(cf, cf.Metadata)
+				break
+			}
+		}
+	}
+}
+
+func (nc NodeController) UpdateNodeCoverIfChanged(data *models.Node, node *models.Node) {
+	// Validate node cover
+	if data.Cover != nil && data.Cover.ID != 0 {
+		nc.DB.First(&models.File{}, "id = ?", data.Cover.ID).Scan(&node.Cover)
+		*node.CoverID = data.Cover.ID
+	}
+}
+
+func (nc NodeController) UpdateNodeTitle(data *models.Node, node *models.Node) {
+	node.Title = data.Title
+
+	if len(node.Title) > 64 {
+		node.Title = node.Title[:64]
+	}
 }

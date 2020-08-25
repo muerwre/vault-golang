@@ -52,10 +52,6 @@ func VideoNodeValidator(n *models.Node) error {
 
 // AudioNodeValidator validates node of type audio
 func AudioNodeValidator(n *models.Node) error {
-	if len(n.Blocks) == 0 {
-		return errors.New(codes.TooShirt)
-	}
-
 	if n.FirstFileOfType(constants.FileTypeAudio) < 0 {
 		return errors.New(codes.TooShirt)
 	}
