@@ -4,7 +4,6 @@ package main
 /*
 
 	-- before release --
-	TODO: can't post node (audio with cover and image) getting "unsupported destination, should be slice or struct"
 	TODO: posting audio node with two songs creates node with only one
 	TODO: flow node doesn't have title sometimes
 	TODO: move everything to cases on PostNode

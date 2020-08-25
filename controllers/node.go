@@ -683,14 +683,19 @@ func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*mod
 
 func (nc NodeController) UpdateNodeCoverIfChanged(data models.Node, node *models.Node) error {
 	// Validate node cover
-	if data.Cover != nil && data.Cover.ID != 0 {
-		query := nc.DB.Model(&models.File{}).Where("id = ?", data.Cover.ID).First(&node.Cover)
+	if data.Cover != nil {
+		node.Cover = &models.File{}
+
+		query := nc.DB.First(node.Cover, "id = ?", data.Cover.ID)
 
 		if query.Error != nil {
 			return query.Error
 		}
 
-		*node.CoverID = data.Cover.ID
+		node.CoverID = &node.Cover.ID
+	} else {
+		node.Cover = nil
+		node.CoverID = nil
 	}
 
 	return nil
@@ -794,7 +799,7 @@ func (nc NodeController) UpdateNodeFiles(data models.Node, node *models.Node) ([
 }
 
 func (nc NodeController) UnsetNodeCoverTarget(data models.Node, node *models.Node) {
-	if node.Cover != nil && (data.Cover == nil || data.Cover.ID == 0 || data.Cover.ID != *node.CoverID) {
-		nc.UnsetFilesTarget([]uint{*node.CoverID})
+	if node.Cover != nil && (data.Cover == nil || data.Cover.ID != node.Cover.ID) {
+		nc.UnsetFilesTarget([]uint{node.Cover.ID})
 	}
 }
