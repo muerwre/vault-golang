@@ -51,6 +51,6 @@ func (fr FileRepository) Save(f *models.File) {
 	fr.db.Save(&f)
 }
 
-func (fr FileRepository) UpdateMetadata(f *models.File, m models.FileMetadata) {
-	fr.db.Model(&f).Update("metadata", m)
+func (fr FileRepository) UpdateMetadata(f *models.File, m models.FileMetadata) error {
+	return fr.db.Model(&f).Update("metadata", m).Error
 }

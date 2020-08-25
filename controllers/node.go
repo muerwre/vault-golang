@@ -659,7 +659,7 @@ func (nc *NodeController) LoadCommentFromData(id uint, node *models.Node, user *
 	return comment, nil
 }
 
-func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*models.File) {
+func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*models.File) error {
 	for _, df := range data {
 		if df.Type != constants.FileTypeAudio {
 			continue
@@ -668,11 +668,17 @@ func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*mod
 		for _, cf := range comment {
 			if cf.ID == df.ID && cf.Metadata.Title != df.Metadata.Title {
 				cf.Metadata.Title = df.Metadata.Title
-				nc.DB.FileRepository.UpdateMetadata(cf, cf.Metadata)
+
+				if err := nc.DB.FileRepository.UpdateMetadata(cf, cf.Metadata); err != nil {
+					logrus.Warnf("Can't update file metadata %d: %s", cf.ID, err.Error())
+				}
+
 				break
 			}
 		}
 	}
+
+	return nil
 }
 
 func (nc NodeController) UpdateNodeCoverIfChanged(data models.Node, node *models.Node) error {
