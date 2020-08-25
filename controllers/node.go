@@ -266,7 +266,13 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	lostFiles := nc.UpdateCommentFiles(data, comment)
+	lostFiles, err := nc.UpdateCommentFiles(data, comment)
+
+	if err != nil {
+		logrus.Warnf("Can't load node files while updating comment %d for node %d: %s", node.ID, comment.ID, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
+		return
+	}
 
 	if err := nc.UpdateCommentText(data, comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -274,6 +280,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 	}
 
 	if err = nc.DB.NodeRepository.SaveCommentWithFiles(comment); err != nil {
+		logrus.Warnf("Failed to save comment %d for node: %s", comment.ID, node.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
 		return
 	}
@@ -484,135 +491,59 @@ func (nc NodeController) GetRelated(c *gin.Context) {
 }
 
 func (nc NodeController) PostNode(c *gin.Context) {
-	d := nc.DB
-	u := c.MustGet("User").(*models.User)
+	user := c.MustGet("User").(*models.User)
 
-	if !u.CanCreateNode() {
+	if !user.CanCreateNode() {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
-	params := request.NodePostRequest{}
+	data := models.Node{}
 
-	err := c.BindJSON(&params)
-
-	if err != nil {
+	if err := c.BindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	data := params.Node
-	node := &models.Node{}
+	node, err := nc.LoadNodeFromData(&data, user)
 
-	if data.ID != 0 {
-		d.Preload("User").Preload("User.Photo").First(&node, "id = ?", data.ID)
-		node.Cover = nil
-	} else {
-		node.User = u
-		node.UserID = &u.ID
-		node.Type = data.Type
-		node.IsPublic = true
-		node.IsPromoted = true
-		node.Tags = make([]*models.Tag, 0)
-	}
-
-	if data.Type == "" || !models.FLOW_NODE_TYPES.Contains(data.Type) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectType})
-		return
-	}
-
-	if !node.CanBeEditedBy(u) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NotEnoughRights})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Update previous node cover target to be null if its changed
 	nc.UpdateNodeCoverIfChanged(&data, node)
 
-	// Clear previous cover target if succeeded
-	defer func() {
-		if node.Cover != nil && (data.Cover == nil || data.Cover.ID == 0 || data.Cover.ID != *node.CoverID) {
-			nc.DB.Model(&node.Files).Where("id IN (?)", node.CoverID).Update("target", nil)
-		}
-	}()
+	lostFiles, err := nc.UpdateNodeFiles(data, node)
 
-	// Finding out valid comment attaches and sorting them according to files_order
-	originFiles := make([]uint, len(node.FilesOrder))
-	copy(originFiles, node.FilesOrder)
-
-	// Setting FilesOrder based on sorted Files array of input data
-	data.FilesOrder = make(models.CommaUintArray, 0)
-
-	for _, v := range data.Files {
-		if v == nil {
-			continue
-		}
-
-		data.FilesOrder = append(node.FilesOrder, v.ID)
+	if err != nil {
+		logrus.Warnf("Can't load node files while updating node %d: %s", data.ID, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	if len(data.FilesOrder) > 0 {
-		ids, _ := data.FilesOrder.Value()
+	nc.UpdateNodeTitle(data, node)
 
-		d.Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
-			Find(&data.Files, "id IN (?)", []uint(data.FilesOrder))
-
-		node.ApplyFiles(data.Files)
-	} else {
-		node.Files = make([]*models.File, 0)
-		node.FilesOrder = make(models.CommaUintArray, 0)
+	if err = nc.UpdateNodeBlocks(data, node); err != nil {
+		logrus.Warnf("Received suspicious blocks while updating node %d: %s", data.ID, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	// Detecting lost files
-	lostFiles := make(models.CommaUintArray, 0)
-
-	for _, v := range originFiles {
-		if !node.FilesOrder.Contains(v) {
-			lostFiles = append(lostFiles, v)
-		}
-	}
-
-	// Unsetting them
-	if len(lostFiles) > 0 {
-		d.Model(&node.Files).Where("id IN (?)", []uint(lostFiles)).Update("target", nil)
-	}
-
-	nc.UpdateNodeTitle(&data, node)
-
-	node.ApplyBlocks(data.Blocks)
-
-	if val, ok := validation.NodeValidators[node.Type]; ok {
-		err = val(node)
-
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
-	// Update node metadata
 	node.UpdateDescription()
 	node.UpdateThumbnail()
 
-	nc.UpdateFilesMetadata(data.Files, node.Files)
-
-	// Save node and its files
-	d.Set("gorm:association_autoupdate", false).
-		Set("gorm:association_save_reference", false).
-		Save(&node).
-		Association("Files").
-		Replace(node.Files)
-
-	// Node not saved
-	if node.ID == 0 {
+	if err = nc.DB.NodeRepository.SaveNodeWithFiles(node); err != nil {
+		logrus.Warnf("Failed to save node %d: %s", node.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	// Updating current files target
-	if len(node.FilesOrder) > 0 {
-		d.Model(&models.File{}).Where("id IN (?)", node.FilesOrder).Update("Target", "node")
-	}
+	nc.UpdateFilesMetadata(data.Files, node.Files)
+	nc.SetFilesTarget(node.FilesOrder, "node")
+	nc.UnsetFilesTarget(lostFiles)
+	nc.UnsetNodeCoverTarget(data, node)
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
@@ -626,7 +557,7 @@ func (nc NodeController) UpdateBriefFromComment(node *models.Node, comment *mode
 
 // TODO: Move everything below this line to usecase:
 
-func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *models.Comment) []uint {
+func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *models.Comment) ([]uint, error) {
 	// Setting FilesOrder based on sorted Files array of input data
 	data.FilesOrder = make(models.CommaUintArray, 0)
 
@@ -645,7 +576,7 @@ func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *model
 	if len(data.FilesOrder) > 0 {
 		ids, _ := data.FilesOrder.Value()
 
-		nc.DB.
+		query := nc.DB.
 			Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
 			Find(
 				&comment.Files,
@@ -653,6 +584,10 @@ func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *model
 				[]uint(data.FilesOrder),
 				structs.Names(models.COMMENT_FILE_TYPES),
 			)
+
+		if query.Error != nil {
+			return nil, query.Error
+		}
 
 		for i := 0; i < len(comment.Files); i += 1 { // TODO: limit files count
 			comment.FilesOrder = append(comment.FilesOrder, comment.Files[i].ID)
@@ -669,7 +604,7 @@ func (nc NodeController) UpdateCommentFiles(data *models.Comment, comment *model
 		}
 	}
 
-	return lostFiles
+	return lostFiles, nil
 }
 
 func (nc *NodeController) SetFilesTarget(files []uint, target string) {
@@ -743,10 +678,103 @@ func (nc NodeController) UpdateNodeCoverIfChanged(data *models.Node, node *model
 	}
 }
 
-func (nc NodeController) UpdateNodeTitle(data *models.Node, node *models.Node) {
+func (nc NodeController) UpdateNodeTitle(data models.Node, node *models.Node) {
 	node.Title = data.Title
 
 	if len(node.Title) > 64 {
 		node.Title = node.Title[:64]
+	}
+}
+
+func (nc NodeController) UpdateNodeBlocks(data models.Node, node *models.Node) error {
+	node.ApplyBlocks(data.Blocks)
+
+	if val, ok := validation.NodeValidators[node.Type]; ok {
+		err := val(node)
+
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf(codes.UnknownNodeType)
+	}
+
+	return nil
+}
+
+func (nc NodeController) LoadNodeFromData(data *models.Node, u *models.User) (*models.Node, error) {
+	node := &models.Node{}
+
+	if data.ID != 0 {
+		nc.DB.Preload("User").Preload("User.Photo").First(&node, "id = ?", data.ID)
+		node.Cover = nil
+	} else {
+		node.User = u
+		node.UserID = &u.ID
+		node.Type = data.Type
+		node.IsPublic = true
+		node.IsPromoted = true
+		node.Tags = make([]*models.Tag, 0)
+	}
+
+	if node.Type == "" || !models.FLOW_NODE_TYPES.Contains(node.Type) {
+		return nil, fmt.Errorf(codes.IncorrectType)
+	}
+
+	if !node.CanBeEditedBy(u) {
+		return nil, fmt.Errorf(codes.NotEnoughRights)
+	}
+
+	return node, nil
+}
+
+func (nc NodeController) UpdateNodeFiles(data models.Node, node *models.Node) ([]uint, error) {
+	// Finding out valid comment attaches and sorting them according to files_order
+	originFiles := make([]uint, len(node.FilesOrder))
+	copy(originFiles, node.FilesOrder)
+
+	// Setting FilesOrder based on sorted Files array of input data
+	data.FilesOrder = make(models.CommaUintArray, 0)
+
+	for _, v := range data.Files {
+		if v == nil {
+			continue
+		}
+
+		data.FilesOrder = append(node.FilesOrder, v.ID)
+	}
+
+	if len(data.FilesOrder) > 0 {
+		ids, _ := data.FilesOrder.Value()
+
+		query := nc.DB.
+			Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
+			Find(&data.Files, "id IN (?)", []uint(data.FilesOrder))
+
+		if query.Error != nil {
+			return nil, query.Error
+		}
+
+		node.ApplyFiles(data.Files)
+	} else {
+		node.Files = make([]*models.File, 0)
+		node.FilesOrder = make(models.CommaUintArray, 0)
+	}
+
+	// Detecting lost files
+	lostFiles := make(models.CommaUintArray, 0)
+
+	for _, v := range originFiles {
+		if !node.FilesOrder.Contains(v) {
+			lostFiles = append(lostFiles, v)
+		}
+	}
+
+	return lostFiles, nil
+}
+
+func (nc NodeController) UnsetNodeCoverTarget(data models.Node, node *models.Node) {
+	if node.Cover != nil && (data.Cover == nil || data.Cover.ID == 0 || data.Cover.ID != *node.CoverID) {
+		nc.UnsetFilesTarget([]uint{*node.CoverID})
 	}
 }

@@ -263,6 +263,10 @@ func (nr NodeRepository) SaveCommentWithFiles(comment *models.Comment) error {
 		Association("Files").
 		Replace(comment.Files)
 
+	if query.Error != nil {
+		return query.Error
+	}
+
 	if len(comment.FilesOrder) > 0 {
 		nr.db.Model(&models.File{}).
 			Where("id IN (?)", []uint(comment.FilesOrder)).
@@ -272,5 +276,29 @@ func (nr NodeRepository) SaveCommentWithFiles(comment *models.Comment) error {
 		comment.Files = make([]*models.File, 0) // pass empty array to response
 	}
 
-	return query.Error
+	return nil
+}
+
+func (nr NodeRepository) SaveNodeWithFiles(node *models.Node) error {
+	// Save node and its files
+	query := nr.db.Set("gorm:association_autoupdate", false).
+		Set("gorm:association_save_reference", false).
+		Save(&node).
+		Association("Files").
+		Replace(node.Files)
+
+	if query.Error != nil {
+		return query.Error
+	}
+
+	if len(node.FilesOrder) > 0 {
+		nr.db.Model(&models.File{}).
+			Where("id IN (?)", []uint(node.FilesOrder)).
+			Update("Target", "comment")
+	} else {
+		// TODO: remove this after moving to CommentResponse
+		node.Files = make([]*models.File, 0) // pass empty array to response
+	}
+
+	return nil
 }
