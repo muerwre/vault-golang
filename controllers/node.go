@@ -278,11 +278,11 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"comment": comment})
-
 	nc.UnsetFilesTarget(lostFiles)
 	nc.UpdateBriefFromComment(node, comment)
 	nc.UpdateFilesMetadata(data.Files, comment.Files)
+
+	c.JSON(http.StatusOK, gin.H{"comment": comment})
 }
 
 // PostTags - POST /node/:id/tags - updates node tags
