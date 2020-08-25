@@ -659,7 +659,7 @@ func (nc *NodeController) LoadCommentFromData(id uint, node *models.Node, user *
 	return comment, nil
 }
 
-func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*models.File) error {
+func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*models.File) {
 	for _, df := range data {
 		if df.Type != constants.FileTypeAudio {
 			continue
@@ -677,8 +677,6 @@ func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*mod
 			}
 		}
 	}
-
-	return nil
 }
 
 func (nc NodeController) UpdateNodeCoverIfChanged(data models.Node, node *models.Node) error {
