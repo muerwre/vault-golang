@@ -4,8 +4,8 @@ package main
 /*
 
 	-- before release --
+	TODO: flow node doesn't have user
 	TODO: move everything to cases on PostNode
-	TODO: node not added?
 	TODO: load comment user after saving it
 	TODO: load node user after saving it
 	TODO: unset comment and node files in defer

@@ -92,7 +92,6 @@ func (nc *NodeController) GetNodeComments(c *gin.Context) {
 func (nc *NodeController) GetDiff(c *gin.Context) {
 	params := &request.NodeDiffParams{}
 	err := c.Bind(&params)
-	d := nc.DB
 	uid := c.MustGet("UID").(uint)
 
 	if err != nil {
@@ -104,15 +103,16 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 		params.Take = 40
 	}
 
-	before := &[]models.FlowNode{}
-	after := &[]models.FlowNode{}
-	heroes := &[]models.FlowNode{}
-	updated := &[]models.FlowNode{}
-	recent := &[]models.FlowNode{}
+	before := &[]models.Node{}
+	after := &[]models.Node{}
+	heroes := &[]models.Node{}
+	updated := &[]models.Node{}
+	recent := &[]models.Node{}
 	valid := []uint{}
 
+	q := nc.DB.Model(&models.Node{}).Preload("User")
 	// TODO: move to repo
-	q := nc.DB.NodeRepository.WhereIsFlowNode(d.Model(&models.Node{}))
+	nc.DB.NodeRepository.WhereIsFlowNode(q)
 
 	var wg sync.WaitGroup
 
@@ -126,12 +126,12 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 		q.Where("created_at < ?", params.End).
 			Order("created_at DESC").
 			Offset(0).
-			Limit(params.Take).Scan(&after)
+			Limit(params.Take).
+			Scan(&after)
 
 		if params.WithHeroes {
-			d.Model(&models.Node{}).
+			q.Order("RAND()").
 				Where("type = ? AND is_heroic = ?", "image", true).
-				Order("RAND()").
 				Offset(0).
 				Limit(20).
 				Scan(&heroes)
@@ -158,7 +158,6 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 		if params.WithRecent {
 			q.Order("created_at DESC").
-				Preload("User").
 				Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
 				Limit(16).
 				Scan(&recent)
@@ -280,13 +279,11 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	defer func() {
-		nc.UnsetFilesTarget(lostFiles)
-		nc.UpdateBriefFromComment(node, comment)
-		nc.UpdateFilesMetadata(data.Files, comment.Files)
-	}()
-
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
+
+	nc.UnsetFilesTarget(lostFiles)
+	nc.UpdateBriefFromComment(node, comment)
+	nc.UpdateFilesMetadata(data.Files, comment.Files)
 }
 
 // PostTags - POST /node/:id/tags - updates node tags
