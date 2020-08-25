@@ -508,12 +508,17 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	node, err := nc.LoadNodeFromData(&data, user)
 
 	if err != nil {
+		logrus.Warnf("Can't load node from data: %s\nData:\n%+v", err.Error(), data)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Update previous node cover target to be null if its changed
-	nc.UpdateNodeCoverIfChanged(&data, node)
+	if err = nc.UpdateNodeCoverIfChanged(data, node); err != nil {
+		logrus.Warnf("Can't load node cover from data: %s\nData:\n%+v", err.Error(), data)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
 
 	lostFiles, err := nc.UpdateNodeFiles(data, node)
 
@@ -670,12 +675,19 @@ func (nc NodeController) UpdateFilesMetadata(data []*models.File, comment []*mod
 	}
 }
 
-func (nc NodeController) UpdateNodeCoverIfChanged(data *models.Node, node *models.Node) {
+func (nc NodeController) UpdateNodeCoverIfChanged(data models.Node, node *models.Node) error {
 	// Validate node cover
 	if data.Cover != nil && data.Cover.ID != 0 {
-		nc.DB.First(&models.File{}, "id = ?", data.Cover.ID).Scan(&node.Cover)
+		query := nc.DB.Model(&models.File{}).Where("id = ?", data.Cover.ID).First(&node.Cover)
+
+		if query.Error != nil {
+			return query.Error
+		}
+
 		*node.CoverID = data.Cover.ID
 	}
+
+	return nil
 }
 
 func (nc NodeController) UpdateNodeTitle(data models.Node, node *models.Node) {
