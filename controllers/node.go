@@ -18,12 +18,13 @@ import (
 )
 
 type NodeController struct {
-	DB      db.DB
+	db      db.DB
 	usecase *usecase.NodeUsecase
 }
 
 func (nc *NodeController) Init(db db.DB) *NodeController {
 	nc.usecase = new(usecase.NodeUsecase).Init(db)
+	nc.db = db
 	return nc
 }
 
@@ -31,7 +32,7 @@ func (nc *NodeController) Init(db db.DB) *NodeController {
 func (nc *NodeController) GetNode(c *gin.Context) {
 	uid := c.MustGet("UID").(uint)
 	u := c.MustGet("User").(*models.User)
-	d := nc.DB
+	d := nc.db
 
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -40,7 +41,7 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.DB.NodeRepository.GetFullNode(
+	node, err := nc.db.NodeRepository.GetFullNode(
 		id,
 		u.Role == models.USER_ROLES.ADMIN,
 		u.ID,
@@ -54,11 +55,11 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 	if uid != 0 {
 		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, uid)
 
-		nc.DB.NodeViewRepository.UpdateView(uid, node.ID)
+		nc.db.NodeViewRepository.UpdateView(uid, node.ID)
 	}
 
 	node.LikeCount = d.NodeRepository.GetNodeLikeCount(node)
-	node.Files, _ = nc.DB.FileRepository.GetFilesByIds([]uint(node.FilesOrder))
+	node.Files, _ = nc.db.FileRepository.GetFilesByIds([]uint(node.FilesOrder))
 
 	node.SortFiles()
 
@@ -92,7 +93,7 @@ func (nc *NodeController) GetNodeComments(c *gin.Context) {
 		order = "DESC"
 	}
 
-	comments, count := nc.DB.NodeRepository.GetComments(id, take, skip, order)
+	comments, count := nc.db.NodeRepository.GetComments(id, take, skip, order)
 
 	c.JSON(http.StatusAccepted, gin.H{"comments": comments, "comment_count": count})
 }
@@ -120,9 +121,9 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 	valid := []uint{}
 
-	q := nc.DB.Preload("User").Preload("User.Photo").Model(&models.Node{})
+	q := nc.db.Preload("User").Preload("User.Photo").Model(&models.Node{})
 	// TODO: move to repo
-	nc.DB.NodeRepository.WhereIsFlowNode(q)
+	nc.db.NodeRepository.WhereIsFlowNode(q)
 
 	var wg sync.WaitGroup
 
@@ -202,7 +203,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 }
 
 func (nc *NodeController) LockComment(c *gin.Context) {
-	d := nc.DB
+	d := nc.db
 	u := c.MustGet("User").(*models.User)
 	cid := c.Param("cid")
 	params := request.NodeLockCommentRequest{}
@@ -249,7 +250,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.DB.NodeRepository.GetById(uint(nid))
+	node, err := nc.db.NodeRepository.GetById(uint(nid))
 
 	if err != nil || node.Type == "" || !node.CanBeCommented() {
 		if err != nil {
@@ -285,7 +286,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	if err = nc.DB.NodeRepository.SaveCommentWithFiles(comment); err != nil {
+	if err = nc.db.NodeRepository.SaveCommentWithFiles(comment); err != nil {
 		logrus.Warnf("Failed to save comment %d for node: %s", comment.ID, node.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
 		return
@@ -301,7 +302,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 // PostTags - POST /node/:id/tags - updates node tags
 func (nc *NodeController) PostTags(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	d := nc.DB
+	d := nc.db
 	u := c.MustGet("User").(*models.User)
 
 	node := &models.Node{}
@@ -350,7 +351,7 @@ func (nc *NodeController) PostTags(c *gin.Context) {
 // PostLike - POST /node/:id/like - likes or dislikes node
 func (nc NodeController) PostLike(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	d := nc.DB
+	d := nc.db
 	u := c.MustGet("User").(*models.User)
 
 	node := &models.Node{}
@@ -380,7 +381,7 @@ func (nc NodeController) PostLike(c *gin.Context) {
 
 // PostLock - POST /node/:id/lock - safely deletes node
 func (nc NodeController) PostLock(c *gin.Context) {
-	d := nc.DB
+	d := nc.db
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeLockRequest{}
 
@@ -418,7 +419,7 @@ func (nc NodeController) PostLock(c *gin.Context) {
 
 // PostHeroic - POST /node/:id/heroic - sets heroic status to node
 func (nc NodeController) PostHeroic(c *gin.Context) {
-	d := nc.DB
+	d := nc.db
 	u := c.MustGet("User").(*models.User)
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
@@ -444,7 +445,7 @@ func (nc NodeController) PostHeroic(c *gin.Context) {
 
 // PostCellView - POST /node/:id/cell-view - sets cel display for node
 func (nc NodeController) PostCellView(c *gin.Context) {
-	d := nc.DB
+	d := nc.db
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeCellViewPostRequest{}
 
@@ -492,7 +493,7 @@ func (nc NodeController) GetRelated(c *gin.Context) {
 		return
 	}
 
-	related, err := nc.DB.NodeRepository.GetRelated(uint(nid))
+	related, err := nc.db.NodeRepository.GetRelated(uint(nid))
 	c.JSON(http.StatusOK, gin.H{"related": related})
 }
 
@@ -545,7 +546,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	node.UpdateDescription()
 	node.UpdateThumbnail()
 
-	if err = nc.DB.NodeRepository.SaveNodeWithFiles(node); err != nil {
+	if err = nc.db.NodeRepository.SaveNodeWithFiles(node); err != nil {
 		logrus.Warnf("Failed to save node %d: %s", node.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return

@@ -56,7 +56,7 @@ func (a API) RecoverMiddleware(c *gin.Context) {
 }
 
 func (a API) InjectContextMiddleware(c *gin.Context) {
-	c.Set("DB", a.db)
+	c.Set("db", a.db)
 	c.Set("config", a.Config)
 	c.Set("Mailer", a.mailer.Chan)
 

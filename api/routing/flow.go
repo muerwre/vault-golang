@@ -14,7 +14,7 @@ type FlowRouter struct {
 
 func (fr *FlowRouter) Init(api utils.AppApi, db db.DB) {
 	fr.api = api
-	fr.nodeController = controllers.NodeController{DB: db}
+	fr.nodeController = *new(controllers.NodeController).Init(db)
 }
 
 // FlowRouter for /node/*

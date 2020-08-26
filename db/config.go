@@ -14,12 +14,12 @@ type Config struct {
 
 func InitConfig() (*Config, error) {
 	config := &Config{
-		URI:   viper.GetString("DB.URI"),
-		Debug: viper.GetBool("DB.Debug"),
+		URI:   viper.GetString("db.URI"),
+		Debug: viper.GetBool("db.Debug"),
 	}
 
 	if config.URI == "" {
-		return nil, errors.New("Please, specify DB uri at config")
+		return nil, errors.New("Please, specify db uri at config")
 	}
 
 	return config, nil
