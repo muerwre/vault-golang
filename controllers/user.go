@@ -1,9 +1,10 @@
 package controllers
 
 import (
-	"github.com/muerwre/vault-golang/constants"
+	"github.com/muerwre/vault-golang/controllers/usecase"
 	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/response"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"time"
@@ -22,17 +23,31 @@ type UserController struct {
 	Mailer mail.Mailer
 	DB     db.DB
 	Config app.Config
+
+	usecase usecase.UserUsecase
+}
+
+func (uc *UserController) Init(db db.DB, mailer mail.Mailer, config app.Config) *UserController {
+	uc.DB = db
+	uc.Mailer = mailer
+	uc.Config = config
+	uc.usecase = *new(usecase.UserUsecase).Init(db)
+
+	return uc
 }
 
 func (uc *UserController) CheckCredentials(c *gin.Context) {
 	user := c.MustGet("User").(*models.User)
-	lastSeenBoris := time.Now()
 
-	if view, err := uc.DB.NodeViewRepository.GetOne(user.ID, constants.BorisNodeId); err == nil && view != nil {
-		lastSeenBoris = view.Visited
+	user, lastSeenBoris, err := uc.usecase.GetUserForCheckCredentials(user.ID)
+
+	if err != nil {
+		logrus.Warnf("Can't load current user %s:", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantLoadUser})
+		return
 	}
 
-	resp := new(response.UserCheckCredentialsResponse).Init(user, lastSeenBoris)
+	resp := new(response.UserCheckCredentialsResponse).Init(user, *lastSeenBoris)
 
 	uc.DB.UserRepository.UpdateLastSeen(user)
 
@@ -86,31 +101,34 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 }
 
 func (uc *UserController) PatchUser(c *gin.Context) {
-	d := uc.DB
 	u := c.MustGet("User").(*models.User)
 
-	data := struct {
-		User request.UserPatchRequest `json:"user"`
-	}{}
+	data := &request.UserPatchRequest{}
 
-	err := c.ShouldBind(&data)
-
-	if err != nil {
+	if err := c.ShouldBind(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
-	}
-
-	validationErrors := data.User.Validate(u, d)
-
-	if validationErrors != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"errors": validationErrors})
 		return
 	}
 
-	data.User.ApplyTo(u)
+	errors := uc.usecase.ValidatePatchRequest(data, *u)
 
-	d.Model(&models.User{}).Updates(u).Preload("Photo").Preload("Cover").First(&u)
+	if errors != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{"user": u})
+	data.ApplyTo(u)
+
+	uc.DB.
+		Model(&models.User{}).
+		Updates(u).
+		Preload("Photo").
+		Preload("Cover").
+		First(&u)
+
+	uc.CheckCredentials(c)
+
+	return
 }
 
 func (uc *UserController) CreateRestoreCode(c *gin.Context) {

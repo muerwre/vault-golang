@@ -2,9 +2,7 @@ package main
 
 // https://aaf.engineering/go-web-application-structure-part-2/
 /*
-
 	-- before release --
-	TODO: new password didn't set
 	TODO: add healthcheck endpoint
 	TODO: refactor GetDiff
 

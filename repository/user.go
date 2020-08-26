@@ -63,6 +63,17 @@ func (ur UserRepository) GetByEmail(n string) (user *models.User, err error) {
 	return user, nil
 }
 
+func (ur UserRepository) GetById(id uint) (user *models.User, err error) {
+	user = &models.User{}
+	err = ur.db.
+		Preload("Photo").
+		Preload("Cover").
+		First(&user, "id = ?", id).
+		Error
+
+	return user, err
+}
+
 func (ur UserRepository) GenerateTokenFor(u *models.User) *models.Token {
 	token := &models.Token{UserID: &u.ID}
 	token.New(u.Username)

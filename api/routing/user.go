@@ -15,7 +15,7 @@ type UserRouter struct {
 }
 
 func (ur *UserRouter) Init(a utils.AppApi, db db.DB, mailer mail.Mailer, conf app.Config) *UserRouter {
-	ur.controller = controllers.UserController{Mailer: mailer, DB: db, Config: conf}
+	ur.controller = *new(controllers.UserController).Init(db, mailer, conf)
 	ur.api = a
 
 	return ur

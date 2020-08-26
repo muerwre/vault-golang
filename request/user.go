@@ -1,14 +1,9 @@
 package request
 
 import (
-	"github.com/muerwre/vault-golang/constants"
-	"github.com/muerwre/vault-golang/utils/validation"
 	"reflect"
 
-	"github.com/go-playground/validator"
-	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/passwords"
 )
 
@@ -35,72 +30,6 @@ func (upd *UserPatchRequest) GetJsonTagName(f string) string {
 	}
 
 	return field.Tag.Get("json")
-}
-
-func (upd *UserPatchRequest) Validate(u *models.User, db db.DB) map[string]string {
-	err := validation.On.Struct(upd)
-	errors := map[string]string{}
-
-	// We need password to change password or email or username
-	if (upd.NewPassword != "" || (upd.Email != "" && upd.Email != u.Email) || (upd.Username != "" && upd.Username != u.Username)) &&
-		(upd.Password == "" || !passwords.CheckPasswordHash(upd.Password, u.Password)) {
-		errors[upd.GetJsonTagName("Password")] = codes.IncorrectPassword
-	}
-
-	// Shouldn't cover exist user
-	if upd.Username != "" && upd.Username != u.Username &&
-		db.First(&models.User{}, "username = ?", upd.Username).RowsAffected > 0 {
-		errors[upd.GetJsonTagName("Username")] = codes.UserExist
-	}
-
-	// Photo should be at database
-	if upd.Photo != nil && upd.Photo.ID != 0 {
-		file := &models.File{}
-
-		db.First(&file, "id = ?", upd.Photo.ID)
-
-		if file == nil || file.UserID != u.ID || file.Type != constants.FileTypeImage {
-			errors[upd.GetJsonTagName("Photo")] = codes.ImageConversionFailed
-		}
-
-		upd.PhotoID = file.ID
-	}
-
-	// Cover should be at database
-	if upd.Cover != nil && upd.Cover.ID != 0 {
-		file := &models.File{}
-
-		db.First(&file, "id = ?", upd.Photo.ID)
-
-		if file == nil || file.UserID != u.ID || file.Type != constants.FileTypeImage {
-			errors[upd.GetJsonTagName("Cover")] = codes.ImageConversionFailed
-		}
-
-		upd.CoverID = file.ID
-	}
-
-	// Minimal requirements for fields from validate tag
-	if err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			field := upd.GetJsonTagName(err.Field())
-
-			if field == "" {
-				continue
-			}
-
-			if codes.ValidationToCode[err.Tag()] != "" {
-				errors[field] = codes.ValidationToCode[err.Tag()]
-			} else {
-				errors[field] = codes.ValidationToCode["required"]
-			}
-		}
-	}
-
-	if len(errors) == 0 {
-		return nil
-	}
-
-	return errors
 }
 
 func (upd *UserPatchRequest) ApplyTo(u *models.User) {

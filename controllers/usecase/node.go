@@ -141,7 +141,7 @@ func (nu NodeUsecase) UpdateFilesMetadata(data []*models.File, comment []*models
 }
 
 func (nu NodeUsecase) UpdateNodeCoverIfChanged(data models.Node, node *models.Node) error {
-	// Validate node cover
+	// ValidatePatchRequest node cover
 	if data.Cover != nil {
 		node.Cover = &models.File{}
 

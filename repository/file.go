@@ -54,3 +54,10 @@ func (fr FileRepository) Save(f *models.File) {
 func (fr FileRepository) UpdateMetadata(f *models.File, m models.FileMetadata) error {
 	return fr.db.Model(&f).Update("metadata", m).Error
 }
+
+func (fr FileRepository) GetById(id uint) (*models.File, error) {
+	file := &models.File{}
+	query := fr.db.First(&file, "id = ?", id)
+
+	return file, query.Error
+}
