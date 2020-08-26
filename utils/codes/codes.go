@@ -38,10 +38,11 @@ const (
 	UnknownNodeType              string = "UnknownNodeType"
 	CantSaveNode                 string = "CantSaveNode"
 	CantLoadUser                 string = "CantLoadUser"
+	InputTooShirt                string = "InputTooShirt"
 )
 
 var ValidationToCode = map[string]string{
-	"gte":      TooShirt,
+	"gte":      InputTooShirt,
 	"email":    NotAnEmail,
 	"required": Required,
 }
