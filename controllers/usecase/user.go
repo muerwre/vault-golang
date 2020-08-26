@@ -34,14 +34,14 @@ func (uc UserUsecase) ValidatePatchRequest(data *request.UserPatchRequest, u mod
 	// Shouldn't cover exist user
 	if data.Username != "" && data.Username != u.Username {
 		if _, err := uc.db.UserRepository.GetByUsername(data.Username); err == nil {
-			errors[data.GetJsonTagName("Username")] = codes.UserExist
+			errors[data.GetJsonTagName("Username")] = codes.UserExistWithUsername
 		}
 	}
 
 	// Shouldn't cover exist user
 	if data.Email != "" && data.Email != u.Email {
 		if _, err := uc.db.UserRepository.GetByEmail(data.Email); err == nil {
-			errors[data.GetJsonTagName("Email")] = codes.UserExist
+			errors[data.GetJsonTagName("Email")] = codes.UserExistWithEmail
 		}
 	}
 
