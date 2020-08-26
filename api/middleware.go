@@ -7,6 +7,7 @@ import (
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"runtime/debug"
 )
 
 func (a *API) WithUser(preloadAvatarAndCover bool) func(*gin.Context) {
@@ -40,7 +41,10 @@ func (a *API) WithUser(preloadAvatarAndCover bool) func(*gin.Context) {
 func (a API) RecoverMiddleware(c *gin.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.WithField("panic", r).Error("we panicked!")
+			logrus.
+				WithField("panic", r).
+				WithField("stack", string(debug.Stack())).
+				Error("we panicked!")
 
 			c.AbortWithStatusJSON(
 				http.StatusInternalServerError,
