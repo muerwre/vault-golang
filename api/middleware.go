@@ -41,10 +41,9 @@ func (a *API) WithUser(preloadAvatarAndCover bool) func(*gin.Context) {
 func (a API) RecoverMiddleware(c *gin.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.
-				WithField("panic", r).
-				WithField("stack", string(debug.Stack())).
-				Error("we panicked!")
+			logrus.Warnf("Runtime error: %s", fmt.Sprint(r))
+
+			println(string(debug.Stack()))
 
 			c.AbortWithStatusJSON(
 				http.StatusInternalServerError,
