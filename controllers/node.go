@@ -40,7 +40,11 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.DB.NodeRepository.GetFullNode(id, u.Role == models.USER_ROLES.ADMIN, u.ID)
+	node, err := nc.DB.NodeRepository.GetFullNode(
+		id,
+		u.Role == models.USER_ROLES.ADMIN,
+		u.ID,
+	)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
