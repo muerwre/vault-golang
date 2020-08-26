@@ -9,7 +9,6 @@ import (
 type Config struct {
 	Debug              bool
 	ApiDebug           bool
-	Host               string
 	Port               int
 	TlsFiles           []string
 	SmtpHost           string
@@ -35,7 +34,6 @@ func InitConfig() (*Config, error) {
 	config := &Config{
 		Debug:              viper.GetBool("Debug"),
 		ApiDebug:           viper.GetBool("Api.Debug"),
-		Host:               viper.GetString("Host"),
 		Port:               viper.GetInt("Port"),
 		TlsFiles:           viper.GetStringSlice("TlsFiles"),
 		SmtpHost:           viper.GetString("Smtp.Host"),

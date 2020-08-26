@@ -1,16 +1,14 @@
 Port: 7777
-Host: localhost
-DB: 
+DB:
   URI: login:password@tcp(db)/database?parseTime=true
-  Debug: true
+  Debug: true # debug queries
 Vk:
   ClientId: 123456
   ClientSecret: SECRET_API_KEY_FROM_VK
   CallbackUrl: http://localhost:7777/oauth/vkontakte/process/
 API:
-  Debug: false
+  Debug: false # debug api calls
   TlsFiles: []
-  Host: 
 Smtp:
   Host: postfix # docker setup
   Port: 25
@@ -30,4 +28,4 @@ Google:
   CallbackUrl: http://localhost:7777/oauth/google/process
 JWT:
   Secret: CHANGE_ME!!!
-Debug: false
+Debug: false # die on errors

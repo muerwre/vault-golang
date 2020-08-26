@@ -41,13 +41,13 @@ func serveAPI(ctx context.Context, api *api.API) {
 	}()
 
 	if hasCerts {
-		logrus.Infof("Https listening at https://%s:%d", api.Config.Host, api.Config.Port)
+		logrus.Infof("Https listening at port %d", api.Config.Port)
 
 		if err := s.ListenAndServeTLS(api.Config.TlsFiles[0], api.Config.TlsFiles[1]); err != http.ErrServerClosed {
 			logrus.Error(err)
 		}
 	} else {
-		logrus.Infof("Http listening at http://%s:%d", api.Config.Host, api.Config.Port)
+		logrus.Infof("Http listening at port %d", api.Config.Port)
 
 		if err := s.ListenAndServe(); err != http.ErrServerClosed {
 			logrus.Error(err)
