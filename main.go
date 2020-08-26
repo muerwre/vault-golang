@@ -4,6 +4,7 @@ package main
 /*
 
 	-- before release --
+	TODO: can't load node anymore
 	TODO: refactor GetDiff
 
 	-- after release --

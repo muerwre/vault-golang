@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -39,6 +40,8 @@ func (a *API) WithUser(preloadAvatarAndCover bool) func(*gin.Context) {
 func (a API) RecoverMiddleware(c *gin.Context) {
 	defer func() {
 		if r := recover(); r != nil {
+			logrus.Warnf("Runtime error occured while executing: %+v", r)
+
 			c.AbortWithStatusJSON(
 				http.StatusInternalServerError,
 				gin.H{"details": fmt.Sprint(r), "error": codes.UnexpectedBehavior},
