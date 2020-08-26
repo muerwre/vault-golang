@@ -5,7 +5,8 @@ package main
 /*
 
 	-- before release --
-	TODO: test submission of all nodes
+	TODO: empty tags are still posted
+	TODO: inputing "Tag" adds "tag" duplicate to form
 	TODO: add healthcheck endpoint
 	TODO: refactor GetDiff
 

@@ -302,10 +302,8 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 // PostTags - POST /node/:id/tags - updates node tags
 func (nc *NodeController) PostTags(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	d := nc.db
 	u := c.MustGet("User").(*models.User)
 
-	node := &models.Node{}
 	tags := []*models.Tag{}
 
 	params := request.NodeTagsPostRequest{}
@@ -315,9 +313,15 @@ func (nc *NodeController) PostTags(c *gin.Context) {
 		return
 	}
 
-	d.First(&node, "id = ?", nid)
+	node, err := nc.db.NodeRepository.GetById(uint(nid))
 
-	if node == nil || node.ID == 0 || !node.CanBeTaggedBy(u) {
+	if err != nil {
+		logrus.Warnf("Node %d not found: %s", nid, err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
+		return
+	}
+
+	if !node.CanBeTaggedBy(u) {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
@@ -333,17 +337,22 @@ func (nc *NodeController) PostTags(c *gin.Context) {
 		params.Tags[i] = strings.ToLower(params.Tags[i])
 	}
 
-	d.Where("title IN (?)", params.Tags).Find(&tags)
+	if len(params.Tags) == 0 {
+		c.JSON(http.StatusOK, gin.H{"node": node})
+		return
+	}
+
+	nc.db.Where("title IN (?)", params.Tags).Find(&tags)
 
 	for _, v := range params.Tags {
-		if !models.TagArrayContains(tags, v) {
+		if !models.TagArrayContains(tags, v) && len(v) > 0 {
 			tag := models.Tag{Title: v}
-			d.Set("gorm:association_autoupdate", false).Save(&tag)
+			nc.db.Set("gorm:association_autoupdate", false).Save(&tag)
 			tags = append(tags, &tag)
 		}
 	}
 
-	d.Model(&node).Association("Tags").Replace(tags)
+	nc.db.Model(&node).Association("Tags").Replace(tags)
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
