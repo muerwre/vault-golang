@@ -294,7 +294,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 
 	nc.usecase.UnsetFilesTarget(lostFiles)
 	nc.usecase.UpdateBriefFromComment(node, comment)
-	nc.usecase.UpdateCommentedAt(node, comment)
+	nc.usecase.UpdateCommentedAt(node, comment.CreatedAt)
 	nc.usecase.UpdateFilesMetadata(data.Files, comment.Files)
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
