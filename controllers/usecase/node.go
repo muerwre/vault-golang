@@ -10,6 +10,7 @@ import (
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/validation"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 type NodeUsecase struct {
@@ -266,6 +267,10 @@ func (nu NodeUsecase) UnsetNodeCoverTarget(data models.Node, node *models.Node) 
 func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.Comment) {
 	if node.Description == "" && *comment.UserID == *node.UserID && len(comment.Text) >= 64 {
 		node.Description = comment.Text
-		nu.db.Save(&node)
+		nu.db.Model(&models.Node{}).Where("id = ?", node.ID).Update("description", comment.Text)
 	}
+}
+
+func (nu NodeUsecase) UpdateCommentedAt(node *models.Node, time *time.Time) {
+	nu.db.Model(&models.Node{}).Where("id = ?", node.ID).Update("commented_at", time)
 }
