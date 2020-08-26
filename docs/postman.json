@@ -1,0 +1,1287 @@
+{
+	"info": {
+		"_postman_id": "613d170e-dd08-49bd-8239-7b63f7040280",
+		"name": "vault-go",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "(go) get",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{apiHost}}/user/user/gvorcek/messages",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"user",
+								"user",
+								"gvorcek",
+								"messages"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "user1",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"gvorcek\",\n\t\"password\": \"crazynerges\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{apiHost}}/user/login",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) user patch",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user\": {\n        \"username\": \"droop\",\n        \"fullname\": \"Fuk Dat\",\n        \"description\": \"Some some some\",\n        \"password\": \"crazynerges\",\n        \"new_password\": \"puzzword\",\n        \"email\": \"em@fey.k\",\n        \"photo\": {\n            \"name\": \"827910016e3d806132b5d4e0e5702f5a-1576568185346.jpg\",\n            \"orig_name\": \"827910016e3d806132b5d4e0e5702f5a.jpg\",\n            \"path\": \"uploads/2019/11/image/\",\n            \"full_path\": \"/var/bbs/.vault-staging/uploads/2019/11/image/827910016e3d806132b5d4e0e5702f5a-1576568185346.jpg\",\n            \"url\": \"REMOTE_CURRENT://uploads/2019/11/image/827910016e3d806132b5d4e0e5702f5a-1576568185346.jpg\",\n            \"size\": 16321,\n            \"type\": \"image\",\n            \"mime\": \"image/jpeg\",\n            \"user\": {\n                \"id\": 9,\n                \"username\": \"gvorcek\",\n                \"email\": \"vajclau@gmail.com\",\n                \"role\": \"admin\",\n                \"fullname\": \"Gvorcek\",\n                \"description\": \"123\",\n                \"is_activated\": false,\n                \"last_seen\": \"2019-12-17T03:11:32.000Z\",\n                \"last_seen_messages\": null,\n                \"created_at\": \"2009-07-29T06:31:53.000Z\",\n                \"updated_at\": \"2019-12-17T03:11:32.000Z\",\n                \"photo\": {\n                    \"id\": 8703,\n                    \"name\": \"90df6618c71a5b2bd3766de41416ae71.png\",\n                    \"orig_name\": \"90df6618c71a5b2bd3766de41416ae71.png\",\n                    \"path\": \"/uploads/2009/6/image/90df6618c71a5b2bd3766de41416ae71.png\",\n                    \"full_path\": \"/var/bbs/.vault-new/uploads/2009/6/image/90df6618c71a5b2bd3766de41416ae71.png\",\n                    \"url\": \"REMOTE_CURRENT://uploads/2009/6/image/90df6618c71a5b2bd3766de41416ae71.png\",\n                    \"size\": 0,\n                    \"type\": \"image\",\n                    \"mime\": \"image/jpeg\",\n                    \"target\": \"profile\",\n                    \"metadata\": null,\n                    \"created_at\": \"2009-07-29T06:31:53.000Z\",\n                    \"updated_at\": \"2009-07-29T06:31:53.000Z\"\n                }\n            },\n            \"target\": null,\n            \"metadata\": null,\n            \"id\": 8763,\n            \"created_at\": \"2019-12-17T07:36:25.000Z\",\n            \"updated_at\": \"2019-12-17T07:36:25.000Z\"\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{apiHost}}/user/",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"user",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) profile get ",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$IX8sMqfvlOR7HxR.PegXcuYtMOxxIoUOrrrV/R7FRWjneVV6qHnXW",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:7777/user/user/gvorcek/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"user",
+								"user",
+								"gvorcek",
+								"profile"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "user1",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) restore_get_code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:7777/user/restore/f7aded37-ff5d-4298-8fe2-929920f041c5",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"user",
+								"restore",
+								"f7aded37-ff5d-4298-8fe2-929920f041c5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) restore_password",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"field\": \"derek\"\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:7777/user/restore",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "7777",
+							"path": [
+								"user",
+								"restore"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) get messages",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2a$10$te6bV7G.5edgruzV.eGPNOd8D8TN4ZVUfrpGP7SpmzCbzTx8NEh5u",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:7777/user/user/eovin/messages",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"user",
+								"user",
+								"eovin",
+								"messages"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "user1",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) restore_post_code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"crazyn\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:7777/user/restore/993f006c-d455-43de-a9da-2f047214ad79",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"user",
+								"restore",
+								"993f006c-d455-43de-a9da-2f047214ad79"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) post message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2a$10$te6bV7G.5edgruzV.eGPNOd8D8TN4ZVUfrpGP7SpmzCbzTx8NEh5u",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"message\": \"Hello\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:7777/user/user/eovin/messages",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"user",
+								"user",
+								"eovin",
+								"messages"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "user1",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) updates",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://{{apiHost}}/user/updates",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"user",
+								"updates"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "node",
+			"item": [
+				{
+					"name": "(go) tags post",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$IX8sMqfvlOR7HxR.PegXcuRW9Jo8/PFnfATb3F9L/Yv1QoqMaPROK",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tags\": [\n        \"Осень\",\n        \"Пачуле\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:7777/node/6199/tags",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"6199",
+								"tags"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) node",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:7777/node/193",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"193"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) node like",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$IX8sMqfvlOR7HxR.PegXcuRW9Jo8/PFnfATb3F9L/Yv1QoqMaPROK",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:7777/node/6199/like",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"6199",
+								"like"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) node lock",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$IX8sMqfvlOR7HxR.PegXcuRW9Jo8/PFnfATb3F9L/Yv1QoqMaPROK",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"is_locked\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:7777/node/6201/lock",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"6201",
+								"lock"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) node heroic",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$IX8sMqfvlOR7HxR.PegXcuRW9Jo8/PFnfATb3F9L/Yv1QoqMaPROK",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:7777/node/6199/heroic",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"6199",
+								"heroic"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) get_related",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$3qW8AZx9CRh/46bw5c9f4uQE399X7phUtgdx9su/bZCUxdg2Nzyg2",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:7777/node/193/related",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"193",
+								"related"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "user1",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) post_node",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$NWEgZoISCjBZ1vn0FSkaPeen6htVCEHtvKqu.3JB8lTdvE9NvRbim",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"node\": {\n        \"id\": null,\n        \"user\": null,\n        \"title\": \"Testureah2\",\n        \"files\": [\n            {\n                \"name\": \"screenshot_2019-12-24_15-59-41_537345277-1577184102580.png\",\n                \"orig_name\": \"screenshot_2019-12-24_15-59-41_537345277.png\",\n                \"path\": \"uploads/2019/11/image/\",\n                \"full_path\": \"/var/bbs/.vault-staging/uploads/2019/11/image/screenshot_2019-12-24_15-59-41_537345277-1577184102580.png\",\n                \"url\": \"REMOTE_CURRENT://uploads/2019/11/image/screenshot_2019-12-24_15-59-41_537345277-1577184102580.png\",\n                \"size\": 38921,\n                \"type\": \"image\",\n                \"mime\": \"image/png\",\n                \"user\": {\n                    \"id\": 9,\n                    \"username\": \"droop\",\n                    \"email\": \"em@fey.k\",\n                    \"role\": \"admin\",\n                    \"fullname\": \"Fuk Dat\",\n                    \"description\": \"Some some some\",\n                    \"is_activated\": false,\n                    \"last_seen\": \"2019-12-24T10:12:32.000Z\",\n                    \"last_seen_messages\": null,\n                    \"created_at\": \"2009-07-29T06:31:53.000Z\",\n                    \"updated_at\": \"2019-12-24T10:12:32.000Z\",\n                    \"photo\": {\n                        \"id\": 8763,\n                        \"name\": \"1448e9ad31141b6ffc7f1a5b0061bdc5-1576581822058.jpg\",\n                        \"orig_name\": \"1448e9ad31141b6ffc7f1a5b0061bdc5.jpg\",\n                        \"path\": \"uploads/2019/11/image/\",\n                        \"full_path\": \"/var/bbs/.vault-staging/uploads/2019/11/image/1448e9ad31141b6ffc7f1a5b0061bdc5-1576581822058.jpg\",\n                        \"url\": \"REMOTE_CURRENT://uploads/2019/11/image/1448e9ad31141b6ffc7f1a5b0061bdc5-1576581822058.jpg\",\n                        \"size\": 386628,\n                        \"type\": \"image\",\n                        \"mime\": \"image/jpeg\",\n                        \"target\": null,\n                        \"metadata\": null,\n                        \"created_at\": \"2019-12-17T11:23:42.000Z\",\n                        \"updated_at\": \"2019-12-17T11:23:42.000Z\"\n                    }\n                },\n                \"target\": null,\n                \"metadata\": null,\n                \"id\": 8769,\n                \"created_at\": \"2019-12-24T10:41:42.000Z\",\n                \"updated_at\": \"2019-12-24T10:41:42.000Z\"\n            }\n        ],\n        \"cover\": {\n            \"name\": \"screenshot_2019-10-15_13-33-56_347696522-1577184105019.png\",\n            \"orig_name\": \"screenshot_2019-10-15_13-33-56_347696522.png\",\n            \"path\": \"uploads/2019/11/image/\",\n            \"full_path\": \"/var/bbs/.vault-staging/uploads/2019/11/image/screenshot_2019-10-15_13-33-56_347696522-1577184105019.png\",\n            \"url\": \"REMOTE_CURRENT://uploads/2019/11/image/screenshot_2019-10-15_13-33-56_347696522-1577184105019.png\",\n            \"size\": 26270,\n            \"type\": \"image\",\n            \"mime\": \"image/png\",\n            \"user\": {\n                \"id\": 9,\n                \"username\": \"droop\",\n                \"email\": \"em@fey.k\",\n                \"role\": \"admin\",\n                \"fullname\": \"Fuk Dat\",\n                \"description\": \"Some some some\",\n                \"is_activated\": false,\n                \"last_seen\": \"2019-12-24T10:12:32.000Z\",\n                \"last_seen_messages\": null,\n                \"created_at\": \"2009-07-29T06:31:53.000Z\",\n                \"updated_at\": \"2019-12-24T10:12:32.000Z\",\n                \"photo\": {\n                    \"id\": 8763,\n                    \"name\": \"1448e9ad31141b6ffc7f1a5b0061bdc5-1576581822058.jpg\",\n                    \"orig_name\": \"1448e9ad31141b6ffc7f1a5b0061bdc5.jpg\",\n                    \"path\": \"uploads/2019/11/image/\",\n                    \"full_path\": \"/var/bbs/.vault-staging/uploads/2019/11/image/1448e9ad31141b6ffc7f1a5b0061bdc5-1576581822058.jpg\",\n                    \"url\": \"REMOTE_CURRENT://uploads/2019/11/image/1448e9ad31141b6ffc7f1a5b0061bdc5-1576581822058.jpg\",\n                    \"size\": 386628,\n                    \"type\": \"image\",\n                    \"mime\": \"image/jpeg\",\n                    \"target\": null,\n                    \"metadata\": null,\n                    \"created_at\": \"2019-12-17T11:23:42.000Z\",\n                    \"updated_at\": \"2019-12-17T11:23:42.000Z\"\n                }\n            },\n            \"target\": null,\n            \"metadata\": null,\n            \"id\": 8770,\n            \"created_at\": \"2019-12-24T10:41:45.000Z\",\n            \"updated_at\": \"2019-12-24T10:41:45.000Z\"\n        },\n        \"type\": \"image\",\n        \"blocks\": [\n        \t{\n        \t\t\"type\": \"text\",\n        \t\t\"text\": \"Hello\",\n        \t\t\"url\": \"uuuurl\"\n        \t},\n        \t{\n        \t\t\"type\": \"video\",\n        \t\t\"url\": \"https://www.youtube.com/watch?v=uC05Dm85iDQ\"\n        \t}\n    \t],\n        \"tags\": [],\n        \"flow\": {\n            \"display\": \"single\",\n            \"show_description\": false\n        }\n    }\n}"
+						},
+						"url": {
+							"raw": "http://localhost:7777/node",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "flow",
+			"item": [
+				{
+					"name": "(go) node diff",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$IX8sMqfvlOR7HxR.PegXcuRW9Jo8/PFnfATb3F9L/Yv1QoqMaPROK",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:7777/nodes/diff?start=2019-12-18T05:47:57.115Z&end=2017-11-18T05:47:57.115Z&with_heroes=true&with_updated=true&with_recent=true&with_valid=true",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"nodes",
+								"diff"
+							],
+							"query": [
+								{
+									"key": "start",
+									"value": "2019-12-18T05:47:57.115Z"
+								},
+								{
+									"key": "end",
+									"value": "2017-11-18T05:47:57.115Z"
+								},
+								{
+									"key": "with_heroes",
+									"value": "true"
+								},
+								{
+									"key": "with_updated",
+									"value": "true"
+								},
+								{
+									"key": "with_recent",
+									"value": "true"
+								},
+								{
+									"key": "with_valid",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) flow view",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$NWEgZoISCjBZ1vn0FSkaPeYuLsX7i5qj3/V5xsRN0E891eW5H6sM.",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"flow\":{\"show_description\":true,\"display\":\"single\"}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:7777/node/6199/cell-view",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"6199",
+								"cell-view"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "comments",
+			"item": [
+				{
+					"name": "(go) comments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:7777/node/696/comment?order=DESC&take=2&skip=1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"696",
+								"comment"
+							],
+							"query": [
+								{
+									"key": "order",
+									"value": "DESC"
+								},
+								{
+									"key": "take",
+									"value": "2"
+								},
+								{
+									"key": "skip",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) comment lock",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$IX8sMqfvlOR7HxR.PegXcuRW9Jo8/PFnfATb3F9L/Yv1QoqMaPROK",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/javascript",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"is_locked\": true\n}",
+							"options": {
+								"raw": {
+									"language": "javascript"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:7777/node/6201/comment/26836/lock",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"6201",
+								"comment",
+								"26836",
+								"lock"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) post comment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2b$10$NWEgZoISCjBZ1vn0FSkaPeen6htVCEHtvKqu.3JB8lTdvE9NvRbim",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": null,\n    \"text\": \"Test?22222\",\n    \"files\": [\n        {\n            \"id\": 8765,\n            \"name\": \"6d35f8cc46b930fe2e0e483021eca079d3475b59-1576730363319.jpg\",\n            \"orig_name\": \"6d35f8cc46b930fe2e0e483021eca079d3475b59.jpg\",\n            \"path\": \"uploads/2019/11/image/\",\n            \"full_path\": \"/var/bbs/.vault-staging/uploads/2019/11/image/6d35f8cc46b930fe2e0e483021eca079d3475b59-1576730363319.jpg\",\n            \"url\": \"REMOTE_CURRENT://uploads/2019/11/image/6d35f8cc46b930fe2e0e483021eca079d3475b59-1576730363319.jpg\",\n            \"size\": 330183,\n            \"type\": \"image\",\n            \"mime\": \"image/jpeg\",\n            \"target\": null,\n            \"metadata\": null,\n            \"created_at\": \"2019-12-19T04:39:23.000Z\",\n            \"updated_at\": \"2019-12-19T04:39:23.000Z\"\n        },\n        {\n            \"id\": 8766,\n            \"name\": \"1448e9ad31141b6ffc7f1a5b0061bdc5-1576730363331.jpg\",\n            \"orig_name\": \"1448e9ad31141b6ffc7f1a5b0061bdc5.jpg\",\n            \"path\": \"uploads/2019/11/image/\",\n            \"full_path\": \"/var/bbs/.vault-staging/uploads/2019/11/image/1448e9ad31141b6ffc7f1a5b0061bdc5-1576730363331.jpg\",\n            \"url\": \"REMOTE_CURRENT://uploads/2019/11/image/1448e9ad31141b6ffc7f1a5b0061bdc5-1576730363331.jpg\",\n            \"size\": 386628,\n            \"type\": \"image\",\n            \"mime\": \"image/jpeg\",\n            \"target\": null,\n            \"metadata\": null,\n            \"created_at\": \"2019-12-19T04:39:23.000Z\",\n            \"updated_at\": \"2019-12-19T04:39:23.000Z\"\n        },\n        {\n            \"id\": 8767,\n            \"name\": \"28-1576730363327.jpg\",\n            \"orig_name\": \"28.jpg\",\n            \"path\": \"uploads/2019/11/image/\",\n            \"full_path\": \"/var/bbs/.vault-staging/uploads/2019/11/image/28-1576730363327.jpg\",\n            \"url\": \"REMOTE_CURRENT://uploads/2019/11/image/28-1576730363327.jpg\",\n            \"size\": 774159,\n            \"type\": \"image\",\n            \"mime\": \"image/jpeg\",\n            \"target\": null,\n            \"metadata\": null,\n            \"created_at\": \"2019-12-19T04:39:23.000Z\",\n            \"updated_at\": \"2019-12-19T04:39:23.000Z\"\n        }\n    ],\n    \"temp_ids\": [],\n    \"is_private\": false,\n    \"files_order\": [\n        8765,\n        8767\n    ],\n    \"deleted_at\": null,\n    \"created_at\": \"2019-12-19T04:39:35.000Z\",\n    \"updated_at\": \"2019-12-19T04:39:35.000Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:7777/node/6287/comment",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"6287",
+								"comment"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) post comment without files",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "$2a$10$te6bV7G.5edgruzV.eGPNOd8D8TN4ZVUfrpGP7SpmzCbzTx8NEh5u",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": null,\n    \"text\": \"Test?22222\",\n    \"files\": [],\n    \"temp_ids\": [],\n    \"is_private\": false,\n    \"files_order\": [\n        8765,\n        8767\n    ],\n    \"deleted_at\": null,\n    \"created_at\": \"2019-12-19T04:39:35.000Z\",\n    \"updated_at\": \"2019-12-19T04:39:35.000Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:7777/node/193/comment",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "7777",
+							"path": [
+								"node",
+								"193",
+								"comment"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "file",
+			"item": [
+				{
+					"name": "(go) upload image",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/muerwre/Downloads/IMG_20200614_135157.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://{{apiHost}}/upload/comments/image",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"upload",
+								"comments",
+								"image"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) upload audio",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/muerwre/Music/tired.mp3"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://{{apiHost}}/upload/comments/audio",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"upload",
+								"comments",
+								"audio"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "embed",
+			"item": [
+				{
+					"name": "(go) get youtubes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://{{apiHost}}/meta/youtube?ids=HhGuXCuDb1U,l1tT3Cud-hY,HNlBlq2BlvQ,6Ap8Sc7nvUA,1gUB9cYAFUw,dYCRNGikr50,vcGMy_ao-Zg,S1J6TFHCevg,mK6fFgJyaVU,LAXI6rRiHNM,bl5TUw7sUBs,IkAp5gAYDUQ,irfXSw55DUo,2dbR2JZmlWo,jPan651rVMs,YWN81V7ojOE,98DDgbtE-eU,18Ku0EaiS88",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"meta",
+								"youtube"
+							],
+							"query": [
+								{
+									"key": "ids",
+									"value": "HhGuXCuDb1U,l1tT3Cud-hY,HNlBlq2BlvQ,6Ap8Sc7nvUA,1gUB9cYAFUw,dYCRNGikr50,vcGMy_ao-Zg,S1J6TFHCevg,mK6fFgJyaVU,LAXI6rRiHNM,bl5TUw7sUBs,IkAp5gAYDUQ,irfXSw55DUo,2dbR2JZmlWo,jPan651rVMs,YWN81V7ojOE,98DDgbtE-eU,18Ku0EaiS88"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "social",
+			"item": [
+				{
+					"name": "(go) social attach",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) social attach",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) social attach",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://{{apiHost}}/oauth/vk/attach?code=fdacb57d8f319dcc08dae797e3a21a27e8a60e899ef83997e125c4a970f2126053c0c1c0b18ef19264b50",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"oauth",
+								"vk",
+								"attach"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "fdacb57d8f319dcc08dae797e3a21a27e8a60e899ef83997e125c4a970f2126053c0c1c0b18ef19264b50"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) attach confirm",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJEYXRhIjp7IlByb3ZpZGVyIjoidmtvbnRha3RlIiwiSWQiOiIzNjAwMDQiLCJFbWFpbCI6ImdvdGhhbTQ4QGdtYWlsLmNvbSIsIlRva2VuIjoiYmYzMGM3OWVlYjc1MWMyNGU5ZDBiNzc5MDA1ZGQ0OWZhODZlMTgyN2IxYWM1ZGRjODUzYTNkYWI4N2U2YmJmOWMwNDY2Zjk3OWRkNjc3YTAxOGVjZSIsIkZldGNoZWQiOnsiUHJvdmlkZXIiOiJ2a29udGFrdGUiLCJJZCI6MzYwMDA0LCJOYW1lIjoi0JPRgNC40LPQvtGA0LjQuSDQp9C10YDQstC-0L_Qu9GP0YEiLCJQaG90byI6Imh0dHBzOi8vc3VuOS02OS51c2VyYXBpLmNvbS9jODUwMTMyL3Y4NTAxMzI3MDQvM2VmN2UveDhLc1lhN1pSSEUuanBnP2F2YT0xIn19LCJUeXBlIjoib2F1dGhfY2xhaW0ifQ.EfRj7voeTU95s5RsdMdxoYXfoC8lcP79c9JJpcgSAy0\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{apiHost}}/oauth/attach/confirm",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"oauth",
+								"attach",
+								"confirm"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "3b0bea6d-c92a-457b-a637-c44e71159257",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "cd3d3e4a-c81e-4177-9f84-a273cc35c7b9",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "d6b044ec-96fe-4126-95a1-a53587ad1df3",
+			"key": "apiHost",
+			"value": "localhost:7777"
+		},
+		{
+			"id": "8a571044-49ae-4968-b511-176f1a22b482",
+			"key": "authToken",
+			"value": "$2a$10$bo633vLAOUpMxLCAAbHNUObQAbm0rtiSt9inhB2glvI35gHNoNQ/y"
+		}
+	],
+	"protocolProfileBehavior": {}
+}
