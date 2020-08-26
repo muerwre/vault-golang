@@ -54,7 +54,7 @@ func (ml *Mailer) Listen() {
 
 			if !ml.open {
 				if ml.closer, err = ml.dialer.Dial(); err != nil {
-					panic(err)
+					logrus.Warnf(err.Error())
 				}
 
 				ml.open = true

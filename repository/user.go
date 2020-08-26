@@ -116,8 +116,7 @@ func (ur UserRepository) GetAliveCount() (count int) {
 }
 
 func (ur UserRepository) UpdateLastSeen(user *models.User) {
-	user.LastSeen = time.Now()
-	ur.db.Save(&user)
+	ur.db.Model(&models.User{}).Where("id = ?", user.ID).Update("last_seen", time.Now())
 }
 
 func (ur UserRepository) UpdatePhoto(uid uint, photoId uint) {

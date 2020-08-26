@@ -4,7 +4,7 @@ package main
 /*
 
 	-- before release --
-	TODO: can't load node anymore
+	TODO: new password didn't set
 	TODO: add healthcheck endpoint
 	TODO: refactor GetDiff
 

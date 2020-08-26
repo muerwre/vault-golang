@@ -223,7 +223,8 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 
 	d.Set("gorm:association_autoupdate", false).
 		Set("gorm:association_save_reference", false).
-		Model(&models.User{}).Where("id = ?", code.UserID).
+		Model(&models.User{}).
+		Where("id = ?", code.UserID).
 		Update("password", password)
 
 	d.Delete(&code, "id = ?", code.ID)

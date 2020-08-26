@@ -38,6 +38,8 @@ services:
         - DKIM_INTERNAL=127.0.0.1
     expose:
       - "25"
+    ports:
+      - 127.0.0.1:25:25
     volumes:
       - /etc/localtime:/etc/localtime
 volumes:
