@@ -4,11 +4,9 @@ package main
 /*
 
 	-- before release --
-	TODO: move everything to cases on PostNode
-	TODO: frontend hide image view if image is null for audio nodes
+	TODO: refactor GetDiff
 
 	-- after release --
-	TODO: refactor GetDiff
 	TODO: move all queries to repositories
 	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 
