@@ -40,7 +40,7 @@ func (a *API) WithUser(preloadAvatarAndCover bool) func(*gin.Context) {
 func (a API) RecoverMiddleware(c *gin.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			logrus.Warnf("Runtime error occured while executing: %+v", r)
+			logrus.WithField("panic", r).Error("we panicked!")
 
 			c.AbortWithStatusJSON(
 				http.StatusInternalServerError,

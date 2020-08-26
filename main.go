@@ -5,6 +5,7 @@ package main
 
 	-- before release --
 	TODO: can't load node anymore
+	TODO: add healthcheck endpoint
 	TODO: refactor GetDiff
 
 	-- after release --
