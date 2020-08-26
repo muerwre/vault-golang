@@ -5,6 +5,7 @@ package main
 /*
 
 	-- before release --
+	TODO: test submission of all nodes
 	TODO: add healthcheck endpoint
 	TODO: refactor GetDiff
 
