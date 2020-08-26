@@ -205,10 +205,23 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 func (nc *NodeController) LockComment(c *gin.Context) {
 	d := nc.db
 	u := c.MustGet("User").(*models.User)
-	cid := c.Param("cid")
 	params := request.NodeLockCommentRequest{}
 
-	err := c.BindJSON(&params)
+	cid, err := strconv.ParseUint(c.Param("cid"), 10, 32)
+
+	if cid == 0 || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
+		return
+	}
+
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	if nid == 0 || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
+		return
+	}
+
+	err = c.BindJSON(&params)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
@@ -230,9 +243,19 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 
 	if params.IsLocked {
 		d.Delete(&comment)
+
+		previous := &models.Comment{}
+		d.Model(&models.Comment{}).Order("created_at DESC").First(&previous)
+
+		if previous.ID != 0 {
+			nc.usecase.UpdateCommentedAt(*comment.NodeID, &comment.CreatedAt)
+		} else {
+			nc.usecase.UpdateCommentedAt(*comment.NodeID, nil)
+		}
 	} else {
 		comment.DeletedAt = nil
 		d.Model(&comment).Unscoped().Where("id = ?", comment.ID).Update("deletedAt", nil)
+		nc.usecase.UpdateCommentedAt(*comment.NodeID, &comment.CreatedAt)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
@@ -294,7 +317,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 
 	nc.usecase.UnsetFilesTarget(lostFiles)
 	nc.usecase.UpdateBriefFromComment(node, comment)
-	nc.usecase.UpdateCommentedAt(node, comment.CreatedAt)
+	nc.usecase.UpdateCommentedAt(uint(nid), &comment.CreatedAt)
 	nc.usecase.UpdateFilesMetadata(data.Files, comment.Files)
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
