@@ -3,7 +3,7 @@ package main
 // https://aaf.engineering/go-web-application-structure-part-2/
 /*
 	-- before release --
-	TODO: frontend: user patch hangs on any empty field
+	TODO: user not updated
 	TODO: add healthcheck endpoint
 	TODO: refactor GetDiff
 

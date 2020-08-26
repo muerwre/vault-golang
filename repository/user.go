@@ -22,9 +22,8 @@ func (ur UserRepository) Create(user *models.User) (err error) {
 	return nil
 }
 
-func (ur UserRepository) Save(user *models.User) (err error) {
-	ur.db.Save(&user)
-	return nil
+func (ur UserRepository) Save(user *models.User) error {
+	return ur.db.Model(&models.User{}).Save(&user).Error
 }
 
 func (ur UserRepository) GetByToken(t string) (user *models.User, err error) {

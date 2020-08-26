@@ -105,7 +105,7 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 
 	data := &request.UserPatchRequest{}
 
-	if err := c.ShouldBind(&data); err != nil {
+	if err := c.BindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
@@ -119,12 +119,11 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 
 	data.ApplyTo(u)
 
-	uc.DB.
-		Model(&models.User{}).
-		Updates(u).
-		Preload("Photo").
-		Preload("Cover").
-		First(&u)
+	if err := uc.DB.UserRepository.Save(u); err != nil {
+		logrus.Infof("Can't update user: %s", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
+		return
+	}
 
 	uc.CheckCredentials(c)
 

@@ -39,6 +39,7 @@ const (
 	CantSaveNode                 string = "CantSaveNode"
 	CantLoadUser                 string = "CantLoadUser"
 	InputTooShirt                string = "InputTooShirt"
+	CantSaveUser                 string = "CantSaveUser"
 )
 
 var ValidationToCode = map[string]string{
