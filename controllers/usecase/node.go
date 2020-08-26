@@ -272,5 +272,9 @@ func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.
 }
 
 func (nu NodeUsecase) UpdateCommentedAt(nid uint, time *time.Time) {
-	nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", time)
+	if time == nil {
+		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", nil)
+	} else {
+		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", *time)
+	}
 }

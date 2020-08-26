@@ -245,10 +245,10 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 		d.Delete(&comment)
 
 		previous := &models.Comment{}
-		d.Model(&models.Comment{}).Order("created_at DESC").First(&previous)
+		d.Model(&models.Comment{}).Order("created_at DESC").Where("nodeId = ?", nid).First(&previous)
 
 		if previous.ID != 0 {
-			nc.usecase.UpdateCommentedAt(*comment.NodeID, &comment.CreatedAt)
+			nc.usecase.UpdateCommentedAt(*comment.NodeID, &previous.CreatedAt)
 		} else {
 			nc.usecase.UpdateCommentedAt(*comment.NodeID, nil)
 		}
