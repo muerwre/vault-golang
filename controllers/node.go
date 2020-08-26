@@ -231,7 +231,7 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 	comment := &models.Comment{}
 	d.Unscoped().Where("id = ?", cid).First(&comment)
 
-	if comment == nil || comment.ID == 0 {
+	if comment == nil || comment.ID == 0 || *comment.NodeID != uint(nid) {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.CommentNotFound})
 		return
 	}

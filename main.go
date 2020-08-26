@@ -4,13 +4,10 @@ package main
 
 /*
 
-	-- before release --
-	TODO: empty tags are still posted
-	TODO: inputing "Tag" adds "tag" duplicate to form
+	-- after release --
+	TODO: try to fill metadata for images (if empty)
 	TODO: add healthcheck endpoint
 	TODO: refactor GetDiff
-
-	-- after release --
 	TODO: move all queries to repositories
 	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 
