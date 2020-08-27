@@ -1,6 +1,14 @@
 package main
 
-// https://aaf.engineering/go-web-application-structure-part-2/
+/*
+
+	App structure I use:
+	https://aaf.engineering/go-web-application-structure-part-2/
+
+	Goods:
+	https://awesomeopensource.com/project/FlowerWrong/awesome-gin - list of good things
+	https://github.com/olahol/melody - websocket middleware I'll use
+*/
 
 /*
 
