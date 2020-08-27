@@ -303,3 +303,10 @@ func (nr NodeRepository) SaveNodeWithFiles(node *models.Node) error {
 
 	return nil
 }
+
+// GetCommentByIdWithDeleted gets comment by cid with deleted ones
+func (nr NodeRepository) GetCommentByIdWithDeleted(cid uint) (*models.Comment, error) {
+	comment := &models.Comment{}
+	q := nr.db.Unscoped().Where("id = ?", cid).First(&comment)
+	return comment, q.Error
+}

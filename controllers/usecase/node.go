@@ -271,10 +271,52 @@ func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.
 	}
 }
 
-func (nu NodeUsecase) UpdateCommentedAt(nid uint, time *time.Time) {
+func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint, time *time.Time) {
 	if time == nil {
 		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", nil)
 	} else {
 		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", *time)
 	}
+}
+
+func (nu NodeUsecase) UpdateNodeSeen(nid uint, uid uint) {
+	nu.db.NodeViewRepository.UpdateView(uid, nid)
+}
+
+func (nu NodeUsecase) DeleteComment(comment *models.Comment) error {
+	if err := nu.db.Delete(&comment).Error; err != nil {
+		return err
+	}
+
+	previous := &models.Comment{}
+
+	nu.db.Model(&models.Comment{}).
+		Order("created_at DESC").
+		Where("nodeId = ?", comment.NodeID).
+		First(&previous)
+
+	if previous.ID != 0 {
+		nu.UpdateNodeCommentedAt(*comment.NodeID, &previous.CreatedAt)
+	} else {
+		nu.UpdateNodeCommentedAt(*comment.NodeID, nil)
+	}
+
+	return nil
+}
+
+func (nu NodeUsecase) RestoreComment(comment *models.Comment) error {
+	comment.DeletedAt = nil
+
+	q := nu.db.Model(&comment).
+		Unscoped().
+		Where("id = ?", comment.ID).
+		Update("deletedAt", nil)
+
+	if q.Error != nil {
+		return q.Error
+	}
+
+	nu.UpdateNodeCommentedAt(*comment.NodeID, &comment.CreatedAt)
+
+	return nil
 }

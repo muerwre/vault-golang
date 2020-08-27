@@ -40,6 +40,8 @@ const (
 	CantLoadUser                 string = "CantLoadUser"
 	InputTooShirt                string = "InputTooShirt"
 	CantSaveUser                 string = "CantSaveUser"
+	CantDeleteComment            string = "CantDeleteComment"
+	CantRestoreComment           string = "CantRestoreComment"
 )
 
 var ValidationToCode = map[string]string{

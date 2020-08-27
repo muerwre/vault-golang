@@ -203,7 +203,6 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 }
 
 func (nc *NodeController) LockComment(c *gin.Context) {
-	d := nc.db
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeLockCommentRequest{}
 
@@ -228,10 +227,9 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 		return
 	}
 
-	comment := &models.Comment{}
-	d.Unscoped().Where("id = ?", cid).First(&comment)
+	comment, err := nc.db.NodeRepository.GetCommentByIdWithDeleted(uint(cid))
 
-	if comment == nil || comment.ID == 0 || *comment.NodeID != uint(nid) {
+	if err != nil || *comment.NodeID != uint(nid) {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.CommentNotFound})
 		return
 	}
@@ -242,20 +240,17 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 	}
 
 	if params.IsLocked {
-		d.Delete(&comment)
-
-		previous := &models.Comment{}
-		d.Model(&models.Comment{}).Order("created_at DESC").Where("nodeId = ?", nid).First(&previous)
-
-		if previous.ID != 0 {
-			nc.usecase.UpdateCommentedAt(*comment.NodeID, &previous.CreatedAt)
-		} else {
-			nc.usecase.UpdateCommentedAt(*comment.NodeID, nil)
+		if err := nc.usecase.DeleteComment(comment); err != nil {
+			logrus.Warnf("Unable to delete comment %d for node %d: %s", comment.ID, comment.NodeID, err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantDeleteComment})
+			return
 		}
 	} else {
-		comment.DeletedAt = nil
-		d.Model(&comment).Unscoped().Where("id = ?", comment.ID).Update("deletedAt", nil)
-		nc.usecase.UpdateCommentedAt(*comment.NodeID, &comment.CreatedAt)
+		if err := nc.usecase.RestoreComment(comment); err != nil {
+			logrus.Warnf("Unable to restore comment %d for node %d: %s", comment.ID, comment.NodeID, err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantRestoreComment})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
@@ -317,8 +312,9 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 
 	nc.usecase.UnsetFilesTarget(lostFiles)
 	nc.usecase.UpdateBriefFromComment(node, comment)
-	nc.usecase.UpdateCommentedAt(uint(nid), &comment.CreatedAt)
 	nc.usecase.UpdateFilesMetadata(data.Files, comment.Files)
+	nc.usecase.UpdateNodeCommentedAt(uint(nid), &comment.CreatedAt)
+	nc.usecase.UpdateNodeSeen(uint(nid), u.ID)
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 }
