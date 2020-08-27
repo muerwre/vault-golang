@@ -6,7 +6,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/response"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"sync"
 )
@@ -55,7 +54,7 @@ func (nr NodeRepository) GetNodeAlbumRelated(
 		Select("`tag`.`title` AS `album`, `node`.`thumbnail`, `node`.`id`, `node`.`title`").
 		Joins("LEFT JOIN `tag` `tag` ON `tags`.`tagId` = `tag`.`id`").
 		Joins("LEFT JOIN `node` `node` ON `tags`.`nodeId` = `node`.`id`").
-		Where("`tags`.`tagId` IN (?) AND `node`.`type` = ? AND `node`.`id` NOT IN (?)", []uint(ids), types, exclude).
+		Where("`tags`.`tagId` IN (?) AND `node`.`type` = ? AND `node`.`id` NOT IN (?) AND `node`.`deleted_at` IS NULL", ids, types, exclude).
 		Limit(6).
 		Scan(&rows)
 
@@ -75,16 +74,15 @@ func (nr NodeRepository) GetNodeSimilarRelated(
 	wg *sync.WaitGroup,
 	c chan []models.NodeRelatedItem,
 ) {
-	d := nr.db
 	similar := []models.NodeRelatedItem{}
 
-	sq := d.Select("*").
+	sq := nr.db.Select("*").
 		Table("`node_tags_tag` `tags`").
 		Where("`tags`.`tagId` IN (?) AND nodeId NOT IN (?)", []uint(ids), exclude).
 		SubQuery()
 
-	d.Table("node").
-		Where("`node`.`type` = ?", types).
+	nr.db.Table("node").
+		Where("`node`.`type` = ? AND `node`.`deleted_at` IS NULL", types).
 		Select("`node`.`title`, `node`.`thumbnail`, `node`.`id`, count(t1.nodeId) AS `count`").
 		Joins("JOIN (?) as `t1` ON `t1`.`nodeId` = `node`.`id`", sq).
 		Order("`count` DESC").
@@ -183,47 +181,6 @@ func (nr NodeRepository) GetComments(id int, take int, skip int, order string) (
 	}
 
 	return comments, count
-}
-
-func (nr NodeRepository) GetRelated(nid uint) (*response.NodeRelatedResponse, error) {
-	related := &response.NodeRelatedResponse{
-		Albums:  map[string][]models.NodeRelatedItem{},
-		Similar: []models.NodeRelatedItem{},
-	}
-
-	node := &models.Node{}
-	nr.db.Preload("Tags").First(&node, "id = ?", nid)
-
-	if node == nil || node.ID == 0 || node.DeletedAt != nil || !node.IsFlowType() || len(node.Tags) == 0 {
-		return related, nil
-	}
-
-	var tagSimilarIds []uint
-	var tagAlbumIds []uint
-
-	for _, v := range node.Tags {
-		if v.Title[:1] == "/" {
-			tagAlbumIds = append(tagAlbumIds, v.ID)
-		} else {
-			tagSimilarIds = append(tagSimilarIds, v.ID)
-		}
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	albumsChan := make(chan map[string][]models.NodeRelatedItem)
-	similarChan := make(chan []models.NodeRelatedItem)
-
-	go nr.GetNodeAlbumRelated(tagAlbumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
-	go nr.GetNodeSimilarRelated(tagSimilarIds, []uint{node.ID}, node.Type, &wg, similarChan)
-
-	wg.Wait()
-
-	related.Albums = <-albumsChan
-	related.Similar = <-similarChan
-
-	return related, nil
 }
 
 func (nr NodeRepository) GetForSearch(

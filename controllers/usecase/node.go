@@ -7,9 +7,11 @@ import (
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/response"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/validation"
 	"github.com/sirupsen/logrus"
+	"sync"
 	"time"
 )
 
@@ -319,4 +321,49 @@ func (nu NodeUsecase) RestoreComment(comment *models.Comment) error {
 	nu.UpdateNodeCommentedAt(*comment.NodeID, &comment.CreatedAt)
 
 	return nil
+}
+
+func (nu NodeUsecase) SeparateNodeTags(tags []*models.Tag) ([]uint, []uint) {
+	var similar []uint
+	var album []uint
+
+	for _, v := range tags {
+		if v.Title[:1] == "/" {
+			album = append(album, v.ID)
+		} else {
+			similar = append(similar, v.ID)
+		}
+	}
+
+	return similar, album
+}
+
+func (nu NodeUsecase) GetNodeRelated(nid uint) (*response.NodeRelatedResponse, error) {
+	related := &response.NodeRelatedResponse{
+		Albums:  map[string][]models.NodeRelatedItem{},
+		Similar: []models.NodeRelatedItem{},
+	}
+
+	node := &models.Node{}
+	if err := nu.db.Preload("Tags").First(&node, "id = ?", nid).Error; err != nil || len(node.Tags) == 0 {
+		return related, nil
+	}
+
+	similarIds, albumIds := nu.SeparateNodeTags(node.Tags)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	albumsChan := make(chan map[string][]models.NodeRelatedItem)
+	similarChan := make(chan []models.NodeRelatedItem)
+
+	go nu.db.NodeRepository.GetNodeAlbumRelated(albumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
+	go nu.db.NodeRepository.GetNodeSimilarRelated(similarIds, []uint{node.ID}, node.Type, &wg, similarChan)
+
+	wg.Wait()
+
+	related.Albums = <-albumsChan
+	related.Similar = <-similarChan
+
+	return related, nil
 }

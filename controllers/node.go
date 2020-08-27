@@ -522,7 +522,8 @@ func (nc NodeController) GetRelated(c *gin.Context) {
 		return
 	}
 
-	related, err := nc.db.NodeRepository.GetRelated(uint(nid))
+	related, err := nc.usecase.GetNodeRelated(uint(nid))
+
 	c.JSON(http.StatusOK, gin.H{"related": related})
 }
 
