@@ -3,6 +3,8 @@ package main
 // https://aaf.engineering/go-web-application-structure-part-2/
 
 /*
+	-- bugs --
+	TODO: node recommendations displaying deleted nodes
 
 	-- after release --
 	TODO: try to fill metadata for images (if empty)
