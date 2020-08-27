@@ -95,9 +95,17 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 		}
 	}
 
+	user, lastSeenBoris, err := uc.usecase.GetUserForCheckCredentials(user.ID)
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
+		return
+	}
+
+	resp := new(response.UserCheckCredentialsResponse).Init(user, *lastSeenBoris)
 	token := d.UserRepository.GenerateTokenFor(user)
 
-	c.JSON(http.StatusOK, gin.H{"user": user, "token": token.Token})
+	c.JSON(http.StatusOK, gin.H{"user": resp, "token": token.Token})
 }
 
 func (uc *UserController) PatchUser(c *gin.Context) {
