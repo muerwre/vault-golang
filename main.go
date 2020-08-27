@@ -4,10 +4,6 @@ package main
 
 /*
 
-	-- bugs --
-	TODO: user doesn't has last_seen_boris on login
-	TODO: node recommendations displaying deleted nodes
-
 	-- after release --
 	TODO: try to fill metadata for images (if empty)
 	TODO: add healthcheck endpoint
