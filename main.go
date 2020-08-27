@@ -3,7 +3,9 @@ package main
 // https://aaf.engineering/go-web-application-structure-part-2/
 
 /*
+
 	-- bugs --
+	TODO: user doesn't has last_seen_boris on login
 	TODO: node recommendations displaying deleted nodes
 
 	-- after release --
