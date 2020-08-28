@@ -15,6 +15,10 @@ type StatsController struct {
 func (sc *StatsController) GetStats(c *gin.Context) {
 	boris, _ := sc.DB.NodeRepository.GetNodeBoris()
 	flowLastPost, _ := sc.DB.NodeRepository.GetFlowLastPost()
+	images := sc.DB.NodeRepository.GetImagesCount()
+	audios := sc.DB.NodeRepository.GetAudiosCount()
+	videos := sc.DB.NodeRepository.GetVideosCount()
+	texts := sc.DB.NodeRepository.GetTextsCount()
 
 	stats := response.StatsResponse{
 		StatsUsers: response.StatsUsers{
@@ -22,10 +26,11 @@ func (sc *StatsController) GetStats(c *gin.Context) {
 			Alive: sc.DB.UserRepository.GetAliveCount(),
 		},
 		StatsNodes: response.StatsNodes{
-			Images: sc.DB.NodeRepository.GetImagesCount(),
-			Audios: sc.DB.NodeRepository.GetAudiosCount(),
-			Videos: sc.DB.NodeRepository.GetVideosCount(),
-			Texts:  sc.DB.NodeRepository.GetTextsCount(),
+			Images: images,
+			Audios: audios,
+			Videos: videos,
+			Texts:  texts,
+			Total:  images + audios + videos + texts,
 		},
 		StatsComments: response.StatsComments{
 			Total: sc.DB.NodeRepository.GetCommentsCount(),
