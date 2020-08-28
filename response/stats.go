@@ -7,7 +7,7 @@ type StatsUsers struct {
 
 type StatsNodes struct {
 	Images int `json:"images"`
-	Audios int `json:"total"`
+	Audios int `json:"audios"`
 	Videos int `json:"videos"`
 	Texts  int `json:"texts"`
 	Total  int `json:"total"`
