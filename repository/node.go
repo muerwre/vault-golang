@@ -101,24 +101,26 @@ func (nr NodeRepository) GetNodeBoris() (node models.Node, err error) {
 	return node, nil
 }
 
-func (nr NodeRepository) GetImagesCount() (count int) {
-	nr.db.Model(&models.Node{}).Where("node.type = ?", models.NODE_TYPES.IMAGE).Count(&count)
-	return
+func (nr NodeRepository) GetNodeTypeCount(t string) int {
+	count := 0
+	nr.db.Model(&models.Node{}).Where("node.type = ?", t).Count(&count)
+	return count
 }
 
-func (nr NodeRepository) GetAudiosCount() (count int) {
-	nr.db.Model(&models.Node{}).Where("node.type = ?", models.NODE_TYPES.AUDIO).Count(&count)
-	return
+func (nr NodeRepository) GetImagesCount() int {
+	return nr.GetNodeTypeCount(models.NODE_TYPES.IMAGE)
 }
 
-func (nr NodeRepository) GetVideosCount() (count int) {
-	nr.db.Model(&models.Node{}).Where("node.type = ?", models.NODE_TYPES.VIDEO).Count(&count)
-	return
+func (nr NodeRepository) GetAudiosCount() int {
+	return nr.GetNodeTypeCount(models.NODE_TYPES.AUDIO)
 }
 
-func (nr NodeRepository) GetTextsCount() (count int) {
-	nr.db.Model(&models.Node{}).Where("node.type = ?", models.NODE_TYPES.TEXT).Count(&count)
-	return
+func (nr NodeRepository) GetVideosCount() int {
+	return nr.GetNodeTypeCount(models.NODE_TYPES.VIDEO)
+}
+
+func (nr NodeRepository) GetTextsCount() int {
+	return nr.GetNodeTypeCount(models.NODE_TYPES.TEXT)
 }
 
 func (nr NodeRepository) GetCommentsCount() (count int) {
