@@ -36,7 +36,7 @@ func (sc *StatsController) GetStats(c *gin.Context) {
 		},
 		StatsTimestamps: response.StatsTimestamps{
 			BorisLastComment: boris.CommentedAt.Format(time.RFC3339),
-			FlowLastPost:     flowLastPost.CreatedAt.String(),
+			FlowLastPost:     flowLastPost.CreatedAt.Format(time.RFC3339),
 		},
 	}
 
