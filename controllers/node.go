@@ -123,7 +123,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 	q := nc.db.Preload("User").Preload("User.Photo").Model(&models.Node{})
 	// TODO: move to repo
-	nc.db.NodeRepository.WhereIsFlowNode(q)
+	q = nc.db.NodeRepository.WhereIsFlowNode(q)
 
 	var wg sync.WaitGroup
 

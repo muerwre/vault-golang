@@ -26,7 +26,7 @@ func (nr *NodeRouter) Handle(r *gin.RouterGroup) *NodeRouter {
 
 	node := r.Group("/:id")
 	{
-		node.GET("", a.AuthOptional, a.WithUser(false), controller.GetNode) // TODO: problem with files
+		node.GET("", a.AuthOptional, a.WithUser(false), controller.GetNode)
 		node.GET("/related", controller.GetRelated)
 
 		node.POST("/tags", a.AuthRequired, a.WithUser(false), controller.PostTags)
