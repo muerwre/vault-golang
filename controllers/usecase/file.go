@@ -25,7 +25,7 @@ func (fu *FileUseCase) Init(db db.DB, config app.Config) *FileUseCase {
 
 // FillMetadataAudio fills Audio file metadata
 func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
-	path := filepath.Join(fu.config.UploadPath, f.FullPath)
+	path := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
 
 	duration := utils.GetAudioDuration(path)
 	artist, title := utils.GetAudioArtistTitle(path)
@@ -45,7 +45,7 @@ func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
 
 // FillMetadataImage fills Image file metadata
 func (fu FileUseCase) FillMetadataImage(f *models.File) error {
-	path := filepath.Join(fu.config.UploadPath, f.FullPath)
+	path := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
 
 	if reader, err := os.Open(path); err == nil {
 		defer reader.Close()
