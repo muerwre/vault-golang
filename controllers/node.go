@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/controllers/usecase"
 	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/response"
@@ -18,12 +19,15 @@ import (
 )
 
 type NodeController struct {
-	db      db.DB
-	usecase *usecase.NodeUsecase
+	db          db.DB
+	nodeUsecase usecase.NodeUsecase
+	fileUsecase usecase.FileUseCase
 }
 
-func (nc *NodeController) Init(db db.DB) *NodeController {
-	nc.usecase = new(usecase.NodeUsecase).Init(db)
+func (nc *NodeController) Init(db db.DB, config app.Config) *NodeController {
+	nc.nodeUsecase = *new(usecase.NodeUsecase).Init(db)
+	nc.fileUsecase = *new(usecase.FileUseCase).Init(db, config)
+
 	nc.db = db
 	return nc
 }
@@ -62,6 +66,7 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 	node.Files, _ = nc.db.FileRepository.GetFilesByIds([]uint(node.FilesOrder))
 
 	node.SortFiles()
+	node.Files = nc.fileUsecase.UpdateFileMetadataIfNeeded(node.Files)
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
@@ -240,13 +245,13 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 	}
 
 	if params.IsLocked {
-		if err := nc.usecase.DeleteComment(comment); err != nil {
+		if err := nc.nodeUsecase.DeleteComment(comment); err != nil {
 			logrus.Warnf("Unable to delete comment %d for node %d: %s", comment.ID, comment.NodeID, err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantDeleteComment})
 			return
 		}
 	} else {
-		if err := nc.usecase.RestoreComment(comment); err != nil {
+		if err := nc.nodeUsecase.RestoreComment(comment); err != nil {
 			logrus.Warnf("Unable to restore comment %d for node %d: %s", comment.ID, comment.NodeID, err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantRestoreComment})
 			return
@@ -284,14 +289,14 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	comment, err := nc.usecase.LoadCommentFromData(data.ID, node, u)
+	comment, err := nc.nodeUsecase.LoadCommentFromData(data.ID, node, u)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	lostFiles, err := nc.usecase.UpdateCommentFiles(data, comment)
+	lostFiles, err := nc.nodeUsecase.UpdateCommentFiles(data, comment)
 
 	if err != nil {
 		logrus.Warnf("Can't load node files while updating comment %d for node %d: %s", node.ID, comment.ID, err.Error())
@@ -299,7 +304,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	if err := nc.usecase.UpdateCommentText(data, comment); err != nil {
+	if err := nc.nodeUsecase.UpdateCommentText(data, comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -310,11 +315,11 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	nc.usecase.UnsetFilesTarget(lostFiles)
-	nc.usecase.UpdateBriefFromComment(node, comment)
-	nc.usecase.UpdateFilesMetadata(data.Files, comment.Files)
-	nc.usecase.UpdateNodeCommentedAt(uint(nid), &comment.CreatedAt)
-	nc.usecase.UpdateNodeSeen(uint(nid), u.ID)
+	nc.nodeUsecase.UnsetFilesTarget(lostFiles)
+	nc.nodeUsecase.UpdateBriefFromComment(node, comment)
+	nc.nodeUsecase.UpdateFilesMetadata(data.Files, comment.Files)
+	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid), &comment.CreatedAt)
+	nc.nodeUsecase.UpdateNodeSeen(uint(nid), u.ID)
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 }
@@ -522,7 +527,7 @@ func (nc NodeController) GetRelated(c *gin.Context) {
 		return
 	}
 
-	related, err := nc.usecase.GetNodeRelated(uint(nid))
+	related, err := nc.nodeUsecase.GetNodeRelated(uint(nid))
 
 	c.JSON(http.StatusOK, gin.H{"related": related})
 }
@@ -542,7 +547,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.usecase.LoadNodeFromData(data, user)
+	node, err := nc.nodeUsecase.LoadNodeFromData(data, user)
 
 	if err != nil {
 		logrus.Warnf("Can't load node from data: %s\nData:\n%+v", err.Error(), data)
@@ -551,13 +556,13 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	}
 
 	// Update previous node cover target to be null if its changed
-	if err = nc.usecase.UpdateNodeCoverIfChanged(data, node); err != nil {
+	if err = nc.nodeUsecase.UpdateNodeCoverIfChanged(data, node); err != nil {
 		logrus.Warnf("Can't load node cover from data: %s\nData:\n%+v", err.Error(), data)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	lostFiles, err := nc.usecase.UpdateNodeFiles(data, node)
+	lostFiles, err := nc.nodeUsecase.UpdateNodeFiles(data, node)
 
 	if err != nil {
 		logrus.Warnf("Can't load node files while updating node %d: %s", data.ID, err.Error())
@@ -565,9 +570,9 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
-	nc.usecase.UpdateNodeTitle(data, node)
+	nc.nodeUsecase.UpdateNodeTitle(data, node)
 
-	if err = nc.usecase.UpdateNodeBlocks(data, node); err != nil {
+	if err = nc.nodeUsecase.UpdateNodeBlocks(data, node); err != nil {
 		logrus.Warnf("Received suspicious blocks while updating node %d: %s", data.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -582,10 +587,10 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
-	nc.usecase.UpdateFilesMetadata(data.Files, node.Files)
-	nc.usecase.SetFilesTarget(node.FilesOrder, "node")
-	nc.usecase.UnsetFilesTarget(lostFiles)
-	nc.usecase.UnsetNodeCoverTarget(data, node)
+	nc.nodeUsecase.UpdateFilesMetadata(data.Files, node.Files)
+	nc.nodeUsecase.SetFilesTarget(node.FilesOrder, "node")
+	nc.nodeUsecase.UnsetFilesTarget(lostFiles)
+	nc.nodeUsecase.UnsetNodeCoverTarget(data, node)
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }

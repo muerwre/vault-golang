@@ -57,7 +57,7 @@ func (a *API) Init() *gin.Engine {
 
 	r.OPTIONS("/*path", a.CorsHandler)
 
-	a.nodeRouter = new(routing.NodeRouter).Init(a, a.db).Handle(r.Group("/node"))
+	a.nodeRouter = new(routing.NodeRouter).Init(a, a.db, a.Config).Handle(r.Group("/node"))
 	a.userRouter = new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
 	a.searchRouter = new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
 
@@ -66,7 +66,7 @@ func (a *API) Init() *gin.Engine {
 	a.statsRouter.Init(a, a.db)
 
 	a.flowRouter = &routing.FlowRouter{}
-	a.flowRouter.Init(a, a.db)
+	a.flowRouter.Init(a, a.db, a.Config)
 
 	a.uploadRouter = &routing.UploadRouter{}
 	a.uploadRouter.Init(a, a.db, a.Config)

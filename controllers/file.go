@@ -5,12 +5,10 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
-	"github.com/muerwre/vault-golang/constants"
+	"github.com/muerwre/vault-golang/controllers/usecase"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
-	"image"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -25,67 +23,17 @@ import (
 )
 
 type FileController struct {
-	db     db.DB
-	config app.Config
+	db      db.DB
+	config  app.Config
+	usecase usecase.FileUseCase
 }
 
 func (fc *FileController) Init(db db.DB, config app.Config) *FileController {
 	fc.db = db
 	fc.config = config
+	fc.usecase = *new(usecase.FileUseCase).Init(db, config)
 
 	return fc
-}
-
-func (fc *FileController) FillMetadataAudio(f *models.File) error {
-	path := filepath.Join(fc.config.UploadPath, f.FullPath)
-
-	duration := utils.GetAudioDuration(path)
-	artist, title := utils.GetAudioArtistTitle(path)
-
-	if artist == "" && title == "" {
-		title = f.OrigName
-	}
-
-	f.Metadata = models.FileMetadata{
-		Id3title:  artist,
-		Id3artist: title,
-		Duration:  duration,
-	}
-
-	return nil
-}
-
-func (fc *FileController) FillMetadataImage(f *models.File) error {
-	path := filepath.Join(fc.config.UploadPath, f.FullPath)
-
-	if reader, err := os.Open(path); err == nil {
-		defer reader.Close()
-		im, _, err := image.DecodeConfig(reader)
-
-		if err != nil {
-			return err
-		}
-
-		f.Metadata = models.FileMetadata{
-			Width:  im.Width,
-			Height: im.Height,
-		}
-
-		return nil
-	} else {
-		return err
-	}
-}
-
-func (fc *FileController) FillMetadata(f *models.File) {
-	switch f.Type {
-	case constants.FileTypeImage:
-		_ = fc.FillMetadataImage(f)
-		return
-	case constants.FileTypeAudio:
-		_ = fc.FillMetadataAudio(f)
-		return
-	}
 }
 
 func (fc *FileController) UploadFile(c *gin.Context) {
@@ -203,7 +151,7 @@ func (fc *FileController) SaveFile(
 		Type:     fileType,
 	}
 
-	fc.FillMetadata(&dbEntry)
+	fc.usecase.FillMetadata(&dbEntry)
 	fc.db.FileRepository.Save(&dbEntry)
 
 	return &dbEntry, nil, nil

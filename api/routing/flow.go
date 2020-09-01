@@ -2,6 +2,7 @@ package routing
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/controllers"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/utils"
@@ -12,9 +13,9 @@ type FlowRouter struct {
 	api            utils.AppApi
 }
 
-func (fr *FlowRouter) Init(api utils.AppApi, db db.DB) {
+func (fr *FlowRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
 	fr.api = api
-	fr.nodeController = *new(controllers.NodeController).Init(db)
+	fr.nodeController = *new(controllers.NodeController).Init(db, config)
 }
 
 // FlowRouter for /node/*

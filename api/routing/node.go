@@ -2,6 +2,7 @@ package routing
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/controllers"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/utils"
@@ -12,8 +13,8 @@ type NodeRouter struct {
 	api        utils.AppApi
 }
 
-func (nr *NodeRouter) Init(a utils.AppApi, db db.DB) *NodeRouter {
-	nr.controller = new(controllers.NodeController).Init(db)
+func (nr *NodeRouter) Init(a utils.AppApi, db db.DB, config app.Config) *NodeRouter {
+	nr.controller = new(controllers.NodeController).Init(db, config)
 	nr.api = a
 	return nr
 }
