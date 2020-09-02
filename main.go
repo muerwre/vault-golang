@@ -13,8 +13,6 @@ package main
 /*
 
 	-- after release --
-	TODO: add healthcheck endpoint
-	TODO: try to fill metadata for images (if empty)
 	TODO: websockets https://github.com/gin-gonic/gin/issues/461
 	TODO: refactor GetDiff
 	TODO: move all queries to repositories
