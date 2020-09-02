@@ -13,11 +13,11 @@ type NodeWatchResponse struct {
 	Status string `json:"status"`
 }
 
-func (r *NodeWatchResponse) Init(w models.NodeWatch) *NodeWatchResponse {
+func (r *NodeWatchResponse) Init(w *models.NodeWatch) *NodeWatchResponse {
 	r.ID = w.ID
 
 	switch {
-	case w.ID == 0:
+	case w == nil || w.ID == 0:
 		r.Status = NodeWatchStatusUnset
 	case w.Active:
 		r.Status = NodeWatchStatusActive
