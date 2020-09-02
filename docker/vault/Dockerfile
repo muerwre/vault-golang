@@ -16,5 +16,5 @@ COPY ./config.yaml .
 COPY ./templates/. ./templates/.
 
 EXPOSE $EXPOSE
-HEALTHCHECK --interval=1m --timeout=30s CMD curl -f http://app:$EXPOSE/stats || kill -s 2 1
+HEALTHCHECK --interval=1m --timeout=30s CMD curl -f http://app:$EXPOSE/stats || kill -s 2 `pidof vault`
 CMD ["./vault", "serve"]
