@@ -8,6 +8,8 @@ type NodeWatch struct {
 
 	Node   Node `json:"-" gorm:"foreignkey:NodeId;"`
 	NodeID uint `gorm:"column:nodeId;uniqueIndex:user_node;" json:"-"`
+
+	Active bool `gorm:"column:active"`
 }
 
 func (NodeWatch) TableName() string {
