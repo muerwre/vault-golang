@@ -52,6 +52,7 @@ func New() (*DB, error) {
 		&models.MessageView{},
 		&models.RestoreCode{},
 		&models.Embed{},
+		&models.NodeWatch{},
 	)
 
 	return &DB{
