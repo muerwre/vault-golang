@@ -15,15 +15,16 @@ type API struct {
 	db     db.DB
 	mailer mail.Mailer
 
-	nodeRouter   *routing.NodeRouter
-	userRouter   *routing.UserRouter
-	statsRouter  *routing.StatsRouter
-	flowRouter   *routing.FlowRouter
-	uploadRouter *routing.UploadRouter
-	staticRouter *routing.StaticRouter
-	metaRouter   *routing.MetaRouter
-	oauthRouter  *routing.OauthRouter
-	searchRouter *routing.SearchRouter
+	nodeRouter         routing.NodeRouter
+	userRouter         routing.UserRouter
+	statsRouter        *routing.StatsRouter
+	flowRouter         *routing.FlowRouter
+	uploadRouter       *routing.UploadRouter
+	staticRouter       *routing.StaticRouter
+	metaRouter         *routing.MetaRouter
+	oauthRouter        *routing.OauthRouter
+	searchRouter       routing.SearchRouter
+	notificationRouter routing.NotificationRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -57,9 +58,10 @@ func (a *API) Init() *gin.Engine {
 
 	r.OPTIONS("/*path", a.CorsHandler)
 
-	a.nodeRouter = new(routing.NodeRouter).Init(a, a.db, a.Config).Handle(r.Group("/node"))
-	a.userRouter = new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
-	a.searchRouter = new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
+	a.nodeRouter = *new(routing.NodeRouter).Init(a, a.db, a.Config).Handle(r.Group("/node"))
+	a.userRouter = *new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
+	a.searchRouter = *new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
+	a.notificationRouter = *new(routing.NotificationRouter).Init(a, a.db).Handle(r.Group("/notification"))
 
 	// TODO: do the same for:
 	a.statsRouter = &routing.StatsRouter{}
