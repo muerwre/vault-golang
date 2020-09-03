@@ -55,6 +55,7 @@ func New() (*DB, error) {
 		&models.Embed{},
 		&models.NodeWatch{},
 		&models.Notification{},
+		&models.NotificationSettings{},
 	)
 
 	return &DB{

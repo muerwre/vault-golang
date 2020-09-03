@@ -271,10 +271,16 @@ func (nr NodeRepository) GetCommentByIdWithDeleted(cid uint) (*models.Comment, e
 }
 
 // GetNodeWatcher finds users, who's watching node
-func (nr NodeRepository) GetNodeWatchers(nid uint) ([]*models.NodeWatch, error) {
+func (nr NodeRepository) GetNodeWatchers(nid uint) ([]uint, error) {
 	var watchers []*models.NodeWatch
 
 	err := nr.db.Model(&models.NodeWatch{}).Where("nodeId = ? AND active = ?", nid, true).Find(&watchers).Error
 
-	return watchers, err
+	ids := make([]uint, len(watchers))
+
+	for k, v := range watchers {
+		ids[k] = v.UserID
+	}
+
+	return ids, err
 }

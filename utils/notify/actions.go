@@ -33,3 +33,38 @@ func (n Notifier) OnNodeDelete(item NotifierItem) {
 		logrus.Warnf("Can't perform OnNodeDelete: %s", err.Error())
 	}
 }
+
+func (n Notifier) OnCommentCreate(item NotifierItem) {
+	c, err := n.db.NodeRepository.GetCommentByIdWithDeleted(item.ItemId)
+
+	if err != nil {
+		logrus.Warnf("Comment with id %s not found", item.ItemId)
+		return
+	}
+
+	recipients, err := n.db.NodeRepository.GetNodeWatchers(*c.NodeID)
+
+	if err != nil {
+		logrus.Warnf("Can't get watchers for node %d", c.NodeID)
+		return
+	}
+
+	for _, v := range recipients {
+		notification := &models.Notification{
+			Type:   models.NotificationTypeComment,
+			ItemID: item.ItemId,
+			UserID: v,
+			Time:   item.CreatedAt,
+		}
+
+		if err := n.db.NotificationRepository.Create(notification); err != nil {
+			logrus.Warnf("Can't perform OnCommentCreate: %s", err.Error())
+		}
+	}
+}
+
+func (n Notifier) OnCommentDelete(item NotifierItem) {
+	if err := n.db.NotificationRepository.DeleteByTypeAndId(models.NotificationTypeComment, item.ItemId); err != nil {
+		logrus.Warnf("Can't perform OnCommentDelete: %s", err.Error())
+	}
+}

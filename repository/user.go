@@ -134,19 +134,17 @@ func (ur UserRepository) UpdatePhoto(uid uint, photoId uint) {
 }
 
 func (ur UserRepository) GetFlowWatchers() ([]uint, error) {
-	var users []*models.User
+	var users []*models.NotificationSettings
 
-	err := ur.db.Model(&models.User{}).Where("subscribed_to_flow = ?", true).Find(&users).Error
-
-	if err != nil {
+	if err := ur.db.Model(&models.NotificationSettings{}).Where("subscribed_to_flow = ?", true).Find(&users).Error; err != nil {
 		return nil, err
 	}
 
 	ids := make([]uint, len(users))
 
 	for k, v := range users {
-		ids[k] = v.ID
+		ids[k] = *v.UserID
 	}
 
-	return ids, err
+	return ids, nil
 }
