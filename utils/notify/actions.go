@@ -29,13 +29,7 @@ func (n Notifier) OnNodeCreate(item NotifierItem) {
 }
 
 func (n Notifier) OnNodeDelete(item NotifierItem) {
-	if err := n.db.NotificationRepository.DeleteByTypeAndId(item.Type, item.ItemId); err != nil {
+	if err := n.db.NotificationRepository.DeleteByTypeAndId(models.NotificationTypeNode, item.ItemId); err != nil {
 		logrus.Warnf("Can't perform OnNodeDelete: %s", err.Error())
-	}
-}
-
-func (n Notifier) OnNodeRestore(item NotifierItem) {
-	if err := n.db.NotificationRepository.RestoreByTypeAndId(models.NotificationTypeNode, item.ItemId); err != nil {
-		logrus.Warnf("Can't perform OnNodeRestore: %s", err.Error())
 	}
 }

@@ -34,7 +34,7 @@ func (n *Notifier) Listen() {
 			case NotifierTypeNodeDelete:
 				n.OnNodeDelete(*item)
 			case NotifierTypeNodeRestore:
-				n.OnNodeRestore(*item)
+				n.OnNodeCreate(*item)
 			default:
 				logrus.Warnf("Got unknown notification of type %s", item.Type)
 			}

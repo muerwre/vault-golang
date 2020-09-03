@@ -21,16 +21,9 @@ func (r NotificationRepository) Create(notification *models.Notification) error 
 func (r NotificationRepository) DeleteByTypeAndId(t string, id uint) error {
 	item := &models.Notification{}
 
-	if err := r.db.Model(&item).First(&item).Error; err != nil {
+	if err := r.db.Unscoped().Model(&item).Where("type = ? AND itemId = ?", t, id).First(&item).Error; err != nil {
 		return err
 	}
 
-	return r.db.Delete(&item).Error
-}
-
-func (r NotificationRepository) RestoreByTypeAndId(t string, id uint) error {
-
-	return r.db.Unscoped().Model(&models.Notification{}).
-		Where("itemId = ? AND type = ?", id, t).
-		Update("deleted_at", nil).Error
+	return r.db.Unscoped().Delete(&item).Error
 }
