@@ -1,26 +1,18 @@
 package notify
 
 import (
-	"fmt"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/sirupsen/logrus"
-	"time"
 )
-
-type AnyNotification interface {
-	GetType() string
-	GetContent() interface{}
-	GetCreatedAt() time.Time
-}
 
 type Notifier struct {
 	db   db.DB
-	Chan chan *AnyNotification
+	Chan chan *NotifierItem
 }
 
 func (n *Notifier) Init(db db.DB) *Notifier {
 	n.db = db
-	n.Chan = make(chan *AnyNotification, 255)
+	n.Chan = make(chan *NotifierItem, 255)
 
 	return n
 }
@@ -30,13 +22,24 @@ func (n *Notifier) Listen() {
 
 	for {
 		select {
-		case m, ok := <-n.Chan:
+		case item, ok := <-n.Chan:
 			if !ok {
 				logrus.Warnf("Notifier channel closed")
 				return
 			}
 
-			fmt.Printf("Got notification: %+v", m)
+			switch item.Type {
+			case NotifierTypeNodeCreate:
+				n.OnNodeCreate(*item)
+			case NotifierTypeNodeDelete:
+				n.OnNodeDelete(*item)
+			case NotifierTypeNodeRestore:
+				n.OnNodeRestore(*item)
+			default:
+				logrus.Warnf("Got unknown notification of type %s", item.Type)
+			}
+
+			logrus.Infof("Got notification: %+v", item)
 		}
 	}
 }

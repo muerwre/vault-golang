@@ -27,7 +27,7 @@ type NodeController struct {
 
 func (nc *NodeController) Init(db db.DB, config app.Config, notifier notify.Notifier) *NodeController {
 	nc.nodeUsecase = *new(usecase.NodeUsecase).Init(db, notifier)
-	nc.fileUsecase = *new(usecase.FileUseCase).Init(db, config)
+	nc.fileUsecase = *new(usecase.FileUseCase).Init(db, config.UploadPath)
 
 	nc.db = db
 	return nc
@@ -414,8 +414,8 @@ func (nc NodeController) PostLike(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"is_liked": !isLiked})
 }
 
-// PostLock - POST /node/:id/lock - safely deletes node
-func (nc NodeController) PostLock(c *gin.Context) {
+// NodeLock - POST /node/:id/lock - safely deletes node
+func (nc NodeController) NodeLock(c *gin.Context) {
 	d := nc.db
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeLockRequest{}
@@ -445,8 +445,10 @@ func (nc NodeController) PostLock(c *gin.Context) {
 
 	if params.IsLocked {
 		d.Unscoped().Model(&node).Update("deleted_at", time.Now().Truncate(time.Second))
+		nc.nodeUsecase.PushDeleteNotification(*node)
 	} else {
 		d.Unscoped().Model(&node).Update("deleted_at", nil)
+		nc.nodeUsecase.PushRestoreNotification(*node)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deleted_at": node.DeletedAt})
@@ -592,6 +594,10 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	nc.nodeUsecase.SetFilesTarget(node.FilesOrder, "node")
 	nc.nodeUsecase.UnsetFilesTarget(lostFiles)
 	nc.nodeUsecase.UnsetNodeCoverTarget(data, node)
+
+	if err = nc.nodeUsecase.PushNotification(data, *node); err != nil {
+		logrus.Warnf(err.Error())
+	}
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }

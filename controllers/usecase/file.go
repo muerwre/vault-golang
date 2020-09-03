@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
@@ -13,19 +12,20 @@ import (
 )
 
 type FileUseCase struct {
-	db     db.DB
-	config app.Config
+	db         db.DB
+	uploadPath string
 }
 
-func (fu *FileUseCase) Init(db db.DB, config app.Config) *FileUseCase {
+func (fu *FileUseCase) Init(db db.DB, uploadPath string) *FileUseCase {
 	fu.db = db
-	fu.config = config
+	fu.uploadPath = uploadPath
+
 	return fu
 }
 
 // FillMetadataAudio fills Audio file metadata
 func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
-	path := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
+	path := filepath.Join(fu.uploadPath, f.Path, f.Name)
 
 	duration := utils.GetAudioDuration(path)
 	artist, title := utils.GetAudioArtistTitle(path)
@@ -45,7 +45,7 @@ func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
 
 // FillMetadataImage fills Image file metadata
 func (fu FileUseCase) FillMetadataImage(f *models.File) error {
-	path := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
+	path := filepath.Join(fu.uploadPath, f.Path, f.Name)
 
 	if reader, err := os.Open(path); err == nil {
 		defer reader.Close()

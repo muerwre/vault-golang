@@ -370,3 +370,60 @@ func (nu NodeUsecase) GetNodeRelated(nid uint) (*response.NodeRelatedResponse, e
 
 	return related, nil
 }
+
+func (nu NodeUsecase) PushCreateNotification(node models.Node) error {
+	note := &notify.NotifierItem{
+		CreatedAt: node.CreatedAt,
+		Timestamp: time.Now(),
+		Type:      notify.NotifierTypeNodeCreate,
+		ItemId:    node.ID,
+	}
+
+	select {
+	case nu.notifier.Chan <- note:
+		return nil
+	default:
+		return fmt.Errorf("Can't push create notification, chan clsed")
+	}
+}
+
+func (nu NodeUsecase) PushDeleteNotification(node models.Node) error {
+	note := &notify.NotifierItem{
+		CreatedAt: node.CreatedAt,
+		Timestamp: time.Now(),
+		Type:      notify.NotifierTypeNodeDelete,
+		ItemId:    node.ID,
+	}
+
+	select {
+	case nu.notifier.Chan <- note:
+		return nil
+	default:
+		return fmt.Errorf("Can't push create notification, chan clsed")
+	}
+}
+
+func (nu NodeUsecase) PushRestoreNotification(node models.Node) error {
+	note := &notify.NotifierItem{
+		CreatedAt: node.CreatedAt,
+		Timestamp: time.Now(),
+		Type:      notify.NotifierTypeNodeRestore,
+		ItemId:    node.ID,
+	}
+
+	select {
+	case nu.notifier.Chan <- note:
+		return nil
+	default:
+		return fmt.Errorf("Can't push create notification, chan clsed")
+	}
+}
+
+func (nu NodeUsecase) PushNotification(data models.Node, node models.Node) error {
+	switch {
+	case data.ID == 0 && node.ID != 0 && node.IsFlowType() && node.IsPublic:
+		return nu.PushCreateNotification(node)
+	default:
+		return nil
+	}
+}

@@ -47,7 +47,8 @@ type User struct {
 	LastSeen         time.Time  `json:"last_seen"`
 	LastSeenMessages time.Time  `json:"last_seen_messages"`
 
-	NewPassword string `json:"-" gorm:"-" sql:"-"`
+	SubscribedToFlow bool   `json:"subscribed_to_flow"`
+	NewPassword      string `json:"-" gorm:"-" sql:"-"`
 }
 
 func (User) TableName() string {

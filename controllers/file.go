@@ -31,7 +31,7 @@ type FileController struct {
 func (fc *FileController) Init(db db.DB, config app.Config) *FileController {
 	fc.db = db
 	fc.config = config
-	fc.usecase = *new(usecase.FileUseCase).Init(db, config)
+	fc.usecase = *new(usecase.FileUseCase).Init(db, config.UploadPath)
 
 	return fc
 }
