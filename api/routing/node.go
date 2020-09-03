@@ -33,7 +33,7 @@ func (nr *NodeRouter) Handle(r *gin.RouterGroup) *NodeRouter {
 
 		node.POST("/tags", a.AuthRequired, a.WithUser(false), controller.PostTags)
 		node.POST("/like", a.AuthRequired, a.WithUser(false), controller.PostLike)
-		node.POST("/lock", a.AuthRequired, a.WithUser(false), controller.NodeLock)
+		node.POST("/lock", a.AuthRequired, a.WithUser(false), controller.LockNode)
 		node.POST("/heroic", a.AuthRequired, a.WithUser(false), controller.PostHeroic)
 		node.POST("/cell-view", a.AuthRequired, a.WithUser(false), controller.PostCellView)
 	}

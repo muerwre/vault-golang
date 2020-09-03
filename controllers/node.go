@@ -251,11 +251,19 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantDeleteComment})
 			return
 		}
+
+		if err = nc.nodeUsecase.PushCommentDeleteNotification(*comment); err != nil {
+			logrus.Warnf(err.Error())
+		}
 	} else {
 		if err := nc.nodeUsecase.RestoreComment(comment); err != nil {
 			logrus.Warnf("Unable to restore comment %d for node %d: %s", comment.ID, comment.NodeID, err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantRestoreComment})
 			return
+		}
+
+		if err = nc.nodeUsecase.PushCommentRestoreNotification(*comment); err != nil {
+			logrus.Warnf(err.Error())
 		}
 	}
 
@@ -323,6 +331,10 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 	nc.nodeUsecase.UpdateNodeSeen(uint(nid), u.ID)
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
+
+	if err = nc.nodeUsecase.PushCommentCreateNotificationIfNeeded(*data, *comment); err != nil {
+		logrus.Warnf(err.Error())
+	}
 }
 
 // PostTags - POST /node/:id/tags - updates node tags
@@ -414,8 +426,8 @@ func (nc NodeController) PostLike(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"is_liked": !isLiked})
 }
 
-// NodeLock - POST /node/:id/lock - safely deletes node
-func (nc NodeController) NodeLock(c *gin.Context) {
+// LockNode - POST /node/:id/lock - safely deletes node
+func (nc NodeController) LockNode(c *gin.Context) {
 	d := nc.db
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeLockRequest{}
@@ -445,10 +457,10 @@ func (nc NodeController) NodeLock(c *gin.Context) {
 
 	if params.IsLocked {
 		d.Unscoped().Model(&node).Update("deleted_at", time.Now().Truncate(time.Second))
-		nc.nodeUsecase.PushDeleteNotification(*node)
+		nc.nodeUsecase.PushNodeDeleteNotification(*node)
 	} else {
 		d.Unscoped().Model(&node).Update("deleted_at", nil)
-		nc.nodeUsecase.PushRestoreNotification(*node)
+		nc.nodeUsecase.PushNodeRestoreNotification(*node)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deleted_at": node.DeletedAt})
@@ -595,7 +607,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	nc.nodeUsecase.UnsetFilesTarget(lostFiles)
 	nc.nodeUsecase.UnsetNodeCoverTarget(data, node)
 
-	if err = nc.nodeUsecase.PushNotification(data, *node); err != nil {
+	if err = nc.nodeUsecase.PushNodeCreateNotificationIfNeeded(data, *node); err != nil {
 		logrus.Warnf(err.Error())
 	}
 

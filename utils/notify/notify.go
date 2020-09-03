@@ -36,10 +36,8 @@ func (n *Notifier) Listen() {
 			case NotifierTypeNodeRestore:
 				n.OnNodeCreate(*item)
 			default:
-				logrus.Warnf("Got unknown notification of type %s", item.Type)
+				logrus.WithField("item", item).Warnf("Got unknown notification of type %s", item.Type)
 			}
-
-			logrus.Infof("Got notification: %+v", item)
 		}
 	}
 }

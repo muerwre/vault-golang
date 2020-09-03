@@ -371,11 +371,11 @@ func (nu NodeUsecase) GetNodeRelated(nid uint) (*response.NodeRelatedResponse, e
 	return related, nil
 }
 
-func (nu NodeUsecase) PushCreateNotification(node models.Node) error {
+func (nu NodeUsecase) PushNodeNotification(node models.Node, t string) error {
 	note := &notify.NotifierItem{
 		CreatedAt: node.CreatedAt,
 		Timestamp: time.Now(),
-		Type:      notify.NotifierTypeNodeCreate,
+		Type:      t,
 		ItemId:    node.ID,
 	}
 
@@ -383,47 +383,64 @@ func (nu NodeUsecase) PushCreateNotification(node models.Node) error {
 	case nu.notifier.Chan <- note:
 		return nil
 	default:
-		return fmt.Errorf("Can't push create notification, chan clsed")
+		return fmt.Errorf("Can't push %s notification, chan closed", t)
 	}
 }
 
-func (nu NodeUsecase) PushDeleteNotification(node models.Node) error {
-	note := &notify.NotifierItem{
-		CreatedAt: node.CreatedAt,
-		Timestamp: time.Now(),
-		Type:      notify.NotifierTypeNodeDelete,
-		ItemId:    node.ID,
-	}
-
-	select {
-	case nu.notifier.Chan <- note:
-		return nil
-	default:
-		return fmt.Errorf("Can't push create notification, chan clsed")
-	}
+func (nu NodeUsecase) PushNodeCreateNotification(node models.Node) error {
+	return nu.PushNodeNotification(node, notify.NotifierTypeNodeCreate)
 }
 
-func (nu NodeUsecase) PushRestoreNotification(node models.Node) error {
-	note := &notify.NotifierItem{
-		CreatedAt: node.CreatedAt,
-		Timestamp: time.Now(),
-		Type:      notify.NotifierTypeNodeRestore,
-		ItemId:    node.ID,
-	}
-
-	select {
-	case nu.notifier.Chan <- note:
-		return nil
-	default:
-		return fmt.Errorf("Can't push create notification, chan clsed")
-	}
+func (nu NodeUsecase) PushNodeDeleteNotification(node models.Node) error {
+	return nu.PushNodeNotification(node, notify.NotifierTypeNodeDelete)
 }
 
-func (nu NodeUsecase) PushNotification(data models.Node, node models.Node) error {
+func (nu NodeUsecase) PushNodeRestoreNotification(node models.Node) error {
+	return nu.PushNodeNotification(node, notify.NotifierTypeNodeRestore)
+}
+
+func (nu NodeUsecase) PushNodeCreateNotificationIfNeeded(data models.Node, node models.Node) error {
 	switch {
 	case data.ID == 0 && node.ID != 0 && node.IsFlowType() && node.IsPublic:
-		return nu.PushCreateNotification(node)
+		return nu.PushNodeCreateNotification(node)
 	default:
 		return nil
 	}
+}
+
+func (nu NodeUsecase) PushCommentCreateNotificationIfNeeded(data models.Comment, comment models.Comment) error {
+	switch {
+	case data.ID == 0 && comment.ID != 0 && comment.Node != nil && comment.Node.IsFlowType() && comment.Node.IsPublic:
+		return nu.PushCommentCreateNotification(comment)
+	default:
+		return nil
+	}
+}
+
+func (nu NodeUsecase) PushCommentNotification(comment models.Comment, t string) error {
+	note := &notify.NotifierItem{
+		CreatedAt: comment.CreatedAt,
+		Timestamp: time.Now(),
+		Type:      t,
+		ItemId:    comment.ID,
+	}
+
+	select {
+	case nu.notifier.Chan <- note:
+		return nil
+	default:
+		return fmt.Errorf("Can't push %s notification, chan closed", t)
+	}
+}
+
+func (nu NodeUsecase) PushCommentCreateNotification(comment models.Comment) error {
+	return nu.PushCommentNotification(comment, notify.NotifierTypeCommentCreate)
+}
+
+func (nu NodeUsecase) PushCommentDeleteNotification(comment models.Comment) error {
+	return nu.PushCommentNotification(comment, notify.NotifierTypeCommentDelete)
+}
+
+func (nu NodeUsecase) PushCommentRestoreNotification(comment models.Comment) error {
+	return nu.PushCommentNotification(comment, notify.NotifierTypeCommentRestore)
 }
