@@ -100,7 +100,7 @@ func (nc *NodeController) GetNodeComments(c *gin.Context) {
 
 	comments, count := nc.db.NodeRepository.GetComments(id, take, skip, order)
 
-	c.JSON(http.StatusAccepted, gin.H{"comments": comments, "comment_count": count})
+	c.JSON(http.StatusOK, gin.H{"comments": comments, "comment_count": count})
 }
 
 // GetDiff /nodes/diff gets newer and older nodes
