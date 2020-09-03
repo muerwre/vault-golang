@@ -6,6 +6,7 @@ import (
 	"github.com/muerwre/vault-golang/controllers"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/utils/notify"
 )
 
 type NodeRouter struct {
@@ -13,8 +14,8 @@ type NodeRouter struct {
 	api        utils.AppApi
 }
 
-func (nr *NodeRouter) Init(a utils.AppApi, db db.DB, config app.Config) *NodeRouter {
-	nr.controller = new(controllers.NodeController).Init(db, config)
+func (nr *NodeRouter) Init(a utils.AppApi, db db.DB, config app.Config, notifier notify.Notifier) *NodeRouter {
+	nr.controller = new(controllers.NodeController).Init(db, config, notifier)
 	nr.api = a
 	return nr
 }

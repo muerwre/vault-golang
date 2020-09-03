@@ -6,14 +6,16 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/utils/mail"
+	"github.com/muerwre/vault-golang/utils/notify"
 )
 
 type API struct {
 	Config app.Config
 
-	app    *app.App
-	db     db.DB
-	mailer mail.Mailer
+	app      *app.App
+	db       db.DB
+	mailer   mail.Mailer
+	notifier notify.Notifier
 
 	nodeRouter         routing.NodeRouter
 	userRouter         routing.UserRouter
@@ -35,7 +37,13 @@ type ErrorCode struct {
 }
 
 func New(a *app.App) (api *API, err error) {
-	return &API{app: a, db: *a.DB, Config: *a.Config, mailer: *a.Mailer}, nil
+	return &API{
+		app:      a,
+		db:       *a.DB,
+		Config:   *a.Config,
+		mailer:   *a.Mailer,
+		notifier: *a.Notifier,
+	}, nil
 }
 
 func (a *API) Init() *gin.Engine {
@@ -58,7 +66,7 @@ func (a *API) Init() *gin.Engine {
 
 	r.OPTIONS("/*path", a.CorsHandler)
 
-	a.nodeRouter = *new(routing.NodeRouter).Init(a, a.db, a.Config).Handle(r.Group("/node"))
+	a.nodeRouter = *new(routing.NodeRouter).Init(a, a.db, a.Config, a.notifier).Handle(r.Group("/node"))
 	a.userRouter = *new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
 	a.searchRouter = *new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
 	a.notificationRouter = *new(routing.NotificationRouter).Init(a, a.db).Handle(r.Group("/notification"))
@@ -68,7 +76,7 @@ func (a *API) Init() *gin.Engine {
 	a.statsRouter.Init(a, a.db)
 
 	a.flowRouter = &routing.FlowRouter{}
-	a.flowRouter.Init(a, a.db, a.Config)
+	a.flowRouter.Init(a, a.db, a.Config, a.notifier)
 
 	a.uploadRouter = &routing.UploadRouter{}
 	a.uploadRouter.Init(a, a.db, a.Config)

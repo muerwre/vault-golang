@@ -98,8 +98,9 @@ var serveCmd = &cobra.Command{
 		go func() {
 			defer wg.Done()
 			go a.Mailer.Listen()
+			go a.Notifier.Listen()
 			<-ctx.Done()
-			a.Mailer.Done()
+			a.Close()
 		}()
 
 		wg.Wait()

@@ -6,6 +6,7 @@ import (
 	"github.com/muerwre/vault-golang/controllers"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/utils/notify"
 )
 
 type FlowRouter struct {
@@ -13,9 +14,9 @@ type FlowRouter struct {
 	api            utils.AppApi
 }
 
-func (fr *FlowRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
+func (fr *FlowRouter) Init(api utils.AppApi, db db.DB, config app.Config, notifier notify.Notifier) {
 	fr.api = api
-	fr.nodeController = *new(controllers.NodeController).Init(db, config)
+	fr.nodeController = *new(controllers.NodeController).Init(db, config, notifier)
 }
 
 // FlowRouter for /node/*

@@ -9,6 +9,7 @@ import (
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/response"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/muerwre/vault-golang/utils/notify"
 	"github.com/muerwre/vault-golang/utils/validation"
 	"github.com/sirupsen/logrus"
 	"sync"
@@ -16,11 +17,13 @@ import (
 )
 
 type NodeUsecase struct {
-	db db.DB
+	db       db.DB
+	notifier notify.Notifier
 }
 
-func (nu *NodeUsecase) Init(db db.DB) *NodeUsecase {
+func (nu *NodeUsecase) Init(db db.DB, notifier notify.Notifier) *NodeUsecase {
 	nu.db = db
+	nu.notifier = notifier
 	return nu
 }
 

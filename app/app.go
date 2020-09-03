@@ -3,27 +3,28 @@ package app
 import (
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/utils/mail"
+	"github.com/muerwre/vault-golang/utils/notify"
 )
 
 type App struct {
-	Config *Config
-	DB     *db.DB
-	Mailer *mail.Mailer
+	Config   *Config
+	DB       *db.DB
+	Mailer   *mail.Mailer
+	Notifier *notify.Notifier
 }
 
 func New() (app *App, err error) {
 	app = &App{}
-	app.Config, err = InitConfig()
 
-	if err != nil {
+	if app.Config, err = InitConfig(); err != nil {
 		return nil, err
 	}
 
-	app.DB, err = db.New()
-
-	if err != nil {
+	if app.DB, err = db.New(); err != nil {
 		return nil, err
 	}
+
+	app.Notifier = new(notify.Notifier).Init(*app.DB)
 
 	if app.Config.SmtpHost != "" {
 		app.Mailer = new(mail.Mailer).Init(&mail.MailerConfig{
@@ -39,5 +40,9 @@ func New() (app *App, err error) {
 }
 
 func (a *App) Close() error {
-	return a.DB.Close()
+	a.Notifier.Done()
+	a.Mailer.Done()
+	a.DB.Close()
+
+	return nil
 }

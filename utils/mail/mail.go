@@ -9,8 +9,6 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-// var MailRestoreSubject = "Кто-то пытается сбросить пароль!"
-
 type MailerConfig struct {
 	From     string
 	Host     string
