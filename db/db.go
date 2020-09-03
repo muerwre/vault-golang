@@ -54,6 +54,7 @@ func New() (*DB, error) {
 		&models.RestoreCode{},
 		&models.Embed{},
 		&models.NodeWatch{},
+		&models.Notification{},
 	)
 
 	return &DB{
