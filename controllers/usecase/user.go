@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"github.com/go-playground/validator"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/db"
@@ -101,4 +102,43 @@ func (uc UserUsecase) GetUserForCheckCredentials(uid uint) (user *models.User, l
 	}
 
 	return user, &view.Visited, nil
+}
+
+func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data request.UserMessageRequest) (*models.Message, error) {
+	to, err := uc.db.UserRepository.GetByUsername(recp)
+
+	if err != nil {
+		return nil, fmt.Errorf(codes.UserNotFound)
+	}
+
+	message := &models.Message{
+		Text:   data.UserMessage.Text,
+		FromID: &from.ID,
+		ToID:   &to.ID,
+	}
+
+	if !message.IsValid() {
+		return nil, fmt.Errorf(codes.IncorrectData)
+	}
+
+	return message, nil
+}
+
+func (uc UserUsecase) SaveMessage(message *models.Message) error {
+	return uc.db.Model(&models.Message{}).Create(message).Error
+}
+
+func (uc UserUsecase) UpdateMessageView(fromID uint, toID uint) error {
+	view := &models.MessageView{
+		DialogId: toID,
+		UserId:   fromID,
+	}
+
+	if err := uc.db.Where("userId = ? AND dialogId = ?", fromID, toID).FirstOrCreate(&view).Error; err != nil {
+		return err
+	}
+
+	view.Viewed = time.Now()
+
+	return uc.db.Save(&view).Error
 }

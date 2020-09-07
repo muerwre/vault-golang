@@ -301,52 +301,26 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
 	d := uc.DB
 
-	user, err := d.UserRepository.GetByUsername(username)
-
-	if err != nil || user.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
-		return
-	}
-
 	params := request.UserMessageRequest{}
 
-	err = c.BindJSON(&params)
-
-	if err != nil || user.ID == 0 {
+	if err := c.BindJSON(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	message := &models.Message{
-		Text:   params.UserMessage.Text,
-		FromID: &u.ID,
-		ToID:   &user.ID,
-	}
+	message, err := uc.usecase.FillMessageFromData(*u, username, params)
 
-	if !message.IsValid() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TooShirt})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	q := d.Model(&models.Message{}).Create(message)
-
-	if q.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.IncorrectData, "details": q.Error.Error()})
+	if err := uc.usecase.SaveMessage(message); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment, "details": err.Error()})
 		return
 	}
 
-	view := &models.MessageView{
-		DialogId: user.ID,
-		UserId:   u.ID,
-	}
-
-	d.
-		Where("userId = ? AND dialogId = ?", u.ID, user.ID).
-		FirstOrCreate(&view)
-
-	view.Viewed = time.Now()
-
-	d.Save(&view)
+	uc.usecase.UpdateMessageView(u.ID, message.To.ID)
 
 	d.Where("id = ?", message.ID).Preload("From").Preload("To").First(&message)
 

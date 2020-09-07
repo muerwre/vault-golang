@@ -41,9 +41,9 @@ func (ur UserRepository) GetByToken(t string) (user *models.User, err error) {
 func (ur UserRepository) GetByUsername(n string) (user *models.User, err error) {
 	user = &models.User{}
 
-	ur.db.Preload("Photo").Preload("Cover").First(&user, "username = ?", n)
+	err = ur.db.Preload("Photo").Preload("Cover").First(&user, "username = ?", n).Error
 
-	if user.ID == 0 {
+	if err != nil || user.ID == 0 {
 		return nil, errors.New(codes.UserNotFound)
 	}
 
