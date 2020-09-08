@@ -80,3 +80,7 @@ type UserMessage struct {
 type UserMessageRequest struct {
 	UserMessage `json:"message"`
 }
+
+type UserLockMessageRequest struct {
+	IsLocked bool `json:"is_locked"`
+}

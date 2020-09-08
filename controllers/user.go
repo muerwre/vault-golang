@@ -324,6 +324,29 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": message})
 }
 
+func (uc *UserController) DeleteMessage(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	u := c.MustGet("User").(*models.User)
+	locked, _ := c.GetQuery("is_locked")
+
+	message, err := uc.DB.MessageRepository.LoadUnscopedMessageWithUsers(uint(id))
+
+	if err != nil || message.From.ID != u.ID {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.MessageNotFound})
+		return
+	}
+
+	if locked == "true" {
+		uc.DB.MessageRepository.Delete(uint(id))
+		*message.DeletedAt = time.Now()
+	} else {
+		uc.DB.MessageRepository.Restore(uint(id))
+		message.DeletedAt = nil
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": message})
+}
+
 func (uc *UserController) GetUpdates(c *gin.Context) {
 	d := uc.DB
 	user := c.MustGet("User").(*models.User)

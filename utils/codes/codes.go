@@ -42,6 +42,7 @@ const (
 	CantSaveUser                 string = "CantSaveUser"
 	CantDeleteComment            string = "CantDeleteComment"
 	CantRestoreComment           string = "CantRestoreComment"
+	MessageNotFound              string = "MessageNotFound"
 )
 
 var ValidationToCode = map[string]string{
