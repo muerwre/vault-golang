@@ -338,7 +338,8 @@ func (uc *UserController) DeleteMessage(c *gin.Context) {
 
 	if locked == "true" {
 		uc.DB.MessageRepository.Delete(uint(id))
-		*message.DeletedAt = time.Now()
+		now := time.Now()
+		message.DeletedAt = &now
 	} else {
 		uc.DB.MessageRepository.Restore(uint(id))
 		message.DeletedAt = nil
