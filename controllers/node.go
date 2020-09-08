@@ -173,7 +173,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 		}
 
 		if params.WithRecent {
-			q.Order("created_at DESC").
+			q.Order("commented_at DESC, created_at DESC").
 				Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
 				Limit(16).
 				Find(&recent)
