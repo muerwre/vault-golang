@@ -16,12 +16,13 @@ func (mr *MetaRepository) Init(db *gorm.DB) *MetaRepository {
 
 func (mr *MetaRepository) GetEmbedsById(addresses []string, provider string) (map[string]*models.Embed, error) {
 	result := make([]models.Embed, 0)
+
 	mr.db.Model(&result).Where("provider = ? AND address in (?)", provider, addresses).Find(&result)
 
 	withIds := make(map[string]*models.Embed, len(result))
 
-	for _, v := range result {
-		withIds[v.Address] = &v
+	for k, v := range result {
+		withIds[v.Address] = &result[k]
 	}
 
 	return withIds, nil
