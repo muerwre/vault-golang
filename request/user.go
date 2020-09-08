@@ -73,6 +73,7 @@ type UserRestorePostRequest struct {
 }
 
 type UserMessage struct {
+	ID   uint   `json:"id"`
 	Text string `json:"text"`
 }
 

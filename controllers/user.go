@@ -299,7 +299,6 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 func (uc *UserController) PostMessage(c *gin.Context) {
 	username := c.Param("username")
 	u := c.MustGet("User").(*models.User)
-	d := uc.DB
 
 	params := request.UserMessageRequest{}
 
@@ -320,9 +319,7 @@ func (uc *UserController) PostMessage(c *gin.Context) {
 		return
 	}
 
-	uc.usecase.UpdateMessageView(u.ID, message.To.ID)
-
-	d.Where("id = ?", message.ID).Preload("From").Preload("To").First(&message)
+	_ = uc.usecase.UpdateMessageView(u.ID, message.To.ID)
 
 	c.JSON(http.StatusOK, gin.H{"message": message})
 }

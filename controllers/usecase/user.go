@@ -117,6 +117,14 @@ func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data re
 		ToID:   &to.ID,
 	}
 
+	if data.ID != 0 {
+		message, err = uc.db.MessageRepository.LoadMessageWithUsers(data.ID)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if !message.IsValid() {
 		return nil, fmt.Errorf(codes.IncorrectData)
 	}
@@ -125,7 +133,23 @@ func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data re
 }
 
 func (uc UserUsecase) SaveMessage(message *models.Message) error {
-	return uc.db.Model(&models.Message{}).Create(message).Error
+	if message.ID == 0 {
+		if err := uc.db.MessageRepository.CreateMessage(message); err != nil {
+			return err
+		}
+	} else {
+		if err := uc.db.MessageRepository.SaveMessage(message); err != nil {
+			return err
+		}
+	}
+
+	if m, err := uc.db.MessageRepository.LoadMessageWithUsers(message.ID); err != nil {
+		return err
+	} else {
+		*message = *m
+	}
+
+	return nil
 }
 
 func (uc UserUsecase) UpdateMessageView(fromID uint, toID uint) error {
