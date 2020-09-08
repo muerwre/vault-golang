@@ -331,7 +331,7 @@ func (uc *UserController) DeleteMessage(c *gin.Context) {
 
 	message, err := uc.DB.MessageRepository.LoadUnscopedMessageWithUsers(uint(id))
 
-	if err != nil || message.From.ID != u.ID {
+	if err != nil || message.From.ID != u.ID || message == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.MessageNotFound})
 		return
 	}
