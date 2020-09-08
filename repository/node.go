@@ -269,3 +269,13 @@ func (nr NodeRepository) GetCommentByIdWithDeleted(cid uint) (*models.Comment, e
 	q := nr.db.Unscoped().Where("id = ?", cid).First(&comment)
 	return comment, q.Error
 }
+
+func (nr NodeRepository) GetNodeLastComment(nid uint) (*models.Comment, error) {
+	comment := &models.Comment{}
+
+	if err := nr.db.Model(&comment).Where("nodeID = ?", nid).Order("created_at DESC").First(&comment).Error; err != nil {
+		return nil, err
+	}
+
+	return comment, nil
+}

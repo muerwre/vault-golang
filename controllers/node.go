@@ -258,6 +258,8 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 		}
 	}
 
+	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid))
+
 	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
 }
 
@@ -318,8 +320,8 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 	nc.nodeUsecase.UnsetFilesTarget(lostFiles)
 	nc.nodeUsecase.UpdateBriefFromComment(node, comment)
 	nc.nodeUsecase.UpdateFilesMetadata(data.Files, comment.Files)
-	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid), &comment.CreatedAt)
 	nc.nodeUsecase.UpdateNodeSeen(uint(nid), u.ID)
+	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid))
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 }
