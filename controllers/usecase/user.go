@@ -111,11 +111,7 @@ func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data re
 		return nil, fmt.Errorf(codes.UserNotFound)
 	}
 
-	message := &models.Message{
-		Text:   data.UserMessage.Text,
-		FromID: &from.ID,
-		ToID:   &to.ID,
-	}
+	message := &models.Message{}
 
 	if data.ID != 0 {
 		message, err = uc.db.MessageRepository.LoadMessageWithUsers(data.ID)
@@ -123,7 +119,16 @@ func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data re
 		if err != nil {
 			return nil, err
 		}
+
+		if message.From.ID != from.ID || message.To.ID != to.ID {
+			return nil, fmt.Errorf(codes.NotEnoughRights)
+		}
+	} else {
+		message.FromID = &from.ID
+		message.ToID = &to.ID
 	}
+
+	message.Text = data.UserMessage.Text
 
 	if !message.IsValid() {
 		return nil, fmt.Errorf(codes.IncorrectData)
