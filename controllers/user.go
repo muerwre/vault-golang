@@ -299,56 +299,51 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 func (uc *UserController) PostMessage(c *gin.Context) {
 	username := c.Param("username")
 	u := c.MustGet("User").(*models.User)
-	d := uc.DB
-
-	user, err := d.UserRepository.GetByUsername(username)
-
-	if err != nil || user.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
-		return
-	}
 
 	params := request.UserMessageRequest{}
 
-	err = c.BindJSON(&params)
-
-	if err != nil || user.ID == 0 {
+	if err := c.BindJSON(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	message := &models.Message{
-		Text:   params.UserMessage.Text,
-		FromID: &u.ID,
-		ToID:   &user.ID,
-	}
+	message, err := uc.usecase.FillMessageFromData(*u, username, params)
 
-	if !message.IsValid() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.TooShirt})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	q := d.Model(&models.Message{}).Create(message)
-
-	if q.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.IncorrectData, "details": q.Error.Error()})
+	if err := uc.usecase.SaveMessage(message); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment, "details": err.Error()})
 		return
 	}
 
-	view := &models.MessageView{
-		DialogId: user.ID,
-		UserId:   u.ID,
+	_ = uc.usecase.UpdateMessageView(u.ID, message.To.ID)
+
+	c.JSON(http.StatusOK, gin.H{"message": message})
+}
+
+func (uc *UserController) DeleteMessage(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	u := c.MustGet("User").(*models.User)
+	locked, _ := c.GetQuery("is_locked")
+
+	message, err := uc.DB.MessageRepository.LoadUnscopedMessageWithUsers(uint(id))
+
+	if err != nil || message.From.ID != u.ID || message == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.MessageNotFound})
+		return
 	}
 
-	d.
-		Where("userId = ? AND dialogId = ?", u.ID, user.ID).
-		FirstOrCreate(&view)
-
-	view.Viewed = time.Now()
-
-	d.Save(&view)
-
-	d.Where("id = ?", message.ID).Preload("From").Preload("To").First(&message)
+	if locked == "true" {
+		uc.DB.MessageRepository.Delete(uint(id))
+		now := time.Now()
+		message.DeletedAt = &now
+	} else {
+		uc.DB.MessageRepository.Restore(uint(id))
+		message.DeletedAt = nil
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": message})
 }

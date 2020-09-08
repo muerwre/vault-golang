@@ -18,6 +18,7 @@ type DB struct {
 	MetaRepository         *repository.MetaRepository
 	SocialRepository       *repository.SocialRepository
 	NodeViewRepository     *repository.NodeViewRepository
+	MessageRepository      *repository.MessageRepository
 	NotificationRepository *repository.NotificationRepository
 }
 
@@ -67,5 +68,6 @@ func New() (*DB, error) {
 		SocialRepository:       new(repository.SocialRepository).Init(db),
 		NodeViewRepository:     new(repository.NodeViewRepository).Init(db),
 		NotificationRepository: new(repository.NotificationRepository).Init(db),
+		MessageRepository:      new(repository.MessageRepository).Init(db),
 	}, nil
 }

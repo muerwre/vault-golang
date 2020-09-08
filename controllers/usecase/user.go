@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"github.com/go-playground/validator"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/db"
@@ -101,4 +102,72 @@ func (uc UserUsecase) GetUserForCheckCredentials(uid uint) (user *models.User, l
 	}
 
 	return user, &view.Visited, nil
+}
+
+func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data request.UserMessageRequest) (*models.Message, error) {
+	to, err := uc.db.UserRepository.GetByUsername(recp)
+
+	if err != nil {
+		return nil, fmt.Errorf(codes.UserNotFound)
+	}
+
+	message := &models.Message{}
+
+	if data.ID != 0 {
+		message, err = uc.db.MessageRepository.LoadMessageWithUsers(data.ID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if message.From.ID != from.ID || message.To.ID != to.ID {
+			return nil, fmt.Errorf(codes.NotEnoughRights)
+		}
+	} else {
+		message.FromID = &from.ID
+		message.ToID = &to.ID
+	}
+
+	message.Text = data.UserMessage.Text
+
+	if !message.IsValid() {
+		return nil, fmt.Errorf(codes.IncorrectData)
+	}
+
+	return message, nil
+}
+
+func (uc UserUsecase) SaveMessage(message *models.Message) error {
+	if message.ID == 0 {
+		if err := uc.db.MessageRepository.CreateMessage(message); err != nil {
+			return err
+		}
+	} else {
+		if err := uc.db.MessageRepository.SaveMessage(message); err != nil {
+			return err
+		}
+	}
+
+	if m, err := uc.db.MessageRepository.LoadMessageWithUsers(message.ID); err != nil {
+		return err
+	} else {
+		*message = *m
+	}
+
+	return nil
+}
+
+func (uc UserUsecase) UpdateMessageView(fromID uint, toID uint) error {
+	view := &models.MessageView{
+		DialogId: toID,
+		UserId:   fromID,
+	}
+
+	if err := uc.db.Where("userId = ? AND dialogId = ?", fromID, toID).FirstOrCreate(&view).Error; err != nil {
+		return err
+	}
+
+	view.Viewed = time.Now()
+
+	return uc.db.Save(&view).Error
 }
