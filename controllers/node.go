@@ -114,9 +114,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 		return
 	}
 
-	if params.Take == 0 {
-		params.Take = 40
-	}
+	params.Normalize()
 
 	before := &[]models.Node{}
 	after := &[]models.Node{}
@@ -137,6 +135,8 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	go func() {
 		q.Where("created_at > ?", params.Start).
 			Order("created_at DESC").
+			Offset(0).
+			Limit(100). // max nodes to be fetched as update
 			Find(&before)
 
 		q.Where("created_at < ?", params.End).
