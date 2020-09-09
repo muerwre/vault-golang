@@ -171,3 +171,16 @@ func (uc UserUsecase) UpdateMessageView(fromID uint, toID uint) error {
 
 	return uc.db.Save(&view).Error
 }
+
+func (uc UserUsecase) GetMessagesForUsers(fromID uint, toID uint) ([]models.Message, error) {
+	messages := []models.Message{}
+
+	err := uc.db.Preload("From").
+		Preload("To").
+		Where("(fromId = ? AND toId = ?) OR (fromId = ? AND toId = ?)", fromID, toID, toID, fromID).
+		Limit(50).
+		Order("created_at DESC").
+		Find(&messages).Error
+
+	return messages, err
+}

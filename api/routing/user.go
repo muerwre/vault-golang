@@ -38,6 +38,7 @@ func (ur *UserRouter) Handle(r *gin.RouterGroup) *UserRouter {
 	{
 		required.GET("/user/:username/messages", ur.api.WithUser(false), ur.controller.GetUserMessages)
 		required.POST("/user/:username/messages", ur.api.WithUser(false), ur.controller.PostMessage)
+
 		required.DELETE("/user/:username/messages/:id", ur.api.WithUser(false), ur.controller.DeleteMessage)
 
 		required.GET("/", ur.api.WithUser(true), ur.controller.CheckCredentials)
