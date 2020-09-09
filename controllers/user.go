@@ -264,6 +264,10 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 	from := c.MustGet("User").(*models.User)
 	d := uc.DB
 
+	params := &request.UserGetMessagesRequest{}
+	_ = c.BindQuery(&params)
+	params.Normalize()
+
 	to, err := d.UserRepository.GetByUsername(username)
 
 	if err != nil {
@@ -271,7 +275,7 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 		return
 	}
 
-	messages, err := uc.usecase.GetMessagesForUsers(from.ID, to.ID)
+	messages, err := uc.usecase.GetMessagesForUsers(from.ID, to.ID, *params.After, *params.Before, params.Limit)
 
 	_ = uc.usecase.UpdateMessageView(from.ID, to.ID)
 
