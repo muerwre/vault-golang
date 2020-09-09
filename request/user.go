@@ -86,9 +86,9 @@ type UserLockMessageRequest struct {
 }
 
 type UserGetMessagesRequest struct {
-	Before *time.Time `json:"before"`
-	After  *time.Time `json:"after"`
-	Limit  int        `json:"limit"`
+	Before *time.Time `json:"before" form:"before"`
+	After  *time.Time `json:"after" form:"after"`
+	Limit  int        `json:"limit" form:"limit"`
 }
 
 func (r *UserGetMessagesRequest) Normalize() {

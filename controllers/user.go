@@ -265,7 +265,7 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 	d := uc.DB
 
 	params := &request.UserGetMessagesRequest{}
-	_ = c.BindQuery(&params)
+	_ = c.Bind(&params)
 	params.Normalize()
 
 	to, err := d.UserRepository.GetByUsername(username)

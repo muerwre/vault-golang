@@ -178,7 +178,7 @@ func (uc UserUsecase) GetMessagesForUsers(fromID uint, toID uint, after time.Tim
 	err := uc.db.Preload("From").
 		Preload("To").
 		Where("(fromId = ? AND toId = ?) OR (fromId = ? AND toId = ?)", fromID, toID, toID, fromID).
-		Where("created_at >= ? AND created_at <= ?", after, before).
+		Where("created_at > ? AND created_at < ?", after, before).
 		Limit(limit).
 		Order("created_at DESC").
 		Find(&messages).Error
