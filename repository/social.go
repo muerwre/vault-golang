@@ -5,6 +5,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/sirupsen/logrus"
 )
 
 type SocialRepository struct {
@@ -16,18 +17,21 @@ func (sr *SocialRepository) Init(db *gorm.DB) *SocialRepository {
 	return sr
 }
 
-func (sr *SocialRepository) FindOne(provider string, id string) (social *models.Social, err error) {
-	social = &models.Social{}
-	sr.db.
+func (sr *SocialRepository) FindOne(provider string, id string) (*models.Social, error) {
+	social := &models.Social{}
+
+	err := sr.db.
+		Model(&social).
 		Where("provider = ? AND account_id = ?", provider, id).
 		Preload("User").
-		First(&social)
+		First(&social).Error
 
-	if social.ID == 0 {
+	if social.ID == 0 || err != nil {
+		logrus.Infof("Can't get social for user", err.Error())
 		return nil, fmt.Errorf(codes.UserNotFound)
 	}
 
-	return
+	return social, nil
 }
 
 func (sr *SocialRepository) Create(social *models.Social) {

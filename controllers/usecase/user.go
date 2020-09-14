@@ -95,7 +95,7 @@ func (uc UserUsecase) GetUserForCheckCredentials(uid uint) (user *models.User, l
 		return nil, nil, err
 	}
 
-	view, err := uc.db.NodeViewRepository.GetOne(uid, constants.BorisNodeId)
+	view, err := uc.db.NodeViewRepository.GetOrCreateOne(uid, constants.BorisNodeId)
 
 	if err != nil {
 		return nil, nil, err

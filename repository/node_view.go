@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/models"
 	"time"
@@ -16,12 +15,14 @@ func (r *NodeViewRepository) Init(db *gorm.DB) *NodeViewRepository {
 	return r
 }
 
-func (r *NodeViewRepository) GetOne(uid uint, nid uint) (*models.NodeView, error) {
-	view := &models.NodeView{}
-	r.db.Model(&view).Where("userId = ? AND nodeId = ?", uid, nid).First(&view)
+func (r *NodeViewRepository) GetOrCreateOne(uid uint, nid uint) (*models.NodeView, error) {
+	view := &models.NodeView{
+		UserID: uid,
+		NodeID: nid,
+	}
 
-	if view.ID == 0 {
-		return nil, fmt.Errorf("can't load node view for (nodeId = %d, userId = %d)", nid, uid)
+	if err := r.db.Model(&view).Where("userId = ? AND nodeId = ?", uid, nid).FirstOrCreate(&view).Error; err != nil {
+		return nil, err
 	}
 
 	return view, nil
