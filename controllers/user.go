@@ -261,37 +261,23 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 
 func (uc *UserController) GetUserMessages(c *gin.Context) {
 	username := c.Param("username")
-	u := c.MustGet("User").(*models.User)
+	from := c.MustGet("User").(*models.User)
 	d := uc.DB
 
-	user, err := d.UserRepository.GetByUsername(username)
+	params := &request.UserGetMessagesRequest{}
+	_ = c.Bind(&params)
+	params.Normalize()
 
-	if err != nil || user.ID == 0 {
+	to, err := d.UserRepository.GetByUsername(username)
+
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
-	messages := []models.Message{}
+	messages, err := uc.usecase.GetMessagesForUsers(from.ID, to.ID, *params.After, *params.Before, params.Limit)
 
-	d.Preload("From").
-		Preload("To").
-		Where("(fromId = ? AND toId = ?) OR (fromId = ? AND toId = ?)", u.ID, user.ID, user.ID, u.ID).
-		Limit(50).
-		Order("created_at DESC").
-		Find(&messages)
-
-	view := &models.MessageView{
-		DialogId: user.ID,
-		UserId:   u.ID,
-	}
-
-	d.
-		Where("userId = ? AND dialogId = ?", u.ID, user.ID).
-		FirstOrCreate(&view)
-
-	view.Viewed = time.Now()
-
-	d.Save(&view)
+	_ = uc.usecase.UpdateMessageView(from.ID, to.ID)
 
 	c.JSON(http.StatusOK, gin.H{"messages": messages})
 }

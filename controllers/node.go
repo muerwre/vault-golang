@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -129,79 +128,65 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 	// TODO: move to repo
 	q = nc.db.NodeRepository.WhereIsFlowNode(q)
 
-	var wg sync.WaitGroup
+	q.Where("created_at > ?", params.Start).
+		Order("created_at DESC").
+		Offset(0).
+		Limit(100). // max nodes to be fetched as update
+		Find(&before)
 
-	wg.Add(2)
+	q.Where("created_at < ?", params.End).
+		Order("created_at DESC").
+		Offset(0).
+		Limit(params.Take).
+		Find(&after)
 
-	go func() {
-		q.Where("created_at > ?", params.Start).
-			Order("created_at DESC").
+	if params.WithHeroes {
+		q.Order("RAND()").
+			Where("type = ? AND is_heroic = ?", "image", true).
 			Offset(0).
-			Limit(100). // max nodes to be fetched as update
-			Find(&before)
+			Limit(20).
+			Find(&heroes)
+	}
 
-		q.Where("created_at < ?", params.End).
-			Order("created_at DESC").
-			Offset(0).
-			Limit(params.Take).
-			Find(&after)
+	if uid != 0 && params.WithUpdated {
+		q.Order("created_at DESC").
+			Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
+			Where("node_view.visited < node.commented_at").
+			Limit(10).
+			Find(&updated)
+	}
 
-		if params.WithHeroes {
-			q.Order("RAND()").
-				Where("type = ? AND is_heroic = ?", "image", true).
-				Offset(0).
-				Limit(20).
-				Find(&heroes)
-		}
+	exclude := make([]uint, len(*updated)+1)
+	exclude[0] = 0
 
-		wg.Done()
-	}()
+	for k, v := range *updated {
+		exclude[k+1] = v.ID
+	}
 
-	go func() {
-		if uid != 0 && params.WithUpdated {
-			q.Order("created_at DESC").
-				Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
-				Where("node_view.visited < node.commented_at").
-				Limit(10).
-				Find(&updated)
-		}
+	if params.WithRecent {
+		q.Order("commented_at DESC, created_at DESC").
+			Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
+			Limit(16).
+			Find(&recent)
+	}
 
-		exclude := make([]uint, len(*updated)+1)
-		exclude[0] = 0
+	if params.WithValid {
+		rows, err := q.Table("node").
+			Select("id").
+			Where("created_at >= ? AND created_at <= ?", params.End, params.Start).
+			Rows()
 
-		for k, v := range *updated {
-			exclude[k+1] = v.ID
-		}
+		if err == nil {
+			id := uint(0)
+			for i := 0; rows.Next(); i += 1 {
+				err = rows.Scan(&id)
 
-		if params.WithRecent {
-			q.Order("commented_at DESC, created_at DESC").
-				Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
-				Limit(16).
-				Find(&recent)
-		}
-
-		if params.WithValid {
-			rows, err := q.Table("node").
-				Select("id").
-				Where("created_at >= ? AND created_at <= ?", params.End, params.Start).
-				Rows()
-
-			if err == nil {
-				id := uint(0)
-				for i := 0; rows.Next(); i += 1 {
-					err = rows.Scan(&id)
-
-					if id > 0 && err == nil {
-						valid = append(valid, id)
-					}
+				if id > 0 && err == nil {
+					valid = append(valid, id)
 				}
 			}
 		}
-
-		wg.Done()
-	}()
-
-	wg.Wait()
+	}
 
 	resp := new(response.FlowResponse).Init(*before, *after, *heroes, *updated, *recent, valid)
 
@@ -267,6 +252,8 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 		}
 	}
 
+	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid))
+
 	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
 }
 
@@ -327,8 +314,8 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 	nc.nodeUsecase.UnsetFilesTarget(lostFiles)
 	nc.nodeUsecase.UpdateBriefFromComment(node, comment)
 	nc.nodeUsecase.UpdateFilesMetadata(data.Files, comment.Files)
-	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid), &comment.CreatedAt)
 	nc.nodeUsecase.UpdateNodeSeen(uint(nid), u.ID)
+	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid))
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 

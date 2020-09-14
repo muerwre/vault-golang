@@ -284,3 +284,13 @@ func (nr NodeRepository) GetNodeWatchers(nid uint) ([]uint, error) {
 
 	return ids, err
 }
+
+func (nr NodeRepository) GetNodeLastComment(nid uint) (*models.Comment, error) {
+	comment := &models.Comment{}
+
+	if err := nr.db.Model(&comment).Where("nodeID = ?", nid).Order("created_at DESC").First(&comment).Error; err != nil {
+		return nil, err
+	}
+
+	return comment, nil
+}

@@ -13,7 +13,6 @@ import (
 	"github.com/muerwre/vault-golang/utils/validation"
 	"github.com/sirupsen/logrus"
 	"sync"
-	"time"
 )
 
 type NodeUsecase struct {
@@ -276,11 +275,13 @@ func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.
 	}
 }
 
-func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint, time *time.Time) {
-	if time == nil {
+func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint) {
+	lastComment, _ := nu.db.NodeRepository.GetNodeLastComment(nid)
+
+	if lastComment == nil {
 		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", nil)
 	} else {
-		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", *time)
+		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", lastComment.CreatedAt)
 	}
 }
 
@@ -289,41 +290,16 @@ func (nu NodeUsecase) UpdateNodeSeen(nid uint, uid uint) {
 }
 
 func (nu NodeUsecase) DeleteComment(comment *models.Comment) error {
-	if err := nu.db.Delete(&comment).Error; err != nil {
-		return err
-	}
-
-	previous := &models.Comment{}
-
-	nu.db.Model(&models.Comment{}).
-		Order("created_at DESC").
-		Where("nodeId = ?", comment.NodeID).
-		First(&previous)
-
-	if previous.ID != 0 {
-		nu.UpdateNodeCommentedAt(*comment.NodeID, &previous.CreatedAt)
-	} else {
-		nu.UpdateNodeCommentedAt(*comment.NodeID, nil)
-	}
-
-	return nil
+	return nu.db.Delete(&comment).Error
 }
 
 func (nu NodeUsecase) RestoreComment(comment *models.Comment) error {
 	comment.DeletedAt = nil
 
-	q := nu.db.Model(&comment).
+	return nu.db.Model(&comment).
 		Unscoped().
 		Where("id = ?", comment.ID).
-		Update("deletedAt", nil)
-
-	if q.Error != nil {
-		return q.Error
-	}
-
-	nu.UpdateNodeCommentedAt(*comment.NodeID, &comment.CreatedAt)
-
-	return nil
+		Update("deletedAt", nil).Error
 }
 
 func (nu NodeUsecase) SeparateNodeTags(tags []*models.Tag) ([]uint, []uint) {
