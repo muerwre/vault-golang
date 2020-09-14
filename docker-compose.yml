@@ -9,8 +9,6 @@ services:
       MYSQL_PASS: 'pass'
       MYSQL_DATABASE: 'vault'
       MYSQL_ROOT_HOST: '%'
-    ports:
-      - 3307:3306
     volumes:
       - ${MYSQL_VOLUME}:/var/lib/mysql
   app:
