@@ -177,6 +177,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 		if err == nil {
 			id := uint(0)
+			defer rows.Close()
 			for i := 0; rows.Next(); i += 1 {
 				err = rows.Scan(&id)
 

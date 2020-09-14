@@ -29,6 +29,7 @@ func (fr FileRepository) GetTotalSize() (count int) {
 		return 0
 	}
 
+	defer rows.Close()
 	rows.Next()
 	err = rows.Scan(&count)
 
