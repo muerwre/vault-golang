@@ -90,8 +90,9 @@ func (nu *NodeUsecase) UnsetFilesTarget(files []uint) {
 func (nu *NodeUsecase) UpdateCommentText(data *models.Comment, comment *models.Comment) error {
 	comment.Text = data.Text
 
-	if len(comment.Text) > 2048 {
-		comment.Text = comment.Text[0:2048]
+	if len(comment.Text) > constants.MaxCommentLength {
+		return fmt.Errorf(codes.CommentTooLong)
+		//comment.Text = comment.Text[0:constants.MaxCommentLength]
 	}
 
 	if len(comment.Text) < 1 && len(comment.FilesOrder) == 0 {

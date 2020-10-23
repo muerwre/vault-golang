@@ -1,3 +1,4 @@
 package constants
 
 const BorisNodeId = 696
+const MaxCommentLength = 1024 * 2
