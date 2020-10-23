@@ -166,8 +166,8 @@ func (nu NodeUsecase) UpdateNodeCoverIfChanged(data models.Node, node *models.No
 func (nu NodeUsecase) UpdateNodeTitle(data models.Node, node *models.Node) {
 	node.Title = data.Title
 
-	if len(node.Title) > 64 {
-		node.Title = node.Title[:64]
+	if len(node.Title) > constants.MaxNodeTitleLength {
+		node.Title = node.Title[:constants.MaxNodeTitleLength]
 	}
 }
 
