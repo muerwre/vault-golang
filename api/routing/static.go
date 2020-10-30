@@ -51,11 +51,22 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		c.Header("Last-Modified", cacheSince)
 		c.Header("Expires", cacheUntil)
 
+		if sr.config.UploadOutputWebp {
+			mime, err := mimetype.DetectFile(filepath.Join(sr.config.UploadPath, dest))
+
+			if err != nil {
+				c.Next()
+				return
+			}
+
+			if mime.String() == "image/webp" {
+				c.Header("Content-type", "image/webp")
+			}
+		}
 		c.Next()
 		return
 	}
 
-	// Somehow, it returns path without additional uploads :-/
 	mime, err := mimetype.DetectFile(filepath.Join(sr.config.UploadPath, src))
 
 	if err != nil {
