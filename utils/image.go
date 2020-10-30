@@ -45,7 +45,7 @@ func GetImagePresetByName(name string) *ImagePreset {
 }
 
 func WriteImageWebp(img image.Image, out io.Writer, mime string) (err error) {
-	options, err := encoder.NewLossyEncoderOptions(encoder.PresetDefault, 75)
+	options, err := encoder.NewLossyEncoderOptions(encoder.PresetPhoto, 100)
 	return webp.Encode(out, img, options)
 }
 
