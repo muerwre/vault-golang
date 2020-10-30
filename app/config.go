@@ -21,6 +21,7 @@ type Config struct {
 	PublicHost         string
 	UploadPath         string
 	UploadMaxSizeMb    int
+	UploadOutputWebp   bool
 	GoogleApiKey       string
 	VkClientId         string
 	VkClientSecret     string
@@ -46,6 +47,7 @@ func InitConfig() (*Config, error) {
 		Protocol:           "http",
 		UploadPath:         filepath.Clean(viper.GetString("Uploads.Path")),
 		UploadMaxSizeMb:    viper.GetInt("Uploads.MaxSizeMb") * 1024 * 1024,
+		UploadOutputWebp:   viper.GetBool("Uploads.OutputWebp"),
 		GoogleApiKey:       viper.GetString("Google.ApiKey"),
 		VkClientId:         viper.GetString("Vk.ClientId"),
 		VkClientSecret:     viper.GetString("Vk.ClientSecret"),

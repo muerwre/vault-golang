@@ -58,6 +58,7 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		filepath.Join(sr.config.UploadPath, src),
 		filepath.Join(sr.config.UploadPath, dest),
 		preset,
+		sr.config.UploadOutputWebp,
 	)
 
 	if err != nil {
