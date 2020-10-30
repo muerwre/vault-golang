@@ -2,6 +2,7 @@ package routing
 
 import (
 	"fmt"
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/utils"
@@ -54,6 +55,14 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		return
 	}
 
+	// Somehow, it returns path without additional uploads :-/
+	mime, err := mimetype.DetectFile(filepath.Join(sr.config.UploadPath, src))
+
+	if err != nil {
+		c.Next()
+		return
+	}
+
 	buff, err := utils.CreateScaledImage(
 		filepath.Join(sr.config.UploadPath, src),
 		filepath.Join(sr.config.UploadPath, dest),
@@ -66,6 +75,7 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		return
 	}
 
+	c.Header("Content-Type", mime.String())
 	c.String(http.StatusOK, buff.String())
 	c.Abort()
 }
