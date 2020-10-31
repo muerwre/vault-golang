@@ -34,7 +34,7 @@ func (tc *TagController) GetNodesOfTag(c *gin.Context) {
 	}
 
 	limit := c.Query("limit")
-	offset := c.Query("limit")
+	offset := c.Query("offset")
 
 	tag, err := tc.tag.GetTagByName(name)
 

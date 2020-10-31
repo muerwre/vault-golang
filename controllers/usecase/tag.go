@@ -34,7 +34,7 @@ func (uc TagUsecase) GetNodesOfTag(tag models.Tag, limit string, offset string) 
 		l = 20
 	}
 
-	o, err := strconv.Atoi(limit)
+	o, err := strconv.Atoi(offset)
 	if err != nil || o < 0 {
 		o = 0
 	}
