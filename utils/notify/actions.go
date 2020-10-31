@@ -7,7 +7,7 @@ import (
 
 func (n Notifier) OnNodeCreate(item NotifierItem) {
 	// TODO: fetch recipients here
-	recipients, err := n.db.UserRepository.GetFlowWatchers()
+	recipients, err := n.db.User.GetFlowWatchers()
 
 	if err != nil {
 		logrus.Warnf("Can't get watchers for node %d", item.ItemId)
@@ -35,14 +35,14 @@ func (n Notifier) OnNodeDelete(item NotifierItem) {
 }
 
 func (n Notifier) OnCommentCreate(item NotifierItem) {
-	c, err := n.db.NodeRepository.GetCommentByIdWithDeleted(item.ItemId)
+	c, err := n.db.Node.GetCommentByIdWithDeleted(item.ItemId)
 
 	if err != nil {
 		logrus.Warnf("Comment with id %s not found", item.ItemId)
 		return
 	}
 
-	recipients, err := n.db.NodeRepository.GetNodeWatchers(*c.NodeID)
+	recipients, err := n.db.Node.GetNodeWatchers(*c.NodeID)
 
 	if err != nil {
 		logrus.Warnf("Can't get watchers for node %d", c.NodeID)

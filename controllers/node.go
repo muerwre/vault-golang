@@ -6,8 +6,8 @@ import (
 	"github.com/muerwre/vault-golang/controllers/usecase"
 	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/response"
-	"github.com/muerwre/vault-golang/utils/notify"
 	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/utils/notify"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
@@ -26,7 +26,7 @@ type NodeController struct {
 	file usecase.FileUseCase
 }
 
-func (nc *NodeController) Init(db db.DB, config app.Config) *NodeController {
+func (nc *NodeController) Init(db db.DB, config app.Config, notifier notify.Notifier) *NodeController {
 	nc.node = *new(usecase.NodeUsecase).Init(db, notifier)
 	nc.file = *new(usecase.FileUseCase).Init(db, config.UploadPath)
 

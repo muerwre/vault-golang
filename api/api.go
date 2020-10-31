@@ -17,16 +17,16 @@ type API struct {
 	mailer   mail.Mailer
 	notifier notify.Notifier
 
-	node   *routing.NodeRouter
-	user   *routing.UserRouter
-	stats  *routing.StatsRouter
-	flow   *routing.FlowRouter
-	upload *routing.UploadRouter
-	static *routing.StaticRouter
-	meta   *routing.MetaRouter
-	oauth  *routing.OauthRouter
-	search *routing.SearchRouter
-	tag    *routing.TagRouter
+	node               *routing.NodeRouter
+	user               *routing.UserRouter
+	stats              *routing.StatsRouter
+	flow               *routing.FlowRouter
+	upload             *routing.UploadRouter
+	static             *routing.StaticRouter
+	meta               *routing.MetaRouter
+	oauth              *routing.OauthRouter
+	search             *routing.SearchRouter
+	tag                *routing.TagRouter
 	notificationRouter routing.NotificationRouter
 }
 
@@ -67,7 +67,7 @@ func (a *API) Init() *gin.Engine {
 
 	r.OPTIONS("/*path", a.CorsHandler)
 
-	a.node = new(routing.NodeRouter).Init(a, a.db, a.Config).Handle(r.Group("/node"))
+	a.node = new(routing.NodeRouter).Init(a, a.db, a.Config, a.notifier).Handle(r.Group("/node"))
 	a.user = new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
 	a.search = new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
 	a.oauth = new(routing.OauthRouter).Init(a, a.db, a.Config).Handle(r.Group("/oauth"))
@@ -78,7 +78,7 @@ func (a *API) Init() *gin.Engine {
 	a.stats.Init(a, a.db)
 
 	a.flow = &routing.FlowRouter{}
-	a.flow.Init(a, a.db, a.Config)
+	a.flow.Init(a, a.db, a.Config, a.notifier)
 
 	a.upload = &routing.UploadRouter{}
 	a.upload.Init(a, a.db, a.Config)

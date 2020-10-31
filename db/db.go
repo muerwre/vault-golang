@@ -12,14 +12,14 @@ import (
 type DB struct {
 	*gorm.DB
 
-	Node     *repository.NodeRepository
-	User     *repository.UserRepository
-	File     *repository.FileRepository
-	Meta     *repository.MetaRepository
-	Social   *repository.SocialRepository
-	NodeView *repository.NodeViewRepository
-	Message  *repository.MessageRepository
-	Tag      *repository.TagRepository
+	Node                   *repository.NodeRepository
+	User                   *repository.UserRepository
+	File                   *repository.FileRepository
+	Meta                   *repository.MetaRepository
+	Social                 *repository.SocialRepository
+	NodeView               *repository.NodeViewRepository
+	Message                *repository.MessageRepository
+	Tag                    *repository.TagRepository
 	NotificationRepository *repository.NotificationRepository
 }
 
@@ -61,15 +61,15 @@ func New() (*DB, error) {
 	)
 
 	return &DB{
-		DB:       db,
-		Node:     new(repository.NodeRepository).Init(db),
-		User:     new(repository.UserRepository).Init(db),
-		File:     new(repository.FileRepository).Init(db),
-		Meta:     new(repository.MetaRepository).Init(db),
-		Social:   new(repository.SocialRepository).Init(db),
-		NodeView: new(repository.NodeViewRepository).Init(db),
-		Message:  new(repository.MessageRepository).Init(db),
-		Tag:      new(repository.TagRepository).Init(db),
+		DB:                     db,
+		Node:                   new(repository.NodeRepository).Init(db),
+		User:                   new(repository.UserRepository).Init(db),
+		File:                   new(repository.FileRepository).Init(db),
+		Meta:                   new(repository.MetaRepository).Init(db),
+		Social:                 new(repository.SocialRepository).Init(db),
+		NodeView:               new(repository.NodeViewRepository).Init(db),
+		Message:                new(repository.MessageRepository).Init(db),
+		Tag:                    new(repository.TagRepository).Init(db),
 		NotificationRepository: new(repository.NotificationRepository).Init(db),
 	}, nil
 }
