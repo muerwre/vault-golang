@@ -38,3 +38,13 @@ func (tr TagRepository) GetNodesOfTag(tag models.Tag, limit int, offset int) ([]
 
 	return nodes, q.Association("Nodes").Count(), nil
 }
+
+func (tr TagRepository) GetLike(search string) ([]*models.Tag, error) {
+	tags := []*models.Tag{}
+
+	if err := tr.db.Limit(25).Find(&tags, "title like concat('%', ?, '%')", search).Error; err != nil {
+		return nil, err
+	}
+
+	return tags, nil
+}

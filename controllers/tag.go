@@ -26,25 +26,32 @@ func (tc *TagController) Init(db db.DB, conf app.Config) *TagController {
 	return tc
 }
 
-func (tc *TagController) GetNodesOfTag(c *gin.Context) {
+func (tc TagController) GetNodesOfTag(c *gin.Context) {
 	name, err := url.QueryUnescape(strings.ToLower(c.Query("name")))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.TagNotFound})
 		return
 	}
 
-	limit := c.Query("limit")
-	offset := c.Query("offset")
-
 	tag, err := tc.tag.GetTagByName(name)
-
 	if err != nil {
 		logrus.Infof(err.Error())
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.TagNotFound})
 		return
 	}
 
-	nodes, count, err := tc.tag.GetNodesOfTag(*tag, limit, offset)
+	nodes, count, err := tc.tag.GetNodesOfTag(*tag, c.Query("limit"), c.Query("offset"))
 
 	c.JSON(http.StatusOK, gin.H{"nodes": nodes, "count": count})
+}
+
+func (tc TagController) GetAutocomplete(c *gin.Context) {
+	tags, err := tc.tag.GetTagsForAutocomplete(c.Query("search"))
+
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"tags": []string{}})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"tags": tags})
 }

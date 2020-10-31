@@ -6,6 +6,7 @@ import (
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/response"
+	"net/url"
 	"strconv"
 )
 
@@ -50,4 +51,26 @@ func (uc TagUsecase) GetNodesOfTag(tag models.Tag, limit string, offset string) 
 	}
 
 	return results, count, nil
+}
+
+func (uc TagUsecase) GetTagsForAutocomplete(s string) ([]string, error) {
+	search, err := url.QueryUnescape(s)
+
+	if err != nil || search == "" {
+		return nil, nil
+	}
+
+	tags, err := uc.db.Tag.GetLike(search)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]string, len(tags))
+
+	for k, v := range tags {
+		res[k] = v.Title
+	}
+
+	return res, nil
 }
