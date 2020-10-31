@@ -8,6 +8,7 @@ import (
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -26,7 +27,12 @@ func (tc *TagController) Init(db db.DB, conf app.Config) *TagController {
 }
 
 func (tc *TagController) GetNodesOfTag(c *gin.Context) {
-	name := strings.ToLower(c.Query("name"))
+	name, err := url.QueryUnescape(strings.ToLower(c.Query("name")))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.TagNotFound})
+		return
+	}
+
 	limit := c.Query("limit")
 	offset := c.Query("limit")
 
