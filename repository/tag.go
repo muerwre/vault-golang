@@ -30,11 +30,11 @@ func (tr TagRepository) GetNodesOfTag(tag models.Tag, limit int, offset int) ([]
 		return nil, 0, err
 	}
 
-	q := utils.WhereIsFlowNode(tr.db.Model(&t)).Limit(limit).Offset(offset).Association("Nodes")
+	q := utils.WhereIsFlowNode(tr.db.Model(&t))
 
-	if err := q.Find(&nodes).Error; err != nil {
+	if err := q.Limit(limit).Offset(offset).Association("Nodes").Find(&nodes).Error; err != nil {
 		return nil, 0, err
 	}
 
-	return nodes, q.Count(), nil
+	return nodes, q.Association("Nodes").Count(), nil
 }
