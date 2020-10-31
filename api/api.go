@@ -15,15 +15,16 @@ type API struct {
 	db     db.DB
 	mailer mail.Mailer
 
-	nodeRouter   *routing.NodeRouter
-	userRouter   *routing.UserRouter
-	statsRouter  *routing.StatsRouter
-	flowRouter   *routing.FlowRouter
-	uploadRouter *routing.UploadRouter
-	staticRouter *routing.StaticRouter
-	metaRouter   *routing.MetaRouter
-	oauthRouter  *routing.OauthRouter
-	searchRouter *routing.SearchRouter
+	node   *routing.NodeRouter
+	user   *routing.UserRouter
+	stats  *routing.StatsRouter
+	flow   *routing.FlowRouter
+	upload *routing.UploadRouter
+	static *routing.StaticRouter
+	meta   *routing.MetaRouter
+	oauth  *routing.OauthRouter
+	search *routing.SearchRouter
+	tag    *routing.TagRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -57,28 +58,27 @@ func (a *API) Init() *gin.Engine {
 
 	r.OPTIONS("/*path", a.CorsHandler)
 
-	a.nodeRouter = new(routing.NodeRouter).Init(a, a.db, a.Config).Handle(r.Group("/node"))
-	a.userRouter = new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
-	a.searchRouter = new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
+	a.node = new(routing.NodeRouter).Init(a, a.db, a.Config).Handle(r.Group("/node"))
+	a.user = new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
+	a.search = new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
+	a.oauth = new(routing.OauthRouter).Init(a, a.db, a.Config).Handle(r.Group("/oauth"))
+	a.tag = new(routing.TagRouter).Init(a, a.db, a.Config).Handle(r.Group("/tag"))
 
 	// TODO: do the same for:
-	a.statsRouter = &routing.StatsRouter{}
-	a.statsRouter.Init(a, a.db)
+	a.stats = &routing.StatsRouter{}
+	a.stats.Init(a, a.db)
 
-	a.flowRouter = &routing.FlowRouter{}
-	a.flowRouter.Init(a, a.db, a.Config)
+	a.flow = &routing.FlowRouter{}
+	a.flow.Init(a, a.db, a.Config)
 
-	a.uploadRouter = &routing.UploadRouter{}
-	a.uploadRouter.Init(a, a.db, a.Config)
+	a.upload = &routing.UploadRouter{}
+	a.upload.Init(a, a.db, a.Config)
 
-	a.staticRouter = &routing.StaticRouter{}
-	a.staticRouter.Init(a, a.Config)
+	a.static = &routing.StaticRouter{}
+	a.static.Init(a, a.Config)
 
-	a.metaRouter = &routing.MetaRouter{}
-	a.metaRouter.Init(a.Config, a.db)
-
-	a.oauthRouter = &routing.OauthRouter{}
-	a.oauthRouter.Init(a, a.db, a.Config)
+	a.meta = &routing.MetaRouter{}
+	a.meta.Init(a.Config, a.db)
 
 	a.Handle(r)
 
@@ -86,10 +86,9 @@ func (a *API) Init() *gin.Engine {
 }
 
 func (a *API) Handle(r *gin.RouterGroup) {
-	a.statsRouter.Handle(r.Group("/stats"))
-	a.flowRouter.Handle(r.Group("/flow"))
-	a.uploadRouter.Handle(r.Group("/upload"))
-	a.staticRouter.Handle(r.Group("/static"))
-	a.metaRouter.Handle(r.Group("/meta"))
-	a.oauthRouter.Handle(r.Group("/oauth"))
+	a.stats.Handle(r.Group("/stats"))
+	a.flow.Handle(r.Group("/flow"))
+	a.upload.Handle(r.Group("/upload"))
+	a.static.Handle(r.Group("/static"))
+	a.meta.Handle(r.Group("/meta"))
 }

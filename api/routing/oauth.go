@@ -15,14 +15,15 @@ type OauthRouter struct {
 	api        utils.AppApi
 }
 
-func (or *OauthRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
+func (or *OauthRouter) Init(api utils.AppApi, db db.DB, config app.Config) *OauthRouter {
 	or.db = db
 	or.config = config
 	or.controller = new(controllers.OAuthController).Init(db, config)
 	or.api = api
+	return or
 }
 
-func (or *OauthRouter) Handle(r *gin.RouterGroup) {
+func (or *OauthRouter) Handle(r *gin.RouterGroup) *OauthRouter {
 	r.POST(
 		"/attach",
 		or.api.AuthRequired,
@@ -44,4 +45,6 @@ func (or *OauthRouter) Handle(r *gin.RouterGroup) {
 	{
 		authenticated.GET("/", or.controller.List)
 	}
+
+	return or
 }

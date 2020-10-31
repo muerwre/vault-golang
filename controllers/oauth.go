@@ -142,7 +142,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 		return
 	}
 
-	if exist, err := oc.db.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
+	if exist, err := oc.db.Social.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
 		// User already has this social account
 		if exist.User.ID == u.ID {
 			c.AbortWithStatusJSON(http.StatusOK, gin.H{"account": exist})
@@ -155,7 +155,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 	}
 
 	// Another user has it
-	if user, err := oc.db.UserRepository.GetByEmail(claim.Data.Email); err == nil && user.ID != u.ID {
+	if user, err := oc.db.User.GetByEmail(claim.Data.Email); err == nil && user.ID != u.ID {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.UserExistWithEmail})
 		return
 	}
@@ -168,7 +168,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 		User:         u,
 	}
 
-	oc.db.SocialRepository.Create(social)
+	oc.db.Social.Create(social)
 
 	c.AbortWithStatusJSON(http.StatusOK, gin.H{"account": social})
 }
@@ -183,8 +183,8 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	// Social exist, login user
-	if social, err := oc.db.SocialRepository.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
-		token := oc.db.UserRepository.GenerateTokenFor(social.User)
+	if social, err := oc.db.Social.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
+		token := oc.db.User.GenerateTokenFor(social.User)
 
 		// TODO: update social info here
 
@@ -201,7 +201,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	// Check if there's no account with this email
-	if _, err := oc.db.UserRepository.GetByEmail(claim.Data.Email); err == nil {
+	if _, err := oc.db.User.GetByEmail(claim.Data.Email); err == nil {
 		// TODO: check it
 		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithEmail})
 		return
@@ -218,7 +218,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	// Check if there's no account with this username
-	if _, err := oc.db.UserRepository.GetByUsername(req.Username); err == nil {
+	if _, err := oc.db.User.GetByUsername(req.Username); err == nil {
 		// TODO: check it
 		c.JSON(
 			http.StatusConflict,
@@ -247,7 +247,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 		IsActivated: "1",
 	}
 
-	oc.db.UserRepository.Create(user)
+	oc.db.User.Create(user)
 
 	social := &models.Social{
 		Provider:     claim.Data.Provider,
@@ -257,8 +257,8 @@ func (oc OAuthController) Login(c *gin.Context) {
 		User:         user,
 	}
 
-	oc.db.SocialRepository.Create(social)
-	token := oc.db.UserRepository.GenerateTokenFor(social.User)
+	oc.db.Social.Create(social)
+	token := oc.db.User.GenerateTokenFor(social.User)
 
 	// Send user a token to login
 	c.JSON(http.StatusOK, gin.H{"token": token.Token})
@@ -266,7 +266,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 	if url := claim.Data.Fetched.Photo; url != "" {
 		// TODO: check it
 		if photo, err := oc.fileController.UploadRemotePic(url, models.FileTargetProfiles, constants.FileTypeImage, user); err == nil {
-			oc.db.UserRepository.UpdatePhoto(user.ID, photo.ID)
+			oc.db.User.UpdatePhoto(user.ID, photo.ID)
 		}
 	}
 }
@@ -274,7 +274,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 // List returns users social accounts
 func (oc OAuthController) List(c *gin.Context) {
 	uid := c.MustGet("UID").(uint)
-	list, err := oc.db.SocialRepository.OfUser(uid)
+	list, err := oc.db.Social.OfUser(uid)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -289,7 +289,7 @@ func (oc OAuthController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	provider := c.Param("provider")
 
-	err := oc.db.SocialRepository.DeleteOfUser(uid, provider, id)
+	err := oc.db.Social.DeleteOfUser(uid, provider, id)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

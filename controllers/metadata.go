@@ -71,7 +71,7 @@ func (mc MetaController) GetYoutubeTitles(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.EmptyRequest})
 	}
 
-	embeds, _ := mc.DB.MetaRepository.GetEmbedsById(ids, "youtube")
+	embeds, _ := mc.DB.Meta.GetEmbedsById(ids, "youtube")
 
 	lost := make([]string, 0)
 
@@ -94,7 +94,7 @@ func (mc MetaController) GetYoutubeTitles(c *gin.Context) {
 				i++
 			}
 
-			mc.DB.MetaRepository.SaveEmbeds(values)
+			mc.DB.Meta.SaveEmbeds(values)
 		}
 	}
 

@@ -133,7 +133,7 @@ func (nu NodeUsecase) UpdateFilesMetadata(data []*models.File, comment []*models
 			if cf != nil && cf.ID == df.ID && cf.Metadata.Title != df.Metadata.Title {
 				cf.Metadata.Title = df.Metadata.Title
 
-				if err := nu.db.FileRepository.UpdateMetadata(cf, cf.Metadata); err != nil {
+				if err := nu.db.File.UpdateMetadata(cf, cf.Metadata); err != nil {
 					logrus.Warnf("Can't update file metadata %d: %s", cf.ID, err.Error())
 				}
 
@@ -202,7 +202,7 @@ func (nu NodeUsecase) LoadNodeFromData(data models.Node, u *models.User) (*model
 		node.Tags = make([]*models.Tag, 0)
 	}
 
-	if node.Type == "" || !models.FLOW_NODE_TYPES.Contains(node.Type) {
+	if node.Type == "" || !constants.FLOW_NODE_TYPES.Contains(node.Type) {
 		return nil, fmt.Errorf(codes.IncorrectType)
 	}
 
@@ -274,7 +274,7 @@ func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.
 }
 
 func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint) {
-	lastComment, _ := nu.db.NodeRepository.GetNodeLastComment(nid)
+	lastComment, _ := nu.db.Node.GetNodeLastComment(nid)
 
 	if lastComment == nil {
 		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", nil)
@@ -284,7 +284,7 @@ func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint) {
 }
 
 func (nu NodeUsecase) UpdateNodeSeen(nid uint, uid uint) {
-	nu.db.NodeViewRepository.UpdateView(uid, nid)
+	nu.db.NodeView.UpdateView(uid, nid)
 }
 
 func (nu NodeUsecase) DeleteComment(comment *models.Comment) error {
@@ -334,8 +334,8 @@ func (nu NodeUsecase) GetNodeRelated(nid uint) (*response.NodeRelatedResponse, e
 	albumsChan := make(chan map[string][]models.NodeRelatedItem)
 	similarChan := make(chan []models.NodeRelatedItem)
 
-	go nu.db.NodeRepository.GetNodeAlbumRelated(albumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
-	go nu.db.NodeRepository.GetNodeSimilarRelated(similarIds, []uint{node.ID}, node.Type, &wg, similarChan)
+	go nu.db.Node.GetNodeAlbumRelated(albumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
+	go nu.db.Node.GetNodeSimilarRelated(similarIds, []uint{node.ID}, node.Type, &wg, similarChan)
 
 	wg.Wait()
 

@@ -40,10 +40,10 @@ func (sc SearchController) SearchNodes(c *gin.Context) {
 		return
 	}
 
-	nodes, count := sc.db.NodeRepository.GetForSearch(req.Text, req.Take, req.Skip)
+	nodes, count := sc.db.Node.GetForSearch(req.Text, req.Take, req.Skip)
 
 	for _, v := range nodes {
-		node := new(response.SearchNodeResponseNode).FromNode(*v)
+		node := new(response.SearchNodeResponseNode).Init(*v)
 		resp.Nodes = append(resp.Nodes, *node)
 	}
 

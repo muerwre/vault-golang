@@ -91,7 +91,7 @@ func (fu FileUseCase) UpdateFileMetadataIfNeeded(files []*models.File) []*models
 	for _, file := range files {
 		if file.FileHasInvalidMetatada() {
 			fu.FillMetadata(file)
-			fu.db.FileRepository.UpdateMetadata(file, file.Metadata)
+			fu.db.File.UpdateMetadata(file, file.Metadata)
 		}
 	}
 
