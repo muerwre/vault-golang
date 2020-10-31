@@ -2,6 +2,7 @@ package routing
 
 import (
 	"fmt"
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/utils"
@@ -50,6 +51,25 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		c.Header("Last-Modified", cacheSince)
 		c.Header("Expires", cacheUntil)
 
+		if sr.config.UploadOutputWebp {
+			mime, err := mimetype.DetectFile(filepath.Join(sr.config.UploadPath, dest))
+
+			if err != nil {
+				c.Next()
+				return
+			}
+
+			if mime.String() == "image/webp" {
+				c.Header("Content-type", "image/webp")
+			}
+		}
+		c.Next()
+		return
+	}
+
+	mime, err := mimetype.DetectFile(filepath.Join(sr.config.UploadPath, src))
+
+	if err != nil {
 		c.Next()
 		return
 	}
@@ -58,6 +78,7 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		filepath.Join(sr.config.UploadPath, src),
 		filepath.Join(sr.config.UploadPath, dest),
 		preset,
+		sr.config.UploadOutputWebp,
 	)
 
 	if err != nil {
@@ -65,6 +86,7 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		return
 	}
 
+	c.Header("Content-Type", mime.String())
 	c.String(http.StatusOK, buff.String())
 	c.Abort()
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/kolesa-team/go-webp/encoder"
+	"github.com/kolesa-team/go-webp/webp"
 	"github.com/lEx0/go-libjpeg-nrgba/jpeg"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -42,7 +44,12 @@ func GetImagePresetByName(name string) *ImagePreset {
 	return nil
 }
 
-func WriteImage(img image.Image, out io.Writer, mime string) (err error) {
+func WriteImageWebp(img image.Image, out io.Writer, mime string) (err error) {
+	options, err := encoder.NewLossyEncoderOptions(encoder.PresetPhoto, 100)
+	return webp.Encode(out, img, options)
+}
+
+func WriteImageInOriginalFormat(img image.Image, out io.Writer, mime string) (err error) {
 	switch mime {
 	case constants.FileMimeGif:
 		err = gif.Encode(out, img, nil)
@@ -74,7 +81,7 @@ func ReadImage(img *image.Image, file io.Reader, mime string) (err error) {
 	return err
 }
 
-func CreateScaledImage(src string, dest string, presetName string) (*bytes.Buffer, error) {
+func CreateScaledImage(src string, dest string, presetName string, writeWebp bool) (*bytes.Buffer, error) {
 	file, err := os.Open(src)
 
 	if err != nil {
@@ -119,12 +126,27 @@ func CreateScaledImage(src string, dest string, presetName string) (*bytes.Buffe
 
 	content := bytes.NewBuffer([]byte{})
 
-	if err = WriteImage(img, out, mime.String()); err != nil {
-		return nil, err
-	}
+	switch writeWebp {
+	case true:
+		// Write a file
+		if err = WriteImageWebp(img, out, mime.String()); err != nil {
+			return nil, err
+		}
 
-	if err = WriteImage(img, content, mime.String()); err != nil {
-		return nil, err
+		// Write output
+		if err = WriteImageWebp(img, content, mime.String()); err != nil {
+			return nil, err
+		}
+	default:
+		// Write a file
+		if err = WriteImageInOriginalFormat(img, out, mime.String()); err != nil {
+			return nil, err
+		}
+
+		// Write output
+		if err = WriteImageInOriginalFormat(img, content, mime.String()); err != nil {
+			return nil, err
+		}
 	}
 
 	return content, err

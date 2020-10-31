@@ -1,6 +1,6 @@
 FROM golang:1.15 AS build-env
 
-RUN apt-get update && apt-get install -y libjpeg-dev -q
+RUN apt-get update && apt-get install -y libjpeg-dev libwebp-dev -q
 
 WORKDIR /usr/src/app
 COPY go.mod go.sum ./

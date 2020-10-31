@@ -43,6 +43,8 @@ const (
 	CantDeleteComment            string = "CantDeleteComment"
 	CantRestoreComment           string = "CantRestoreComment"
 	MessageNotFound              string = "MessageNotFound"
+	CommentTooLong               string = "CommentTooLong"
+	TagNotFound                  string = "TagNotFound"
 )
 
 var ValidationToCode = map[string]string{

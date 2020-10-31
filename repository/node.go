@@ -2,10 +2,10 @@ package repository
 
 import (
 	"fmt"
-	"github.com/fatih/structs"
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"sync"
 )
@@ -17,13 +17,6 @@ type NodeRepository struct {
 func (nr *NodeRepository) Init(db *gorm.DB) *NodeRepository {
 	nr.db = db
 	return nr
-}
-
-func (nr *NodeRepository) WhereIsFlowNode(d *gorm.DB) *gorm.DB {
-	return d.Where(
-		"deleted_at IS NULL AND is_promoted = 1 AND is_public = 1 AND type IN (?)",
-		structs.Values(models.FLOW_NODE_TYPES),
-	)
 }
 
 func (nr NodeRepository) IsNodeLikedBy(node *models.Node, uid uint) bool {
@@ -108,19 +101,19 @@ func (nr NodeRepository) GetNodeTypeCount(t string) int {
 }
 
 func (nr NodeRepository) GetImagesCount() int {
-	return nr.GetNodeTypeCount(models.NODE_TYPES.IMAGE)
+	return nr.GetNodeTypeCount(constants.NODE_TYPES.IMAGE)
 }
 
 func (nr NodeRepository) GetAudiosCount() int {
-	return nr.GetNodeTypeCount(models.NODE_TYPES.AUDIO)
+	return nr.GetNodeTypeCount(constants.NODE_TYPES.AUDIO)
 }
 
 func (nr NodeRepository) GetVideosCount() int {
-	return nr.GetNodeTypeCount(models.NODE_TYPES.VIDEO)
+	return nr.GetNodeTypeCount(constants.NODE_TYPES.VIDEO)
 }
 
 func (nr NodeRepository) GetTextsCount() int {
-	return nr.GetNodeTypeCount(models.NODE_TYPES.TEXT)
+	return nr.GetNodeTypeCount(constants.NODE_TYPES.TEXT)
 }
 
 func (nr NodeRepository) GetCommentsCount() (count int) {
@@ -131,7 +124,7 @@ func (nr NodeRepository) GetCommentsCount() (count int) {
 func (nr NodeRepository) GetFlowLastPost() (*models.Node, error) {
 	node := &models.Node{}
 
-	nr.WhereIsFlowNode(nr.db.Model(&node).Order("created_at DESC").Limit(1)).First(&node)
+	utils.WhereIsFlowNode(nr.db.Model(&node).Order("created_at DESC").Limit(1)).First(&node)
 
 	if node.ID == 0 {
 		return nil, fmt.Errorf(codes.NodeNotFound)
@@ -199,7 +192,7 @@ func (nr NodeRepository) GetForSearch(
 		Order(fmt.Sprintf("description LIKE concat('%s', '%%') DESC", text)).
 		Order("created_at DESC ")
 
-	query = nr.WhereIsFlowNode(query)
+	query = utils.WhereIsFlowNode(query)
 
 	query.Model(&models.Node{}).Count(&count)
 	query.Limit(take).Offset(skip).Find(&res)

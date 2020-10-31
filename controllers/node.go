@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"github.com/muerwre/vault-golang/app"
+	"github.com/muerwre/vault-golang/constants"
 	"github.com/muerwre/vault-golang/controllers/usecase"
 	"github.com/muerwre/vault-golang/request"
 	"github.com/muerwre/vault-golang/response"
 	"github.com/muerwre/vault-golang/utils/notify"
+	"github.com/muerwre/vault-golang/utils"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
@@ -19,14 +21,14 @@ import (
 )
 
 type NodeController struct {
-	db          db.DB
-	nodeUsecase usecase.NodeUsecase
-	fileUsecase usecase.FileUseCase
+	db   db.DB
+	node usecase.NodeUsecase
+	file usecase.FileUseCase
 }
 
-func (nc *NodeController) Init(db db.DB, config app.Config, notifier notify.Notifier) *NodeController {
-	nc.nodeUsecase = *new(usecase.NodeUsecase).Init(db, notifier)
-	nc.fileUsecase = *new(usecase.FileUseCase).Init(db, config.UploadPath)
+func (nc *NodeController) Init(db db.DB, config app.Config) *NodeController {
+	nc.node = *new(usecase.NodeUsecase).Init(db, notifier)
+	nc.file = *new(usecase.FileUseCase).Init(db, config.UploadPath)
 
 	nc.db = db
 	return nc
@@ -45,7 +47,7 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.db.NodeRepository.GetFullNode(
+	node, err := nc.db.Node.GetFullNode(
 		id,
 		u.Role == models.USER_ROLES.ADMIN,
 		u.ID,
@@ -57,16 +59,16 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 	}
 
 	if uid != 0 {
-		node.IsLiked = d.NodeRepository.IsNodeLikedBy(node, uid)
+		node.IsLiked = d.Node.IsNodeLikedBy(node, uid)
 
-		nc.db.NodeViewRepository.UpdateView(uid, node.ID)
+		nc.db.NodeView.UpdateView(uid, node.ID)
 	}
 
-	node.LikeCount = d.NodeRepository.GetNodeLikeCount(node)
-	node.Files, _ = nc.db.FileRepository.GetFilesByIds([]uint(node.FilesOrder))
+	node.LikeCount = d.Node.GetNodeLikeCount(node)
+	node.Files, _ = nc.db.File.GetFilesByIds([]uint(node.FilesOrder))
 
 	node.SortFiles()
-	node.Files = nc.fileUsecase.UpdateFileMetadataIfNeeded(node.Files)
+	node.Files = nc.file.UpdateFileMetadataIfNeeded(node.Files)
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
@@ -98,7 +100,7 @@ func (nc *NodeController) GetNodeComments(c *gin.Context) {
 		order = "DESC"
 	}
 
-	comments, count := nc.db.NodeRepository.GetComments(id, take, skip, order)
+	comments, count := nc.db.Node.GetComments(id, take, skip, order)
 
 	c.JSON(http.StatusOK, gin.H{"comments": comments, "comment_count": count})
 }
@@ -126,7 +128,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 	q := nc.db.Preload("User").Preload("User.Photo").Model(&models.Node{})
 	// TODO: move to repo
-	q = nc.db.NodeRepository.WhereIsFlowNode(q)
+	q = utils.WhereIsFlowNode(q)
 
 	q.Where("created_at > ?", params.Start).
 		Order("created_at DESC").
@@ -178,6 +180,7 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 		if err == nil {
 			id := uint(0)
+			defer rows.Close()
 			for i := 0; rows.Next(); i += 1 {
 				err = rows.Scan(&id)
 
@@ -218,7 +221,7 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 		return
 	}
 
-	comment, err := nc.db.NodeRepository.GetCommentByIdWithDeleted(uint(cid))
+	comment, err := nc.db.Node.GetCommentByIdWithDeleted(uint(cid))
 
 	if err != nil || *comment.NodeID != uint(nid) {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.CommentNotFound})
@@ -231,28 +234,28 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 	}
 
 	if params.IsLocked {
-		if err := nc.nodeUsecase.DeleteComment(comment); err != nil {
+		if err := nc.node.DeleteComment(comment); err != nil {
 			logrus.Warnf("Unable to delete comment %d for node %d: %s", comment.ID, comment.NodeID, err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantDeleteComment})
 			return
 		}
 
-		if err = nc.nodeUsecase.PushCommentDeleteNotification(*comment); err != nil {
+		if err = nc.node.PushCommentDeleteNotification(*comment); err != nil {
 			logrus.Warnf(err.Error())
 		}
 	} else {
-		if err := nc.nodeUsecase.RestoreComment(comment); err != nil {
+		if err := nc.node.RestoreComment(comment); err != nil {
 			logrus.Warnf("Unable to restore comment %d for node %d: %s", comment.ID, comment.NodeID, err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantRestoreComment})
 			return
 		}
 
-		if err = nc.nodeUsecase.PushCommentRestoreNotification(*comment); err != nil {
+		if err = nc.node.PushCommentRestoreNotification(*comment); err != nil {
 			logrus.Warnf(err.Error())
 		}
 	}
 
-	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid))
+	nc.node.UpdateNodeCommentedAt(uint(nid))
 
 	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
 }
@@ -269,7 +272,7 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.db.NodeRepository.GetById(uint(nid))
+	node, err := nc.db.Node.GetById(uint(nid))
 
 	if err != nil || node.Type == "" || !node.CanBeCommented() {
 		if err != nil {
@@ -285,14 +288,14 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	comment, err := nc.nodeUsecase.LoadCommentFromData(data.ID, node, u)
+	comment, err := nc.node.LoadCommentFromData(data.ID, node, u)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	lostFiles, err := nc.nodeUsecase.UpdateCommentFiles(data, comment)
+	lostFiles, err := nc.node.UpdateCommentFiles(data, comment)
 
 	if err != nil {
 		logrus.Warnf("Can't load node files while updating comment %d for node %d: %s", node.ID, comment.ID, err.Error())
@@ -300,26 +303,26 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 		return
 	}
 
-	if err := nc.nodeUsecase.UpdateCommentText(data, comment); err != nil {
+	if err := nc.node.UpdateCommentText(data, comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err = nc.db.NodeRepository.SaveCommentWithFiles(comment); err != nil {
+	if err = nc.db.Node.SaveCommentWithFiles(comment); err != nil {
 		logrus.Warnf("Failed to save comment %d for node: %s", comment.ID, node.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
 		return
 	}
 
-	nc.nodeUsecase.UnsetFilesTarget(lostFiles)
-	nc.nodeUsecase.UpdateBriefFromComment(node, comment)
-	nc.nodeUsecase.UpdateFilesMetadata(data.Files, comment.Files)
-	nc.nodeUsecase.UpdateNodeSeen(uint(nid), u.ID)
-	nc.nodeUsecase.UpdateNodeCommentedAt(uint(nid))
+	nc.node.UnsetFilesTarget(lostFiles)
+	nc.node.UpdateBriefFromComment(node, comment)
+	nc.node.UpdateFilesMetadata(data.Files, comment.Files)
+	nc.node.UpdateNodeSeen(uint(nid), u.ID)
+	nc.node.UpdateNodeCommentedAt(uint(nid))
 
 	c.JSON(http.StatusOK, gin.H{"comment": comment})
 
-	if err = nc.nodeUsecase.PushCommentCreateNotificationIfNeeded(*data, *comment); err != nil {
+	if err = nc.node.PushCommentCreateNotificationIfNeeded(*data, *comment); err != nil {
 		logrus.Warnf(err.Error())
 	}
 }
@@ -338,7 +341,7 @@ func (nc *NodeController) PostTags(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.db.NodeRepository.GetById(uint(nid))
+	node, err := nc.db.Node.GetById(uint(nid))
 
 	if err != nil {
 		logrus.Warnf("Node %d not found: %s", nid, err.Error())
@@ -402,7 +405,7 @@ func (nc NodeController) PostLike(c *gin.Context) {
 		return
 	}
 
-	isLiked := d.NodeRepository.IsNodeLikedBy(node, u.ID)
+	isLiked := d.Node.IsNodeLikedBy(node, u.ID)
 
 	if isLiked {
 		d.Model(&node).Association("Likes").Delete(u)
@@ -444,10 +447,10 @@ func (nc NodeController) LockNode(c *gin.Context) {
 
 	if params.IsLocked {
 		d.Unscoped().Model(&node).Update("deleted_at", time.Now().Truncate(time.Second))
-		nc.nodeUsecase.PushNodeDeleteNotification(*node)
+		nc.node.PushNodeDeleteNotification(*node)
 	} else {
 		d.Unscoped().Model(&node).Update("deleted_at", nil)
-		nc.nodeUsecase.PushNodeRestoreNotification(*node)
+		nc.node.PushNodeRestoreNotification(*node)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deleted_at": node.DeletedAt})
@@ -494,7 +497,7 @@ func (nc NodeController) PostCellView(c *gin.Context) {
 
 	err = c.BindJSON(&params)
 
-	if err != nil || !models.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
+	if err != nil || !constants.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
@@ -529,7 +532,7 @@ func (nc NodeController) GetRelated(c *gin.Context) {
 		return
 	}
 
-	related, err := nc.nodeUsecase.GetNodeRelated(uint(nid))
+	related, err := nc.node.GetNodeRelated(uint(nid))
 
 	c.JSON(http.StatusOK, gin.H{"related": related})
 }
@@ -549,7 +552,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.nodeUsecase.LoadNodeFromData(data, user)
+	node, err := nc.node.LoadNodeFromData(data, user)
 
 	if err != nil {
 		logrus.Warnf("Can't load node from data: %s\nData:\n%+v", err.Error(), data)
@@ -558,13 +561,13 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	}
 
 	// Update previous node cover target to be null if its changed
-	if err = nc.nodeUsecase.UpdateNodeCoverIfChanged(data, node); err != nil {
+	if err = nc.node.UpdateNodeCoverIfChanged(data, node); err != nil {
 		logrus.Warnf("Can't load node cover from data: %s\nData:\n%+v", err.Error(), data)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	lostFiles, err := nc.nodeUsecase.UpdateNodeFiles(data, node)
+	lostFiles, err := nc.node.UpdateNodeFiles(data, node)
 
 	if err != nil {
 		logrus.Warnf("Can't load node files while updating node %d: %s", data.ID, err.Error())
@@ -572,9 +575,9 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
-	nc.nodeUsecase.UpdateNodeTitle(data, node)
+	nc.node.UpdateNodeTitle(data, node)
 
-	if err = nc.nodeUsecase.UpdateNodeBlocks(data, node); err != nil {
+	if err = nc.node.UpdateNodeBlocks(data, node); err != nil {
 		logrus.Warnf("Received suspicious blocks while updating node %d: %s", data.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -583,18 +586,18 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	node.UpdateDescription()
 	node.UpdateThumbnail()
 
-	if err = nc.db.NodeRepository.SaveNodeWithFiles(node); err != nil {
+	if err = nc.db.Node.SaveNodeWithFiles(node); err != nil {
 		logrus.Warnf("Failed to save node %d: %s", node.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	nc.nodeUsecase.UpdateFilesMetadata(data.Files, node.Files)
-	nc.nodeUsecase.SetFilesTarget(node.FilesOrder, "node")
-	nc.nodeUsecase.UnsetFilesTarget(lostFiles)
-	nc.nodeUsecase.UnsetNodeCoverTarget(data, node)
+	nc.node.UpdateFilesMetadata(data.Files, node.Files)
+	nc.node.SetFilesTarget(node.FilesOrder, "node")
+	nc.node.UnsetFilesTarget(lostFiles)
+	nc.node.UnsetNodeCoverTarget(data, node)
 
-	if err = nc.nodeUsecase.PushNodeCreateNotificationIfNeeded(data, *node); err != nil {
+	if err = nc.node.PushNodeCreateNotificationIfNeeded(data, *node); err != nil {
 		logrus.Warnf(err.Error())
 	}
 

@@ -152,7 +152,7 @@ func (fc *FileController) SaveFile(
 	}
 
 	fc.usecase.FillMetadata(&dbEntry)
-	fc.db.FileRepository.Save(&dbEntry)
+	fc.db.File.Save(&dbEntry)
 
 	return &dbEntry, nil, nil
 }

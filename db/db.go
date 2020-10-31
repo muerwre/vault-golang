@@ -12,13 +12,14 @@ import (
 type DB struct {
 	*gorm.DB
 
-	NodeRepository         *repository.NodeRepository
-	UserRepository         *repository.UserRepository
-	FileRepository         *repository.FileRepository
-	MetaRepository         *repository.MetaRepository
-	SocialRepository       *repository.SocialRepository
-	NodeViewRepository     *repository.NodeViewRepository
-	MessageRepository      *repository.MessageRepository
+	Node     *repository.NodeRepository
+	User     *repository.UserRepository
+	File     *repository.FileRepository
+	Meta     *repository.MetaRepository
+	Social   *repository.SocialRepository
+	NodeView *repository.NodeViewRepository
+	Message  *repository.MessageRepository
+	Tag      *repository.TagRepository
 	NotificationRepository *repository.NotificationRepository
 }
 
@@ -60,14 +61,15 @@ func New() (*DB, error) {
 	)
 
 	return &DB{
-		DB:                     db,
-		NodeRepository:         new(repository.NodeRepository).Init(db),
-		UserRepository:         new(repository.UserRepository).Init(db),
-		FileRepository:         new(repository.FileRepository).Init(db),
-		MetaRepository:         new(repository.MetaRepository).Init(db),
-		SocialRepository:       new(repository.SocialRepository).Init(db),
-		NodeViewRepository:     new(repository.NodeViewRepository).Init(db),
+		DB:       db,
+		Node:     new(repository.NodeRepository).Init(db),
+		User:     new(repository.UserRepository).Init(db),
+		File:     new(repository.FileRepository).Init(db),
+		Meta:     new(repository.MetaRepository).Init(db),
+		Social:   new(repository.SocialRepository).Init(db),
+		NodeView: new(repository.NodeViewRepository).Init(db),
+		Message:  new(repository.MessageRepository).Init(db),
+		Tag:      new(repository.TagRepository).Init(db),
 		NotificationRepository: new(repository.NotificationRepository).Init(db),
-		MessageRepository:      new(repository.MessageRepository).Init(db),
 	}, nil
 }

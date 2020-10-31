@@ -177,8 +177,7 @@ func (c oAuthConfigList) GetByName(name string) (*OAuthConfig, error) {
 
 func fetchVkData(code string) (*OAuthFetchResult, error) {
 	url := fmt.Sprintf(
-		`https://api.vk.com/method/users.get?user_id=%s&fields=photo,email&v=5.67&access_token=%s`,
-		"360004",
+		`https://api.vk.com/method/users.get?fields=photo,email&v=5.67&access_token=%s`,
 		code,
 	)
 

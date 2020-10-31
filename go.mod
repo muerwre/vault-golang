@@ -19,6 +19,7 @@ require (
 	github.com/goulash/stat v0.0.0-20160808140053-152dab06d086 // indirect
 	github.com/jinzhu/gorm v1.9.11
 	github.com/json-iterator/go v1.1.8 // indirect
+	github.com/kolesa-team/go-webp v0.0.2
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lEx0/go-libjpeg-nrgba v0.3.0
 	github.com/leodido/go-urn v1.2.0 // indirect

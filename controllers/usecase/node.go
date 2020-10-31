@@ -94,8 +94,9 @@ func (nu *NodeUsecase) UnsetFilesTarget(files []uint) {
 func (nu *NodeUsecase) UpdateCommentText(data *models.Comment, comment *models.Comment) error {
 	comment.Text = data.Text
 
-	if len(comment.Text) > 2048 {
-		comment.Text = comment.Text[0:2048]
+	if len(comment.Text) > constants.MaxCommentLength {
+		return fmt.Errorf(codes.CommentTooLong)
+		//comment.Text = comment.Text[0:constants.MaxCommentLength]
 	}
 
 	if len(comment.Text) < 1 && len(comment.FilesOrder) == 0 {
@@ -136,7 +137,7 @@ func (nu NodeUsecase) UpdateFilesMetadata(data []*models.File, comment []*models
 			if cf != nil && cf.ID == df.ID && cf.Metadata.Title != df.Metadata.Title {
 				cf.Metadata.Title = df.Metadata.Title
 
-				if err := nu.db.FileRepository.UpdateMetadata(cf, cf.Metadata); err != nil {
+				if err := nu.db.File.UpdateMetadata(cf, cf.Metadata); err != nil {
 					logrus.Warnf("Can't update file metadata %d: %s", cf.ID, err.Error())
 				}
 
@@ -169,8 +170,8 @@ func (nu NodeUsecase) UpdateNodeCoverIfChanged(data models.Node, node *models.No
 func (nu NodeUsecase) UpdateNodeTitle(data models.Node, node *models.Node) {
 	node.Title = data.Title
 
-	if len(node.Title) > 64 {
-		node.Title = node.Title[:64]
+	if len(node.Title) > constants.MaxNodeTitleLength {
+		node.Title = node.Title[:constants.MaxNodeTitleLength]
 	}
 }
 
@@ -205,7 +206,7 @@ func (nu NodeUsecase) LoadNodeFromData(data models.Node, u *models.User) (*model
 		node.Tags = make([]*models.Tag, 0)
 	}
 
-	if node.Type == "" || !models.FLOW_NODE_TYPES.Contains(node.Type) {
+	if node.Type == "" || !constants.FLOW_NODE_TYPES.Contains(node.Type) {
 		return nil, fmt.Errorf(codes.IncorrectType)
 	}
 
@@ -277,7 +278,7 @@ func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.
 }
 
 func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint) {
-	lastComment, _ := nu.db.NodeRepository.GetNodeLastComment(nid)
+	lastComment, _ := nu.db.Node.GetNodeLastComment(nid)
 
 	if lastComment == nil {
 		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", nil)
@@ -287,7 +288,7 @@ func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint) {
 }
 
 func (nu NodeUsecase) UpdateNodeSeen(nid uint, uid uint) {
-	nu.db.NodeViewRepository.UpdateView(uid, nid)
+	nu.db.NodeView.UpdateView(uid, nid)
 }
 
 func (nu NodeUsecase) DeleteComment(comment *models.Comment) error {
@@ -337,8 +338,8 @@ func (nu NodeUsecase) GetNodeRelated(nid uint) (*response.NodeRelatedResponse, e
 	albumsChan := make(chan map[string][]models.NodeRelatedItem)
 	similarChan := make(chan []models.NodeRelatedItem)
 
-	go nu.db.NodeRepository.GetNodeAlbumRelated(albumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
-	go nu.db.NodeRepository.GetNodeSimilarRelated(similarIds, []uint{node.ID}, node.Type, &wg, similarChan)
+	go nu.db.Node.GetNodeAlbumRelated(albumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
+	go nu.db.Node.GetNodeSimilarRelated(similarIds, []uint{node.ID}, node.Type, &wg, similarChan)
 
 	wg.Wait()
 

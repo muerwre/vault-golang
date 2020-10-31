@@ -9,10 +9,10 @@ import (
 )
 
 var NodeValidators = map[string]func(n *models.Node) error{
-	models.FLOW_NODE_TYPES.IMAGE: ImageNodeValidator,
-	models.FLOW_NODE_TYPES.AUDIO: AudioNodeValidator,
-	models.FLOW_NODE_TYPES.TEXT:  TextNodeValidator,
-	models.FLOW_NODE_TYPES.VIDEO: VideoNodeValidator,
+	constants.FLOW_NODE_TYPES.IMAGE: ImageNodeValidator,
+	constants.FLOW_NODE_TYPES.AUDIO: AudioNodeValidator,
+	constants.FLOW_NODE_TYPES.TEXT:  TextNodeValidator,
+	constants.FLOW_NODE_TYPES.VIDEO: VideoNodeValidator,
 }
 
 // ImageNodeValidator validates node of type image

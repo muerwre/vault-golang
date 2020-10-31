@@ -6,7 +6,6 @@ import (
 	"github.com/muerwre/vault-golang/constants"
 	"time"
 
-	"github.com/fatih/structs"
 	"github.com/muerwre/vault-golang/utils"
 )
 
@@ -25,58 +24,14 @@ type NodeFlow struct {
 	ShowDescription bool   `json:"show_description"`
 }
 
-type FlowNodeTypes struct {
-	IMAGE string
-	VIDEO string
-	TEXT  string
-	AUDIO string
-}
-
 type ServiceNodeTypes struct {
 	BORIS string
-}
-
-type NodeTypes struct {
-	IMAGE string
-	VIDEO string
-	TEXT  string
-	BORIS string
-	AUDIO string
-}
-
-type NodeFlowDisplay struct {
-	SINGLE     string
-	VERTICAL   string
-	HORIZONTAL string
-	QUADRO     string
 }
 
 const (
 	BlockTypeText  string = "text"
 	BlockTypeVideo string = "video"
 )
-
-var FLOW_NODE_TYPES = FlowNodeTypes{
-	IMAGE: "image",
-	VIDEO: "video",
-	TEXT:  "text",
-	AUDIO: "audio",
-}
-
-var NODE_TYPES = NodeTypes{
-	IMAGE: "image",
-	VIDEO: "video",
-	AUDIO: "audio",
-	TEXT:  "text",
-	BORIS: "boris",
-}
-
-var NODE_FLOW_DISPLAY = NodeFlowDisplay{
-	SINGLE:     "single",
-	VERTICAL:   "vertical",
-	HORIZONTAL: "horizontal",
-	QUADRO:     "quadro",
-}
 
 type NodeRelatedItem struct {
 	Album     string `json:"-" sql:"album" gorm:"column:album"`
@@ -134,32 +89,12 @@ func (s NodeFlow) Value() (driver.Value, error) {
 	return string(val), err
 }
 
-func (f NodeFlowDisplay) Contains(t string) bool {
-	for _, a := range structs.Map(f) {
-		if a == t {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (f FlowNodeTypes) Contains(t string) bool {
-	for _, a := range structs.Map(f) {
-		if a == t {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (n Node) IsFlowType() bool {
-	return FLOW_NODE_TYPES.Contains(n.Type)
+	return constants.FLOW_NODE_TYPES.Contains(n.Type)
 }
 
 func (n Node) CanBeCommented() bool {
-	return n.Type == NODE_TYPES.BORIS || n.IsFlowType()
+	return n.Type == constants.NODE_TYPES.BORIS || n.IsFlowType()
 }
 
 func (n Node) CanBeTaggedBy(user *User) bool {
@@ -182,10 +117,10 @@ func (n Node) CanBeHeroedBy(u *User) bool {
 // CanHasFile - checks if node can has file of type
 func (n Node) CanHasFile(f File) bool {
 	switch n.Type {
-	case NODE_TYPES.IMAGE:
+	case constants.NODE_TYPES.IMAGE:
 		return f.Type == constants.FileTypeImage
 
-	case NODE_TYPES.AUDIO:
+	case constants.NODE_TYPES.AUDIO:
 		return f.Type == constants.FileTypeAudio || f.Type == constants.FileTypeImage
 
 	default:
@@ -196,9 +131,9 @@ func (n Node) CanHasFile(f File) bool {
 // CanHasBlock - checks if node can has block of type
 func (n Node) CanHasBlock(b NodeBlock) bool {
 	switch n.Type {
-	case NODE_TYPES.TEXT:
+	case constants.NODE_TYPES.TEXT:
 		return b.Type == BlockTypeText
-	case NODE_TYPES.VIDEO:
+	case constants.NODE_TYPES.VIDEO:
 		return b.Type == BlockTypeVideo
 	default:
 		return false
@@ -259,7 +194,7 @@ func (n Node) FirstFileOfType(t string) int {
 
 // UpdateDescription - generates node brief description from node's body
 func (n *Node) UpdateDescription() {
-	if n.Type == NODE_TYPES.TEXT {
+	if n.Type == constants.NODE_TYPES.TEXT {
 		textBlock := n.Blocks[n.FirstBlockOfType(BlockTypeText)]
 
 		if len(textBlock.Text) > 64 {
@@ -271,7 +206,7 @@ func (n *Node) UpdateDescription() {
 
 // UpdateDescription - generates node thumbnail image from node's body
 func (n *Node) UpdateThumbnail() {
-	if n.Type == NODE_TYPES.IMAGE || n.Type == NODE_TYPES.AUDIO {
+	if n.Type == constants.NODE_TYPES.IMAGE || n.Type == constants.NODE_TYPES.AUDIO {
 		i := n.FirstFileOfType(constants.FileTypeImage)
 
 		if i >= 0 {
@@ -280,7 +215,7 @@ func (n *Node) UpdateThumbnail() {
 		}
 	}
 
-	if n.Type == NODE_TYPES.VIDEO {
+	if n.Type == constants.NODE_TYPES.VIDEO {
 		i := n.FirstBlockOfType(BlockTypeVideo)
 
 		if url := utils.GetThumbFromUrl(n.Blocks[i].Url); url != "" {

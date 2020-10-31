@@ -34,21 +34,21 @@ func (uc UserUsecase) ValidatePatchRequest(data *request.UserPatchRequest, u mod
 
 	// Shouldn't cover exist user
 	if data.Username != "" && data.Username != u.Username {
-		if _, err := uc.db.UserRepository.GetByUsername(data.Username); err == nil {
+		if _, err := uc.db.User.GetByUsername(data.Username); err == nil {
 			errors[data.GetJsonTagName("Username")] = codes.UserExistWithUsername
 		}
 	}
 
 	// Shouldn't cover exist user
 	if data.Email != "" && data.Email != u.Email {
-		if _, err := uc.db.UserRepository.GetByEmail(data.Email); err == nil {
+		if _, err := uc.db.User.GetByEmail(data.Email); err == nil {
 			errors[data.GetJsonTagName("Email")] = codes.UserExistWithEmail
 		}
 	}
 
 	// Photo should be at database
 	if data.Photo != nil && data.Photo.ID != 0 {
-		if file, err := uc.db.FileRepository.GetById(data.Photo.ID); err != nil || file.Type != constants.FileTypeImage {
+		if file, err := uc.db.File.GetById(data.Photo.ID); err != nil || file.Type != constants.FileTypeImage {
 			errors[data.GetJsonTagName("Photo")] = codes.ImageConversionFailed
 		} else {
 			data.PhotoID = file.ID
@@ -57,7 +57,7 @@ func (uc UserUsecase) ValidatePatchRequest(data *request.UserPatchRequest, u mod
 
 	// Cover should be at database
 	if data.Cover != nil && data.Cover.ID != 0 {
-		if file, err := uc.db.FileRepository.GetById(data.Photo.ID); err != nil || file.Type != constants.FileTypeImage {
+		if file, err := uc.db.File.GetById(data.Photo.ID); err != nil || file.Type != constants.FileTypeImage {
 			errors[data.GetJsonTagName("Cover")] = codes.ImageConversionFailed
 		} else {
 			data.CoverID = file.ID
@@ -89,13 +89,13 @@ func (uc UserUsecase) ValidatePatchRequest(data *request.UserPatchRequest, u mod
 }
 
 func (uc UserUsecase) GetUserForCheckCredentials(uid uint) (user *models.User, lastSeenBoris *time.Time, err error) {
-	user, err = uc.db.UserRepository.GetById(uid)
+	user, err = uc.db.User.GetById(uid)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	view, err := uc.db.NodeViewRepository.GetOne(uid, constants.BorisNodeId)
+	view, err := uc.db.NodeView.GetOrCreateOne(uid, constants.BorisNodeId)
 
 	if err != nil {
 		return nil, nil, err
@@ -105,7 +105,7 @@ func (uc UserUsecase) GetUserForCheckCredentials(uid uint) (user *models.User, l
 }
 
 func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data request.UserMessageRequest) (*models.Message, error) {
-	to, err := uc.db.UserRepository.GetByUsername(recp)
+	to, err := uc.db.User.GetByUsername(recp)
 
 	if err != nil {
 		return nil, fmt.Errorf(codes.UserNotFound)
@@ -114,7 +114,7 @@ func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data re
 	message := &models.Message{}
 
 	if data.ID != 0 {
-		message, err = uc.db.MessageRepository.LoadMessageWithUsers(data.ID)
+		message, err = uc.db.Message.LoadMessageWithUsers(data.ID)
 
 		if err != nil {
 			return nil, err
@@ -139,16 +139,16 @@ func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data re
 
 func (uc UserUsecase) SaveMessage(message *models.Message) error {
 	if message.ID == 0 {
-		if err := uc.db.MessageRepository.CreateMessage(message); err != nil {
+		if err := uc.db.Message.CreateMessage(message); err != nil {
 			return err
 		}
 	} else {
-		if err := uc.db.MessageRepository.SaveMessage(message); err != nil {
+		if err := uc.db.Message.SaveMessage(message); err != nil {
 			return err
 		}
 	}
 
-	if m, err := uc.db.MessageRepository.LoadMessageWithUsers(message.ID); err != nil {
+	if m, err := uc.db.Message.LoadMessageWithUsers(message.ID); err != nil {
 		return err
 	} else {
 		*message = *m

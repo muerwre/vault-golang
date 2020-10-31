@@ -49,7 +49,7 @@ func (uc *UserController) CheckCredentials(c *gin.Context) {
 
 	resp := new(response.UserCheckCredentialsResponse).Init(user, *lastSeenBoris)
 
-	uc.DB.UserRepository.UpdateLastSeen(user)
+	uc.DB.User.UpdateLastSeen(user)
 
 	c.JSON(http.StatusOK, gin.H{"user": &resp})
 }
@@ -58,7 +58,7 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 	username := c.Param("username")
 	d := uc.DB
 
-	user, err := d.UserRepository.GetByUsername(username)
+	user, err := d.User.GetByUsername(username)
 
 	if err != nil || user.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
@@ -79,7 +79,7 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 	}
 
 	d := uc.DB
-	user, err := d.UserRepository.GetByUsername(credentials.Username)
+	user, err := d.User.GetByUsername(credentials.Username)
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
@@ -103,7 +103,7 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 	}
 
 	resp := new(response.UserCheckCredentialsResponse).Init(user, *lastSeenBoris)
-	token := d.UserRepository.GenerateTokenFor(user)
+	token := d.User.GenerateTokenFor(user)
 
 	c.JSON(http.StatusOK, gin.H{"user": resp, "token": token.Token})
 }
@@ -127,7 +127,7 @@ func (uc *UserController) PatchUser(c *gin.Context) {
 
 	data.ApplyTo(u)
 
-	if err := uc.DB.UserRepository.Save(u); err != nil {
+	if err := uc.DB.User.Save(u); err != nil {
 		logrus.Infof("Can't update user: %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
 		return
@@ -254,7 +254,7 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 
 	d.Delete(&code, "id = ?", code.ID)
 
-	token := d.UserRepository.GenerateTokenFor(code.User)
+	token := d.User.GenerateTokenFor(code.User)
 
 	c.JSON(http.StatusOK, gin.H{"user": code.User, "token": token.Token})
 }
@@ -268,7 +268,7 @@ func (uc *UserController) GetUserMessages(c *gin.Context) {
 	_ = c.Bind(&params)
 	params.Normalize()
 
-	to, err := d.UserRepository.GetByUsername(username)
+	to, err := d.User.GetByUsername(username)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.UserNotFound})
@@ -315,7 +315,7 @@ func (uc *UserController) DeleteMessage(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
 	locked, _ := c.GetQuery("is_locked")
 
-	message, err := uc.DB.MessageRepository.LoadUnscopedMessageWithUsers(uint(id))
+	message, err := uc.DB.Message.LoadUnscopedMessageWithUsers(uint(id))
 
 	if err != nil || message.From.ID != u.ID || message == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.MessageNotFound})
@@ -323,11 +323,11 @@ func (uc *UserController) DeleteMessage(c *gin.Context) {
 	}
 
 	if locked == "true" {
-		uc.DB.MessageRepository.Delete(uint(id))
+		uc.DB.Message.Delete(uint(id))
 		now := time.Now()
 		message.DeletedAt = &now
 	} else {
-		uc.DB.MessageRepository.Restore(uint(id))
+		uc.DB.Message.Restore(uint(id))
 		message.DeletedAt = nil
 	}
 
@@ -344,9 +344,9 @@ func (uc *UserController) GetUpdates(c *gin.Context) {
 		exclude = 0
 	}
 
-	messages, err := d.UserRepository.GetUserNewMessages(*user, exclude, last)
+	messages, err := d.User.GetUserNewMessages(*user, exclude, last)
 
-	boris, _ := d.NodeRepository.GetNodeBoris()
+	boris, _ := d.Node.GetNodeBoris()
 	notifications := make([]response.Notification, len(messages))
 
 	for k := range notifications {

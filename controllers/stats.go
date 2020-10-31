@@ -13,17 +13,17 @@ type StatsController struct {
 }
 
 func (sc *StatsController) GetStats(c *gin.Context) {
-	boris, _ := sc.DB.NodeRepository.GetNodeBoris()
-	flowLastPost, _ := sc.DB.NodeRepository.GetFlowLastPost()
-	images := sc.DB.NodeRepository.GetImagesCount()
-	audios := sc.DB.NodeRepository.GetAudiosCount()
-	videos := sc.DB.NodeRepository.GetVideosCount()
-	texts := sc.DB.NodeRepository.GetTextsCount()
+	boris, _ := sc.DB.Node.GetNodeBoris()
+	flowLastPost, _ := sc.DB.Node.GetFlowLastPost()
+	images := sc.DB.Node.GetImagesCount()
+	audios := sc.DB.Node.GetAudiosCount()
+	videos := sc.DB.Node.GetVideosCount()
+	texts := sc.DB.Node.GetTextsCount()
 
 	stats := response.StatsResponse{
 		StatsUsers: response.StatsUsers{
-			Total: sc.DB.UserRepository.GetTotalCount(),
-			Alive: sc.DB.UserRepository.GetAliveCount(),
+			Total: sc.DB.User.GetTotalCount(),
+			Alive: sc.DB.User.GetAliveCount(),
 		},
 		StatsNodes: response.StatsNodes{
 			Images: images,
@@ -33,11 +33,11 @@ func (sc *StatsController) GetStats(c *gin.Context) {
 			Total:  images + audios + videos + texts,
 		},
 		StatsComments: response.StatsComments{
-			Total: sc.DB.NodeRepository.GetCommentsCount(),
+			Total: sc.DB.Node.GetCommentsCount(),
 		},
 		StatsFiles: response.StatsFiles{
-			Count: sc.DB.FileRepository.GetTotalCount(),
-			Size:  sc.DB.FileRepository.GetTotalSize(),
+			Count: sc.DB.File.GetTotalCount(),
+			Size:  sc.DB.File.GetTotalSize(),
 		},
 		StatsTimestamps: response.StatsTimestamps{
 			BorisLastComment: boris.CommentedAt.Format(time.RFC3339),
