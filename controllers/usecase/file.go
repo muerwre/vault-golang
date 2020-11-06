@@ -45,7 +45,20 @@ func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
 
 // FillMetadataImage fills Image file metadata
 func (fu FileUseCase) FillMetadataImage(f *models.File) error {
-	path := filepath.Join(fu.uploadPath, f.Path, f.Name)
+	var path string
+
+	file, err := os.Stat(filepath.Join(fu.uploadPath, f.Path))
+
+	if err != nil {
+		return err
+	}
+
+	switch mode := file.Mode(); {
+	case mode.IsDir():
+		path = filepath.Join(fu.uploadPath, f.Path, f.Name)
+	case mode.IsRegular():
+		path = filepath.Join(fu.uploadPath, f.Path)
+	}
 
 	if reader, err := os.Open(path); err == nil {
 		defer reader.Close()
