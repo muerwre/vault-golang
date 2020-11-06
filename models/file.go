@@ -80,5 +80,10 @@ func FileValidateTarget(target string) bool {
 
 // FileHasInvalidMetatada reports if file metadata is empty
 func (f File) FileHasInvalidMetatada() bool {
-	return f.Type == constants.FileTypeImage && (f.Metadata.Width == 0 && f.Metadata.Height == 0)
+	switch f.Type {
+	case constants.FileTypeImage:
+		return f.Metadata.Width == 0 && f.Metadata.Height == 0
+	default:
+		return false
+	}
 }
