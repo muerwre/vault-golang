@@ -5,8 +5,8 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/feature/user/controller"
+	"github.com/muerwre/vault-golang/service/mail"
 	"github.com/muerwre/vault-golang/utils"
-	"github.com/muerwre/vault-golang/utils/mail"
 )
 
 type UserRouter struct {
@@ -14,7 +14,7 @@ type UserRouter struct {
 	api        utils.AppApi
 }
 
-func (ur *UserRouter) Init(a utils.AppApi, db db.DB, mailer mail.Mailer, conf app.Config) *UserRouter {
+func (ur *UserRouter) Init(a utils.AppApi, db db.DB, mailer mail.MailService, conf app.Config) *UserRouter {
 	ur.controller = *new(controller.UserController).Init(db, mailer, conf)
 	ur.api = a
 

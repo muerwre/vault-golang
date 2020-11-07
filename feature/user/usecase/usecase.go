@@ -10,7 +10,6 @@ import (
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/passwords"
-	"github.com/muerwre/vault-golang/utils/validation"
 	"time"
 )
 
@@ -24,7 +23,7 @@ func (uc *UserUsecase) Init(db db.DB) *UserUsecase {
 }
 
 func (uc UserUsecase) ValidatePatchRequest(data *request.UserPatchRequest, u models.User) map[string]string {
-	err := validation.On.Struct(data)
+	err := data.Validate()
 	errors := map[string]string{}
 
 	// We need password to change password or email or username
@@ -114,8 +113,8 @@ func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data re
 
 	message := &models.Message{}
 
-	if data.ID != 0 {
-		message, err = uc.db.Message.LoadMessageWithUsers(data.ID)
+	if data.Message.ID != 0 {
+		message, err = uc.db.Message.LoadMessageWithUsers(data.Message.ID)
 
 		if err != nil {
 			return nil, err
@@ -129,7 +128,7 @@ func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data re
 		message.ToID = &to.ID
 	}
 
-	message.Text = data.UserMessage.Text
+	message.Text = data.Message.Text
 
 	if !message.IsValid() {
 		return nil, fmt.Errorf(codes.IncorrectData)

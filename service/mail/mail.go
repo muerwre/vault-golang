@@ -17,7 +17,7 @@ type MailerConfig struct {
 	Password string
 }
 
-type Mailer struct {
+type MailService struct {
 	config *MailerConfig
 	dialer *gomail.Dialer
 	open   bool
@@ -26,7 +26,7 @@ type Mailer struct {
 	Chan chan *gomail.Message
 }
 
-func (ml *Mailer) Init(c *MailerConfig) *Mailer {
+func (ml *MailService) Init(c *MailerConfig) *MailService {
 	ml.config = c
 	ml.dialer = gomail.NewDialer(c.Host, c.Port, c.User, c.Password)
 
@@ -35,8 +35,8 @@ func (ml *Mailer) Init(c *MailerConfig) *Mailer {
 	return ml
 }
 
-func (ml *Mailer) Listen() {
-	logrus.Info("Mailer routine started")
+func (ml *MailService) Listen() {
+	logrus.Info("MailService routine started")
 	logrus.Infof("Smtp relay via %s:%d", ml.config.Host, ml.config.Port)
 
 	ml.open = false
@@ -46,7 +46,7 @@ func (ml *Mailer) Listen() {
 		select {
 		case m, ok := <-ml.Chan:
 			if !ok {
-				logrus.Warnf("Mailer channel closed")
+				logrus.Warnf("MailService channel closed")
 				return
 			}
 
@@ -59,7 +59,7 @@ func (ml *Mailer) Listen() {
 			}
 
 			if err := gomail.Send(ml.closer, m); err != nil {
-				logrus.Warnf("Mailer can't send mail: %s", err.Error())
+				logrus.Warnf("MailService can't send mail: %s", err.Error())
 			}
 
 		case <-time.After(30 * time.Second):
@@ -74,11 +74,11 @@ func (ml *Mailer) Listen() {
 	}
 }
 
-func (ml Mailer) Create(to string, subj string, text string, html string, vals *map[string]string) *gomail.Message {
+func (ml MailService) CreateMessage(to string, subj string, text string, html string, values *map[string]string) *gomail.Message {
 	m := gomail.NewMessage()
 
-	if vals != nil {
-		for k, v := range *vals {
+	if values != nil {
+		for k, v := range *values {
 			text = strings.ReplaceAll(text, fmt.Sprintf("{%s}", k), v)
 			html = strings.ReplaceAll(html, fmt.Sprintf("{%s}", k), v)
 		}
@@ -96,10 +96,10 @@ func (ml Mailer) Create(to string, subj string, text string, html string, vals *
 	return m
 }
 
-func (ml Mailer) Send(m *gomail.Message) {
+func (ml MailService) Send(m *gomail.Message) {
 	ml.Chan <- m
 }
 
-func (ml Mailer) Done() {
+func (ml MailService) Done() {
 	close(ml.Chan)
 }

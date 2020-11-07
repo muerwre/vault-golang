@@ -1,4 +1,4 @@
-package notify
+package notification
 
 const (
 	NotifierTypeNodeCreate  string = "node_create"
