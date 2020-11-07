@@ -11,8 +11,8 @@ import (
 	nodeUsecase "github.com/muerwre/vault-golang/feature/node/usecase"
 	tagUsecase "github.com/muerwre/vault-golang/feature/tag/usecase"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/service/notification"
 	"github.com/muerwre/vault-golang/utils/codes"
-	"github.com/muerwre/vault-golang/utils/notify"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
@@ -24,7 +24,7 @@ type NodeController struct {
 	tag  tagUsecase.TagUsecase
 }
 
-func (nc *NodeController) Init(db db.DB, config app.Config, notifier notify.Notifier) *NodeController {
+func (nc *NodeController) Init(db db.DB, config app.Config, notifier notification.NotificationService) *NodeController {
 	nc.node = *new(nodeUsecase.NodeUsecase).Init(db, notifier)
 	nc.file = *new(fileUsecase.FileUseCase).Init(db, config)
 	nc.tag = *new(tagUsecase.TagUsecase).Init(db, config)
@@ -85,6 +85,7 @@ func (nc *NodeController) GetNodeComments(c *gin.Context) {
 
 // GetDiff /nodes/diff gets newer and older nodes
 func (nc *NodeController) GetDiff(c *gin.Context) {
+	// TODO: move to flow controller
 	params := &request.NodeDiffParams{}
 	err := c.Bind(&params)
 	uid := c.MustGet("UID").(uint)

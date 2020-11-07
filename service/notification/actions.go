@@ -1,11 +1,11 @@
-package notify
+package notification
 
 import (
 	"github.com/muerwre/vault-golang/models"
 	"github.com/sirupsen/logrus"
 )
 
-func (n Notifier) OnNodeCreate(item NotifierItem) {
+func (n NotificationService) OnNodeCreate(item NotifierItem) {
 	// TODO: fetch recipients here
 	recipients, err := n.db.User.GetFlowWatchers()
 
@@ -28,13 +28,13 @@ func (n Notifier) OnNodeCreate(item NotifierItem) {
 	}
 }
 
-func (n Notifier) OnNodeDelete(item NotifierItem) {
+func (n NotificationService) OnNodeDelete(item NotifierItem) {
 	if err := n.db.NotificationRepository.DeleteByTypeAndId(models.NotificationTypeNode, item.ItemId); err != nil {
 		logrus.Warnf("Can't perform OnNodeDelete: %s", err.Error())
 	}
 }
 
-func (n Notifier) OnCommentCreate(item NotifierItem) {
+func (n NotificationService) OnCommentCreate(item NotifierItem) {
 	c, err := n.db.Node.GetCommentByIdWithDeleted(item.ItemId)
 
 	if err != nil {
@@ -63,8 +63,8 @@ func (n Notifier) OnCommentCreate(item NotifierItem) {
 	}
 }
 
-func (n Notifier) OnCommentDelete(item NotifierItem) {
+func (n NotificationService) OnCommentDelete(item NotifierItem) {
 	if err := n.db.NotificationRepository.DeleteByTypeAndId(models.NotificationTypeComment, item.ItemId); err != nil {
-		logrus.Warnf("Can't perform OnCommentDelete: %s", err.Error())
+		logrus.Warnf("Can't perform OnCommentDelete notification: %s", err.Error())
 	}
 }

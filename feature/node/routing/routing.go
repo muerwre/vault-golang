@@ -4,18 +4,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
-	controller2 "github.com/muerwre/vault-golang/feature/node/controller"
+	"github.com/muerwre/vault-golang/feature/node/controller"
+	"github.com/muerwre/vault-golang/service/notification"
 	"github.com/muerwre/vault-golang/utils"
-	"github.com/muerwre/vault-golang/utils/notify"
 )
 
 type NodeRouter struct {
-	controller *controller2.NodeController
+	controller *controller.NodeController
 	api        utils.AppApi
 }
 
-func (nr *NodeRouter) Init(a utils.AppApi, db db.DB, config app.Config, notifier notify.Notifier) *NodeRouter {
-	nr.controller = new(controller2.NodeController).Init(db, config, notifier)
+func (nr *NodeRouter) Init(a utils.AppApi, db db.DB, config app.Config, notifier notification.NotificationService) *NodeRouter {
+	nr.controller = new(controller.NodeController).Init(db, config, notifier)
 	nr.api = a
 	return nr
 }

@@ -15,20 +15,20 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/service/mail"
 	"github.com/muerwre/vault-golang/utils/codes"
-	"github.com/muerwre/vault-golang/utils/mail"
 	"github.com/muerwre/vault-golang/utils/passwords"
 )
 
 type UserController struct {
-	Mailer mail.Mailer
+	Mailer mail.MailService
 	DB     db.DB
 	Config app.Config
 
 	usecase usecase.UserUsecase
 }
 
-func (uc *UserController) Init(db db.DB, mailer mail.Mailer, config app.Config) *UserController {
+func (uc *UserController) Init(db db.DB, mailer mail.MailService, config app.Config) *UserController {
 	uc.DB = db
 	uc.Mailer = mailer
 	uc.Config = config
@@ -173,11 +173,11 @@ func (uc *UserController) CreateRestoreCode(c *gin.Context) {
 		return
 	}
 
-	message := mailer.Create(
+	message := mailer.CreateMessage(
 		user.Email,
-		mail.MAIL_RESTORE_SUBJECT,
-		mail.MAIL_RESTORE_TEXT,
-		mail.MAIL_RESTORE_HTML,
+		mail.RestoreSubject,
+		mail.RestoreText,
+		mail.RestoreHtml,
 		&map[string]string{
 			"url":  config.Protocol + "://" + config.PublicHost + config.ResetUrl,
 			"code": code.Code,

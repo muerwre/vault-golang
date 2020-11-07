@@ -1,30 +1,30 @@
-package notify
+package notification
 
 import (
 	"github.com/muerwre/vault-golang/db"
 	"github.com/sirupsen/logrus"
 )
 
-type Notifier struct {
+type NotificationService struct {
 	db   db.DB
 	Chan chan *NotifierItem
 }
 
-func (n *Notifier) Init(db db.DB) *Notifier {
+func (n *NotificationService) Init(db db.DB) *NotificationService {
 	n.db = db
 	n.Chan = make(chan *NotifierItem, 255)
 
 	return n
 }
 
-func (n *Notifier) Listen() {
-	logrus.Info("Notifier routine started")
+func (n *NotificationService) Listen() {
+	logrus.Info("NotificationService routine started")
 
 	for {
 		select {
 		case item, ok := <-n.Chan:
 			if !ok {
-				logrus.Warnf("Notifier channel closed")
+				logrus.Warnf("NotificationService channel closed")
 				return
 			}
 
@@ -44,6 +44,6 @@ func (n *Notifier) Listen() {
 	}
 }
 
-func (n *Notifier) Done() {
+func (n *NotificationService) Done() {
 	close(n.Chan)
 }
