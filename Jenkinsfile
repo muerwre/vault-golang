@@ -13,10 +13,9 @@ pipeline {
                 echo "WORKSPACE: ${WORKSPACE}"
 
                 script {
-                    if("${ENV}" == "" || ("${env.BRANCH_NAME}" != "master" && "${env.BRANCH_NAME}" != "develop")) {
-                        println "INCORRECT VARIABLES"
+                    if("${ENV}" == "") {
+                        println "Invalid variables"
                         currentBuild.result = 'FAILED'
-                        error "Build failed :-("
                         return
                     }
                 }
@@ -39,6 +38,14 @@ pipeline {
 
         stage('deploy') {
             steps {
+                script {
+                    if ("${env.BRANCH_NAME}" != "master" && "${env.BRANCH_NAME}" != "develop") {
+                        println "Not a deployable branch"
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+                }
+
                 sh "docker-compose up -d"
             }
         }

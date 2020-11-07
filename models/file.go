@@ -3,7 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"github.com/muerwre/vault-golang/constants"
+	constants2 "github.com/muerwre/vault-golang/feature/file/constants"
 )
 
 type FileMetadata struct {
@@ -48,7 +48,7 @@ func (s FileMetadata) Value() (driver.Value, error) {
 }
 
 func FileGetTypeByMime(fileMime string) string {
-	for fileType, mimes := range constants.FileTypeToMime {
+	for fileType, mimes := range constants2.FileTypeToMime {
 		for _, mimeType := range mimes {
 			if mimeType == fileMime {
 				return fileType
@@ -81,7 +81,7 @@ func FileValidateTarget(target string) bool {
 // FileHasInvalidMetatada reports if file metadata is empty
 func (f File) FileHasInvalidMetatada() bool {
 	switch f.Type {
-	case constants.FileTypeImage:
+	case constants2.FileTypeImage:
 		return f.Metadata.Width == 0 && f.Metadata.Height == 0
 	default:
 		return false

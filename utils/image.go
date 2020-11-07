@@ -8,7 +8,7 @@ import (
 	"github.com/kolesa-team/go-webp/encoder"
 	"github.com/kolesa-team/go-webp/webp"
 	"github.com/lEx0/go-libjpeg-nrgba/jpeg"
-	"github.com/muerwre/vault-golang/constants"
+	constants2 "github.com/muerwre/vault-golang/feature/file/constants"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"image"
@@ -26,12 +26,12 @@ type ImagePreset struct {
 }
 
 var ImagePresetList = map[string]*ImagePreset{
-	constants.ImagePreset1600:      {Width: 1600},
-	constants.ImagePreset600:       {Width: 600},
-	constants.ImagePreset300:       {Width: 300},
-	constants.ImagePresetAvatar:    {Width: 72, Height: 72, Crop: true},
-	constants.ImagePresetCover:     {Width: 400, Height: 400, Crop: true},
-	constants.ImagePresetSmallHero: {Width: 800, Height: 300, Crop: true},
+	constants2.ImagePreset1600:      {Width: 1600},
+	constants2.ImagePreset600:       {Width: 600},
+	constants2.ImagePreset300:       {Width: 300},
+	constants2.ImagePresetAvatar:    {Width: 72, Height: 72, Crop: true},
+	constants2.ImagePresetCover:     {Width: 400, Height: 400, Crop: true},
+	constants2.ImagePresetSmallHero: {Width: 800, Height: 300, Crop: true},
 }
 
 func GetImagePresetByName(name string) *ImagePreset {
@@ -51,11 +51,11 @@ func WriteImageWebp(img image.Image, out io.Writer, mime string) (err error) {
 
 func WriteImageInOriginalFormat(img image.Image, out io.Writer, mime string) (err error) {
 	switch mime {
-	case constants.FileMimeGif:
+	case constants2.FileMimeGif:
 		err = gif.Encode(out, img, nil)
-	case constants.FileMimeJpeg:
+	case constants2.FileMimeJpeg:
 		err = jpeg.Encode(out, img, &jpeg.EncoderOptions{Quality: 100})
-	case constants.FileMimePng:
+	case constants2.FileMimePng:
 		err = png.Encode(out, img)
 	default:
 		err = fmt.Errorf(codes.UnknownFileType)
@@ -68,11 +68,11 @@ type AbstractOptions interface{}
 
 func ReadImage(img *image.Image, file io.Reader, mime string) (err error) {
 	switch mime {
-	case constants.FileMimeGif:
+	case constants2.FileMimeGif:
 		*img, err = gif.Decode(file)
-	case constants.FileMimeJpeg:
+	case constants2.FileMimeJpeg:
 		*img, err = jpeg.Decode(file, &jpeg.DecoderOptions{})
-	case constants.FileMimePng:
+	case constants2.FileMimePng:
 		*img, err = png.Decode(file)
 	default:
 		*img, err = nil, fmt.Errorf(codes.UnknownFileType)

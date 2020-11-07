@@ -3,8 +3,15 @@ package db
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql" // needed for gorm
+	fileRepository "github.com/muerwre/vault-golang/feature/file/repository"
+	messageRepository "github.com/muerwre/vault-golang/feature/message/repository"
+	metaRepository "github.com/muerwre/vault-golang/feature/meta/repository"
+	nodeRepository "github.com/muerwre/vault-golang/feature/node/repository"
+	notificationRepository "github.com/muerwre/vault-golang/feature/notification/repository"
+	oauthRepository "github.com/muerwre/vault-golang/feature/oauth/repository"
+	tagRepository "github.com/muerwre/vault-golang/feature/tag/repository"
+	userRepository "github.com/muerwre/vault-golang/feature/user/repository"
 	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/repository"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -12,15 +19,15 @@ import (
 type DB struct {
 	*gorm.DB
 
-	Node                   *repository.NodeRepository
-	User                   *repository.UserRepository
-	File                   *repository.FileRepository
-	Meta                   *repository.MetaRepository
-	Social                 *repository.SocialRepository
-	NodeView               *repository.NodeViewRepository
-	Message                *repository.MessageRepository
-	Tag                    *repository.TagRepository
-	NotificationRepository *repository.NotificationRepository
+	Node                   *nodeRepository.NodeRepository
+	User                   *userRepository.UserRepository
+	File                   *fileRepository.FileRepository
+	Meta                   *metaRepository.MetaRepository
+	Social                 *oauthRepository.SocialRepository
+	NodeView               *nodeRepository.NodeViewRepository
+	Message                *messageRepository.MessageRepository
+	Tag                    *tagRepository.TagRepository
+	NotificationRepository *notificationRepository.NotificationRepository
 }
 
 func New() (*DB, error) {
@@ -62,14 +69,14 @@ func New() (*DB, error) {
 
 	return &DB{
 		DB:                     db,
-		Node:                   new(repository.NodeRepository).Init(db),
-		User:                   new(repository.UserRepository).Init(db),
-		File:                   new(repository.FileRepository).Init(db),
-		Meta:                   new(repository.MetaRepository).Init(db),
-		Social:                 new(repository.SocialRepository).Init(db),
-		NodeView:               new(repository.NodeViewRepository).Init(db),
-		Message:                new(repository.MessageRepository).Init(db),
-		Tag:                    new(repository.TagRepository).Init(db),
-		NotificationRepository: new(repository.NotificationRepository).Init(db),
+		Node:                   new(nodeRepository.NodeRepository).Init(db),
+		User:                   new(userRepository.UserRepository).Init(db),
+		File:                   new(fileRepository.FileRepository).Init(db),
+		Meta:                   new(metaRepository.MetaRepository).Init(db),
+		Social:                 new(oauthRepository.SocialRepository).Init(db),
+		NodeView:               new(nodeRepository.NodeViewRepository).Init(db),
+		Message:                new(messageRepository.MessageRepository).Init(db),
+		Tag:                    new(tagRepository.TagRepository).Init(db),
+		NotificationRepository: new(notificationRepository.NotificationRepository).Init(db),
 	}, nil
 }

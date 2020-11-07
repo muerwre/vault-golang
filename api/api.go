@@ -2,9 +2,19 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/muerwre/vault-golang/api/routing"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
+	flowRouting "github.com/muerwre/vault-golang/feature/flow/routing"
+	metaRouting "github.com/muerwre/vault-golang/feature/meta/routing"
+	nodeRouting "github.com/muerwre/vault-golang/feature/node/routing"
+	notificationRouting "github.com/muerwre/vault-golang/feature/notification/routing"
+	oauthRouting "github.com/muerwre/vault-golang/feature/oauth/routing"
+	searchRouting "github.com/muerwre/vault-golang/feature/search/routing"
+	staticRouting "github.com/muerwre/vault-golang/feature/static/routing"
+	statsRouting "github.com/muerwre/vault-golang/feature/stats/routing"
+	tagRouting "github.com/muerwre/vault-golang/feature/tag/routing"
+	uploadRouting "github.com/muerwre/vault-golang/feature/upload/routing"
+	userRouting "github.com/muerwre/vault-golang/feature/user/routing"
 	"github.com/muerwre/vault-golang/utils/mail"
 	"github.com/muerwre/vault-golang/utils/notify"
 )
@@ -17,17 +27,17 @@ type API struct {
 	mailer   mail.Mailer
 	notifier notify.Notifier
 
-	node               *routing.NodeRouter
-	user               *routing.UserRouter
-	stats              *routing.StatsRouter
-	flow               *routing.FlowRouter
-	upload             *routing.UploadRouter
-	static             *routing.StaticRouter
-	meta               *routing.MetaRouter
-	oauth              *routing.OauthRouter
-	search             *routing.SearchRouter
-	tag                *routing.TagRouter
-	notificationRouter routing.NotificationRouter
+	node               *nodeRouting.NodeRouter
+	user               *userRouting.UserRouter
+	stats              *statsRouting.StatsRouter
+	flow               *flowRouting.FlowRouter
+	upload             *uploadRouting.UploadRouter
+	static             *staticRouting.StaticRouter
+	meta               *metaRouting.MetaRouter
+	oauth              *oauthRouting.OauthRouter
+	search             *searchRouting.SearchRouter
+	tag                *tagRouting.TagRouter
+	notificationRouter notificationRouting.NotificationRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -67,26 +77,26 @@ func (a *API) Init() *gin.Engine {
 
 	r.OPTIONS("/*path", a.CorsHandler)
 
-	a.node = new(routing.NodeRouter).Init(a, a.db, a.Config, a.notifier).Handle(r.Group("/node"))
-	a.user = new(routing.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
-	a.search = new(routing.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
-	a.oauth = new(routing.OauthRouter).Init(a, a.db, a.Config).Handle(r.Group("/oauth"))
-	a.tag = new(routing.TagRouter).Init(a, a.db, a.Config).Handle(r.Group("/tag"))
+	a.node = new(nodeRouting.NodeRouter).Init(a, a.db, a.Config, a.notifier).Handle(r.Group("/node"))
+	a.user = new(userRouting.UserRouter).Init(a, a.db, a.mailer, a.Config).Handle(r.Group("/user"))
+	a.search = new(searchRouting.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
+	a.oauth = new(oauthRouting.OauthRouter).Init(a, a.db, a.Config).Handle(r.Group("/oauth"))
+	a.tag = new(tagRouting.TagRouter).Init(a, a.db, a.Config).Handle(r.Group("/tag"))
 
 	// TODO: do the same for:
-	a.stats = &routing.StatsRouter{}
+	a.stats = &statsRouting.StatsRouter{}
 	a.stats.Init(a, a.db)
 
-	a.flow = &routing.FlowRouter{}
+	a.flow = &flowRouting.FlowRouter{}
 	a.flow.Init(a, a.db, a.Config, a.notifier)
 
-	a.upload = &routing.UploadRouter{}
+	a.upload = &uploadRouting.UploadRouter{}
 	a.upload.Init(a, a.db, a.Config)
 
-	a.static = &routing.StaticRouter{}
+	a.static = &staticRouting.StaticRouter{}
 	a.static.Init(a, a.Config)
 
-	a.meta = &routing.MetaRouter{}
+	a.meta = &metaRouting.MetaRouter{}
 	a.meta.Init(a.Config, a.db)
 
 	a.Handle(r)

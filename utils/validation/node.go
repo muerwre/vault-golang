@@ -2,22 +2,23 @@ package validation
 
 import (
 	"errors"
-	"github.com/muerwre/vault-golang/constants"
+	constants3 "github.com/muerwre/vault-golang/feature/file/constants"
+	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
 
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
 )
 
 var NodeValidators = map[string]func(n *models.Node) error{
-	constants.FLOW_NODE_TYPES.IMAGE: ImageNodeValidator,
-	constants.FLOW_NODE_TYPES.AUDIO: AudioNodeValidator,
-	constants.FLOW_NODE_TYPES.TEXT:  TextNodeValidator,
-	constants.FLOW_NODE_TYPES.VIDEO: VideoNodeValidator,
+	constants2.FLOW_NODE_TYPES.IMAGE: ImageNodeValidator,
+	constants2.FLOW_NODE_TYPES.AUDIO: AudioNodeValidator,
+	constants2.FLOW_NODE_TYPES.TEXT:  TextNodeValidator,
+	constants2.FLOW_NODE_TYPES.VIDEO: VideoNodeValidator,
 }
 
 // ImageNodeValidator validates node of type image
 func ImageNodeValidator(n *models.Node) error {
-	if n.FirstFileOfType(constants.FileTypeImage) < 0 {
+	if n.FirstFileOfType(constants3.FileTypeImage) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 
@@ -52,7 +53,7 @@ func VideoNodeValidator(n *models.Node) error {
 
 // AudioNodeValidator validates node of type audio
 func AudioNodeValidator(n *models.Node) error {
-	if n.FirstFileOfType(constants.FileTypeAudio) < 0 {
+	if n.FirstFileOfType(constants3.FileTypeAudio) < 0 {
 		return errors.New(codes.TooShirt)
 	}
 
