@@ -14,9 +14,8 @@ pipeline {
 
                 script {
                     if("${ENV}" == "" || ("${env.BRANCH_NAME}" != "master" && "${env.BRANCH_NAME}" != "develop")) {
-                        println "INCORRECT VARIABLES"
-                        currentBuild.result = 'FAILED'
-                        error "Build failed :-("
+                        println "Not a deployable branch"
+                        currentBuild.result = 'SUCCESS'
                         return
                     }
                 }
