@@ -1,13 +1,15 @@
-package usecase
+package tagUsecase
 
 import (
 	"fmt"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	response2 "github.com/muerwre/vault-golang/feature/search/response"
+	"github.com/muerwre/vault-golang/feature/tag/utils"
 	"github.com/muerwre/vault-golang/models"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type TagUsecase struct {
@@ -73,4 +75,32 @@ func (uc TagUsecase) GetTagsForAutocomplete(s string) ([]string, error) {
 	}
 
 	return res, nil
+}
+
+func (uc TagUsecase) FindOrCreateTags(titles []string) ([]*models.Tag, error) {
+	// make incoming tags lowercase
+	for i := 0; i < len(titles); i += 1 {
+		titles[i] = strings.ToLower(titles[i])
+	}
+
+	if len(titles) == 0 {
+		return make([]*models.Tag, 0), nil
+	}
+
+	// load tags
+	tags, err := uc.db.Tag.FindTagsByTitleList(titles)
+	if err != nil {
+		return nil, err
+	}
+
+	// create missed tags
+	for _, v := range titles {
+		if !utils.TagArrayContains(tags, v) && len(v) > 0 {
+			if tag, err := uc.db.Tag.CreateTagFromTitle(v); err == nil {
+				tags = append(tags, tag)
+			}
+		}
+	}
+
+	return tags, err
 }

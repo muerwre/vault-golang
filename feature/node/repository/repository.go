@@ -8,6 +8,7 @@ import (
 	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"sync"
+	"time"
 )
 
 type NodeRepository struct {
@@ -154,7 +155,7 @@ func (nr NodeRepository) GetFullNode(id int, isAdmin bool, uid uint) (*models.No
 	return node, nil
 }
 
-func (nr NodeRepository) GetComments(id int, take int, skip int, order string) (*[]*models.Comment, int) {
+func (nr NodeRepository) GetComments(id uint, take int, skip int, order string) ([]*models.Comment, int, error) {
 	comments := &[]*models.Comment{}
 	count := 0
 
@@ -162,20 +163,27 @@ func (nr NodeRepository) GetComments(id int, take int, skip int, order string) (
 		Where("nodeId = ?", id).
 		Order(fmt.Sprintf("created_at %s", order))
 
-	q.Model(&comments).Count(&count)
+	if err := q.Model(&comments).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
 
-	q.Preload("User").
+	err := q.Preload("User").
 		Preload("Files").
 		Preload("User.Photo").
 		Offset(skip).
 		Limit(take).
-		Find(&comments)
+		Find(&comments).
+		Error
+
+	if err != nil {
+		return nil, 0, err
+	}
 
 	for _, v := range *comments {
 		v.SortFiles()
 	}
 
-	return comments, count
+	return *comments, count, nil
 }
 
 func (nr NodeRepository) GetForSearch(
@@ -286,4 +294,129 @@ func (nr NodeRepository) GetNodeLastComment(nid uint) (*models.Comment, error) {
 	}
 
 	return comment, nil
+}
+
+func (nr NodeRepository) GetDiffNodesBefore(start *time.Time) ([]models.Node, error) {
+	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	r := &[]models.Node{}
+
+	err := q.Where("created_at > ?", start).
+		Order("created_at DESC").
+		Offset(0).
+		Limit(100). // max nodes to be fetched as update
+		Find(&r).Error
+
+	return *r, err
+}
+
+func (nr NodeRepository) GetDiffNodesAfter(end *time.Time, take uint) ([]models.Node, error) {
+	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	r := &[]models.Node{}
+
+	err := q.Where("created_at < ?", end).
+		Order("created_at DESC").
+		Offset(0).
+		Limit(take).
+		Find(&r).Error
+
+	return *r, err
+}
+
+func (nr NodeRepository) GetDiffHeroes() ([]models.Node, error) {
+	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	r := &[]models.Node{}
+
+	err := q.Order("RAND()").
+		Where("type = ? AND is_heroic = ?", "image", true).
+		Offset(0).
+		Limit(20).
+		Find(&r).Error
+
+	return *r, err
+}
+
+func (nr NodeRepository) GetDiffUpdated(uid uint, limit uint) ([]models.Node, error) {
+	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	r := &[]models.Node{}
+
+	err := q.Order("created_at DESC").
+		Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
+		Where("node_view.visited < node.commented_at").
+		Limit(limit).
+		Find(&r).Error
+
+	return *r, err
+}
+
+func (nr NodeRepository) GetDiffRecent(limit uint, exclude []uint) ([]models.Node, error) {
+	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	r := &[]models.Node{}
+
+	err := q.Order("commented_at DESC, created_at DESC").
+		Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
+		Limit(limit).
+		Find(&r).Error
+
+	return *r, err
+}
+
+func (nr NodeRepository) GetDiffValid(start *time.Time, end *time.Time) ([]uint, error) {
+	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	r := []uint{}
+
+	rows, err := q.Table("node").
+		Select("id").
+		Where("created_at >= ? AND created_at <= ?", end, start).
+		Rows()
+
+	if err != nil {
+		return nil, err
+	}
+
+	id := uint(0)
+	defer rows.Close()
+
+	for i := 0; rows.Next(); i += 1 {
+		err = rows.Scan(&id)
+
+		if id > 0 && err == nil {
+			r = append(r, id)
+		}
+	}
+
+	return r, err
+}
+
+func (nr NodeRepository) UpdateNodeTags(node *models.Node, tags []*models.Tag) error {
+	return nr.db.Model(&node).Association("Tags").Replace(tags).Error
+}
+
+func (nr NodeRepository) LikeNode(node *models.Node, u *models.User) error {
+	return nr.db.Model(&node).Association("Likes").Append(u).Error
+}
+
+func (nr NodeRepository) DislikeNode(node *models.Node, u *models.User) error {
+	return nr.db.Model(&node).Association("Likes").Delete(u).Error
+}
+
+func (nr NodeRepository) GetDeletedNode(nid uint) (*models.Node, error) {
+	node := &models.Node{}
+	err := nr.db.Unscoped().First(&node, "id = ?", nid).Error
+	return node, err
+}
+
+func (nr NodeRepository) LockNode(node *models.Node) error {
+	return nr.db.Unscoped().Model(&node).Update("deleted_at", time.Now().Truncate(time.Second)).Error
+}
+
+func (nr NodeRepository) UnlockNode(node *models.Node) error {
+	return nr.db.Unscoped().Model(&node).Update("deleted_at", nil).Error
+}
+
+func (nr NodeRepository) UpdateNodeIsHeroic(node *models.Node, isHeroic bool) error {
+	return nr.db.Model(&node).Update("is_heroic", isHeroic).Error
+}
+
+func (nr NodeRepository) UpdateNodeFlow(node *models.Node, flow models.NodeFlow) error {
+	return nr.db.Model(&node).Update("flow", flow).Error
 }

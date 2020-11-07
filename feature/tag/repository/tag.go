@@ -49,3 +49,16 @@ func (tr TagRepository) GetLike(search string) ([]*models.Tag, error) {
 
 	return tags, nil
 }
+
+func (tr TagRepository) FindTagsByTitleList(tags []string) ([]*models.Tag, error) {
+	r := []*models.Tag{}
+	err := tr.db.Where("title IN (?)", tags).Find(&r).Error
+
+	return r, err
+}
+
+func (tr TagRepository) CreateTagFromTitle(title string) (*models.Tag, error) {
+	tag := &models.Tag{Title: title}
+	err := tr.db.Set("gorm:association_autoupdate", false).Save(&tag).Error
+	return tag, err
+}

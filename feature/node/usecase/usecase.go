@@ -5,8 +5,10 @@ import (
 	"github.com/fatih/structs"
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/db"
-	constants3 "github.com/muerwre/vault-golang/feature/file/constants"
-	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
+	fileConstants "github.com/muerwre/vault-golang/feature/file/constants"
+	fileRepository "github.com/muerwre/vault-golang/feature/file/repository"
+	"github.com/muerwre/vault-golang/feature/node/constants"
+	"github.com/muerwre/vault-golang/feature/node/repository"
 	"github.com/muerwre/vault-golang/feature/node/response"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -18,13 +20,17 @@ import (
 )
 
 type NodeUsecase struct {
-	db       db.DB
+	db       db.DB // TODO: remove, use usecases:
 	notifier notify.Notifier
+	node     repository.NodeRepository
+	file     fileRepository.FileRepository
 }
 
 func (nu *NodeUsecase) Init(db db.DB, notifier notify.Notifier) *NodeUsecase {
-	nu.db = db
+	nu.db = db // TODO: remove, use usecases:
 	nu.notifier = notifier
+	nu.node = *new(repository.NodeRepository).Init(db.DB)
+	nu.file = *new(fileRepository.FileRepository).Init(db.DB)
 	return nu
 }
 
@@ -92,12 +98,11 @@ func (nu *NodeUsecase) UnsetFilesTarget(files []uint) {
 	}
 }
 
-func (nu *NodeUsecase) UpdateCommentText(data *models.Comment, comment *models.Comment) error {
+func (nu *NodeUsecase) ValidateAndUpdateCommentText(data *models.Comment, comment *models.Comment) error {
 	comment.Text = data.Text
 
-	if len(comment.Text) > constants2.MaxCommentLength {
+	if len(comment.Text) > constants.MaxCommentLength {
 		return fmt.Errorf(codes.CommentTooLong)
-		//comment.Text = comment.Text[0:constants.MaxCommentLength]
 	}
 
 	if len(comment.Text) < 1 && len(comment.FilesOrder) == 0 {
@@ -130,7 +135,7 @@ func (nu *NodeUsecase) LoadCommentFromData(id uint, node *models.Node, user *mod
 
 func (nu NodeUsecase) UpdateFilesMetadata(data []*models.File, comment []*models.File) {
 	for _, df := range data {
-		if df == nil || df.Type != constants3.FileTypeAudio {
+		if df == nil || df.Type != fileConstants.FileTypeAudio {
 			continue
 		}
 
@@ -138,7 +143,7 @@ func (nu NodeUsecase) UpdateFilesMetadata(data []*models.File, comment []*models
 			if cf != nil && cf.ID == df.ID && cf.Metadata.Title != df.Metadata.Title {
 				cf.Metadata.Title = df.Metadata.Title
 
-				if err := nu.db.File.UpdateMetadata(cf, cf.Metadata); err != nil {
+				if err := nu.file.UpdateMetadata(cf, cf.Metadata); err != nil {
 					logrus.Warnf("Can't update file metadata %d: %s", cf.ID, err.Error())
 				}
 
@@ -171,8 +176,8 @@ func (nu NodeUsecase) UpdateNodeCoverIfChanged(data models.Node, node *models.No
 func (nu NodeUsecase) UpdateNodeTitle(data models.Node, node *models.Node) {
 	node.Title = data.Title
 
-	if len(node.Title) > constants2.MaxNodeTitleLength {
-		node.Title = node.Title[:constants2.MaxNodeTitleLength]
+	if len(node.Title) > constants.MaxNodeTitleLength {
+		node.Title = node.Title[:constants.MaxNodeTitleLength]
 	}
 }
 
@@ -207,7 +212,7 @@ func (nu NodeUsecase) LoadNodeFromData(data models.Node, u *models.User) (*model
 		node.Tags = make([]*models.Tag, 0)
 	}
 
-	if node.Type == "" || !constants2.FLOW_NODE_TYPES.Contains(node.Type) {
+	if node.Type == "" || !constants.FLOW_NODE_TYPES.Contains(node.Type) {
 		return nil, fmt.Errorf(codes.IncorrectType)
 	}
 
@@ -279,7 +284,7 @@ func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.
 }
 
 func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint) {
-	lastComment, _ := nu.db.Node.GetNodeLastComment(nid)
+	lastComment, _ := nu.node.GetNodeLastComment(nid)
 
 	if lastComment == nil {
 		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", nil)
@@ -339,8 +344,8 @@ func (nu NodeUsecase) GetNodeRelated(nid uint) (*response.NodeRelatedResponse, e
 	albumsChan := make(chan map[string][]models.NodeRelatedItem)
 	similarChan := make(chan []models.NodeRelatedItem)
 
-	go nu.db.Node.GetNodeAlbumRelated(albumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
-	go nu.db.Node.GetNodeSimilarRelated(similarIds, []uint{node.ID}, node.Type, &wg, similarChan)
+	go nu.node.GetNodeAlbumRelated(albumIds, []uint{node.ID}, node.Type, &wg, albumsChan)
+	go nu.node.GetNodeSimilarRelated(similarIds, []uint{node.ID}, node.Type, &wg, similarChan)
 
 	wg.Wait()
 
@@ -422,4 +427,233 @@ func (nu NodeUsecase) PushCommentDeleteNotification(comment models.Comment) erro
 
 func (nu NodeUsecase) PushCommentRestoreNotification(comment models.Comment) error {
 	return nu.PushCommentNotification(comment, notify.NotifierTypeCommentRestore)
+}
+
+func (nu NodeUsecase) GetNodeWithLikesAndFiles(id int, role string, uid uint) (*models.Node, error) {
+	node, err := nu.node.GetFullNode(
+		id,
+		role == models.USER_ROLES.ADMIN,
+		uid,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if uid != 0 {
+		node.IsLiked = nu.node.IsNodeLikedBy(node, uid)
+		nu.db.NodeView.UpdateView(uid, node.ID)
+	}
+
+	node.LikeCount = nu.node.GetNodeLikeCount(node)
+	node.Files, _ = nu.file.GetFilesByIds([]uint(node.FilesOrder))
+
+	node.SortFiles()
+
+	return node, nil
+}
+
+func (nu NodeUsecase) GetComments(id uint, take int, skip int, order string) ([]*models.Comment, int, error) {
+	if take <= 0 {
+		take = 100
+	}
+
+	if skip < 0 {
+		skip = 0
+	}
+
+	if order != "ASC" {
+		order = "DESC"
+	}
+
+	return nu.node.GetComments(id, take, skip, order)
+}
+
+func (nu NodeUsecase) GetDiffNodesBefore(start *time.Time) ([]models.Node, error) {
+	return nu.node.GetDiffNodesBefore(start)
+}
+
+func (nu NodeUsecase) GetDiffNodesAfter(end *time.Time, take uint) ([]models.Node, error) {
+	if take <= 0 {
+		take = 50
+	}
+
+	return nu.node.GetDiffNodesAfter(end, take)
+}
+
+func (nu NodeUsecase) GetDiffHeroes(shouldSearch bool) ([]models.Node, error) {
+	if !shouldSearch {
+		return make([]models.Node, 0), nil
+	}
+
+	return nu.node.GetDiffHeroes()
+}
+
+func (nu NodeUsecase) GetDiffUpdated(uid uint, shouldSearch bool) ([]models.Node, []uint, error) {
+	if !shouldSearch {
+		return make([]models.Node, 0), make([]uint, 0), nil
+	}
+
+	updated, err := nu.node.GetDiffUpdated(uid, 10)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	exclude := make([]uint, len(updated)+1)
+	exclude[0] = 0
+
+	for k, v := range updated {
+		exclude[k+1] = v.ID
+	}
+
+	return updated, exclude, nil
+}
+
+func (nu NodeUsecase) GetDiffRecent(exclude []uint, shouldSearch bool) ([]models.Node, error) {
+	if !shouldSearch {
+		return make([]models.Node, 0), nil
+	}
+
+	return nu.node.GetDiffRecent(16, exclude)
+}
+
+func (nu NodeUsecase) GetDiffValid(start *time.Time, end *time.Time, shouldSearch bool) ([]uint, error) {
+	if !shouldSearch {
+		return make([]uint, 0), nil
+	}
+
+	return nu.node.GetDiffValid(start, end)
+}
+
+func (nu NodeUsecase) GetDeletedComment(cid uint, nid uint, u models.User) (*models.Comment, error) {
+	comment, err := nu.node.GetCommentByIdWithDeleted(cid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if *comment.NodeID != nid {
+		return nil, fmt.Errorf("comment %d is not of node %d", cid, nid)
+	}
+
+	if !u.CanEditComment(comment) {
+		return nil, fmt.Errorf("user %s can't edit comment %d", u.Username, cid)
+	}
+
+	return comment, err
+}
+
+func (nu NodeUsecase) GetCommentableNodeById(nid uint) (*models.Node, error) {
+	node, err := nu.node.GetById(nid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !node.CanBeCommented() {
+		return nil, fmt.Errorf("node [%d](%s) can't be commented, but someone is trying", nid, node.Title)
+	}
+
+	return node, nil
+}
+
+func (nu NodeUsecase) SaveCommentWithFiles(comment *models.Comment) error {
+	return nu.node.SaveCommentWithFiles(comment)
+}
+
+func (nu NodeUsecase) GetTaggableNodeById(nid uint, u *models.User) (*models.Node, error) {
+	node, err := nu.node.GetById(nid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !node.CanBeTaggedBy(u) {
+		return nil, fmt.Errorf("node [%d](%s) can't be commented, but someone is trying", nid, node.Title)
+	}
+
+	return node, nil
+}
+
+func (nu NodeUsecase) UpdateNodeTags(node *models.Node, tags []*models.Tag) error {
+	return nu.node.UpdateNodeTags(node, tags)
+}
+
+func (nu NodeUsecase) UpdateNodeLikeByUser(node *models.Node, user *models.User, isLiked bool) error {
+	switch isLiked {
+	case true:
+		return nu.node.LikeNode(node, user)
+	default:
+		return nu.node.DislikeNode(node, user)
+	}
+}
+
+func (nu NodeUsecase) GetDeletedNode(nid uint, u *models.User) (*models.Node, error) {
+	node, err := nu.node.GetDeletedNode(nid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !node.CanBeEditedBy(u) {
+		return nil, fmt.Errorf("Node %d can't be edited by user %s", nid, u.Username)
+	}
+
+	return node, nil
+}
+
+func (nu NodeUsecase) UpdateNodeLocked(node *models.Node, isLocked bool) error {
+	switch isLocked {
+	case true:
+		if err := nu.node.LockNode(node); err != nil {
+			return err
+		}
+
+		_ = nu.PushNodeDeleteNotification(*node)
+	default:
+		if err := nu.node.UnlockNode(node); err != nil {
+			return err
+		}
+
+		_ = nu.PushNodeRestoreNotification(*node)
+	}
+
+	return nil
+}
+
+func (nu NodeUsecase) GetHeroeableNodeById(nid uint, u *models.User) (*models.Node, error) {
+	node, err := nu.node.GetById(nid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !node.CanBeHeroedBy(u) {
+		return nil, fmt.Errorf("node %d can't be heroed by user %s", u.Username)
+	}
+
+	return node, nil
+}
+
+func (nu NodeUsecase) UpdateNodeIsHeroic(node *models.Node, isHeroic bool) error {
+	return nu.node.UpdateNodeIsHeroic(node, isHeroic)
+}
+
+func (nu NodeUsecase) GetEditableNodeById(nid uint, u *models.User) (*models.Node, error) {
+	node, err := nu.node.GetById(nid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !node.CanBeEditedBy(u) {
+		return nil, fmt.Errorf("node %d can't be edited by user %s", u.Username)
+	}
+
+	return node, nil
+}
+
+func (nu NodeUsecase) UpdateNodeFlow(node *models.Node, flow models.NodeFlow) error {
+	return nu.node.UpdateNodeFlow(node, flow)
+}
+
+func (nu NodeUsecase) SaveNodeWithFiles(node *models.Node) error {
+	return nu.node.SaveNodeWithFiles(node)
 }

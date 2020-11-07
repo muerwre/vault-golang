@@ -1,45 +1,40 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
+	"github.com/muerwre/vault-golang/db"
 	fileUsecase "github.com/muerwre/vault-golang/feature/file/usecase"
 	"github.com/muerwre/vault-golang/feature/node/constants"
 	"github.com/muerwre/vault-golang/feature/node/request"
 	"github.com/muerwre/vault-golang/feature/node/response"
 	nodeUsecase "github.com/muerwre/vault-golang/feature/node/usecase"
-	"github.com/muerwre/vault-golang/utils"
+	tagUsecase "github.com/muerwre/vault-golang/feature/tag/usecase"
+	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/notify"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
-	"strings"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/muerwre/vault-golang/db"
-	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/utils/codes"
 )
 
 type NodeController struct {
-	db   db.DB
 	node nodeUsecase.NodeUsecase
 	file fileUsecase.FileUseCase
+	tag  tagUsecase.TagUsecase
 }
 
 func (nc *NodeController) Init(db db.DB, config app.Config, notifier notify.Notifier) *NodeController {
 	nc.node = *new(nodeUsecase.NodeUsecase).Init(db, notifier)
 	nc.file = *new(fileUsecase.FileUseCase).Init(db, config)
+	nc.tag = *new(tagUsecase.TagUsecase).Init(db, config)
 
-	nc.db = db
 	return nc
 }
 
 // GetNode /node:id - returns single node with tags, likes count and files
 func (nc *NodeController) GetNode(c *gin.Context) {
-	uid := c.MustGet("UID").(uint)
 	u := c.MustGet("User").(*models.User)
-	d := nc.db
 
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -48,9 +43,9 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	node, err := nc.db.Node.GetFullNode(
+	node, err := nc.node.GetNodeWithLikesAndFiles(
 		id,
-		u.Role == models.USER_ROLES.ADMIN,
+		u.Role,
 		u.ID,
 	)
 
@@ -59,16 +54,6 @@ func (nc *NodeController) GetNode(c *gin.Context) {
 		return
 	}
 
-	if uid != 0 {
-		node.IsLiked = d.Node.IsNodeLikedBy(node, uid)
-
-		nc.db.NodeView.UpdateView(uid, node.ID)
-	}
-
-	node.LikeCount = d.Node.GetNodeLikeCount(node)
-	node.Files, _ = nc.db.File.GetFilesByIds([]uint(node.FilesOrder))
-
-	node.SortFiles()
 	node.Files = nc.file.UpdateFileMetadataIfNeeded(node.Files)
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
@@ -83,25 +68,17 @@ func (nc *NodeController) GetNodeComments(c *gin.Context) {
 		return
 	}
 
-	take, err := strconv.Atoi(c.Query("take"))
-
-	if err != nil {
-		take = 100
-	}
-
+	take, _ := strconv.Atoi(c.Query("take"))
 	skip, err := strconv.Atoi(c.Query("skip"))
-
-	if err != nil {
-		skip = 0
-	}
-
 	order := c.Query("order")
 
-	if order != "ASC" {
-		order = "DESC"
-	}
+	comments, count, err := nc.node.GetComments(uint(id), take, skip, order)
 
-	comments, count := nc.db.Node.GetComments(id, take, skip, order)
+	if err != nil {
+		logrus.Warnf("Can't load comments for node: %+v", err)
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"comments": comments, "comment_count": count})
 }
@@ -119,80 +96,14 @@ func (nc *NodeController) GetDiff(c *gin.Context) {
 
 	params.Normalize()
 
-	before := &[]models.Node{}
-	after := &[]models.Node{}
-	heroes := &[]models.Node{}
-	updated := &[]models.Node{}
-	recent := &[]models.Node{}
+	before, err := nc.node.GetDiffNodesBefore(params.Start)
+	after, err := nc.node.GetDiffNodesAfter(params.End, params.Take)
+	heroes, err := nc.node.GetDiffHeroes(params.WithHeroes)
+	updated, exclude, err := nc.node.GetDiffUpdated(uid, params.WithUpdated)
+	recent, err := nc.node.GetDiffRecent(exclude, params.WithRecent)
+	valid, err := nc.node.GetDiffValid(params.Start, params.End, params.WithValid)
 
-	valid := []uint{}
-
-	q := nc.db.Preload("User").Preload("User.Photo").Model(&models.Node{})
-	// TODO: move to repo
-	q = utils.WhereIsFlowNode(q)
-
-	q.Where("created_at > ?", params.Start).
-		Order("created_at DESC").
-		Offset(0).
-		Limit(100). // max nodes to be fetched as update
-		Find(&before)
-
-	q.Where("created_at < ?", params.End).
-		Order("created_at DESC").
-		Offset(0).
-		Limit(params.Take).
-		Find(&after)
-
-	if params.WithHeroes {
-		q.Order("RAND()").
-			Where("type = ? AND is_heroic = ?", "image", true).
-			Offset(0).
-			Limit(20).
-			Find(&heroes)
-	}
-
-	if uid != 0 && params.WithUpdated {
-		q.Order("created_at DESC").
-			Joins("LEFT JOIN node_view AS node_view ON node_view.nodeId = node.id AND node_view.userId = ?", uid).
-			Where("node_view.visited < node.commented_at").
-			Limit(10).
-			Find(&updated)
-	}
-
-	exclude := make([]uint, len(*updated)+1)
-	exclude[0] = 0
-
-	for k, v := range *updated {
-		exclude[k+1] = v.ID
-	}
-
-	if params.WithRecent {
-		q.Order("commented_at DESC, created_at DESC").
-			Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
-			Limit(16).
-			Find(&recent)
-	}
-
-	if params.WithValid {
-		rows, err := q.Table("node").
-			Select("id").
-			Where("created_at >= ? AND created_at <= ?", params.End, params.Start).
-			Rows()
-
-		if err == nil {
-			id := uint(0)
-			defer rows.Close()
-			for i := 0; rows.Next(); i += 1 {
-				err = rows.Scan(&id)
-
-				if id > 0 && err == nil {
-					valid = append(valid, id)
-				}
-			}
-		}
-	}
-
-	resp := new(response.FlowResponse).Init(*before, *after, *heroes, *updated, *recent, valid)
+	resp := new(response.FlowResponse).Init(before, after, heroes, updated, recent, valid)
 
 	c.JSON(http.StatusOK, resp)
 }
@@ -222,15 +133,10 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 		return
 	}
 
-	comment, err := nc.db.Node.GetCommentByIdWithDeleted(uint(cid))
+	comment, err := nc.node.GetDeletedComment(uint(cid), uint(nid), *u)
 
 	if err != nil || *comment.NodeID != uint(nid) {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.CommentNotFound})
-		return
-	}
-
-	if !u.CanEditComment(comment) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.NotEnoughRights})
 		return
 	}
 
@@ -263,53 +169,46 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 
 // PostComment - /node/:id/comment saving and creating comments
 func (nc *NodeController) PostComment(c *gin.Context) {
-	data := &models.Comment{}
-
 	u := c.MustGet("User").(*models.User)
-	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 
+	data := &models.Comment{}
+	if err := c.BindJSON(&data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
+
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if nid == 0 || err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	node, err := nc.db.Node.GetById(uint(nid))
-
-	if err != nil || node.Type == "" || !node.CanBeCommented() {
-		if err != nil {
-			logrus.Warnf(err.Error())
-		}
-
+	node, err := nc.node.GetCommentableNodeById(uint(nid))
+	if err != nil || !node.CanBeCommented() {
+		logrus.Warnf(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	if err = c.BindJSON(&data); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
-		return
-	}
-
 	comment, err := nc.node.LoadCommentFromData(data.ID, node, u)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	lostFiles, err := nc.node.UpdateCommentFiles(data, comment)
-
 	if err != nil {
 		logrus.Warnf("Can't load node files while updating comment %d for node %d: %s", node.ID, comment.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
 		return
 	}
 
-	if err := nc.node.UpdateCommentText(data, comment); err != nil {
+	if err := nc.node.ValidateAndUpdateCommentText(data, comment); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err = nc.db.Node.SaveCommentWithFiles(comment); err != nil {
+	if err = nc.node.SaveCommentWithFiles(comment); err != nil {
 		logrus.Warnf("Failed to save comment %d for node: %s", comment.ID, node.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveComment})
 		return
@@ -330,58 +229,39 @@ func (nc *NodeController) PostComment(c *gin.Context) {
 
 // PostTags - POST /node/:id/tags - updates node tags
 func (nc *NodeController) PostTags(c *gin.Context) {
-	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	u := c.MustGet("User").(*models.User)
 
-	tags := []*models.Tag{}
-
 	params := request.NodeTagsPostRequest{}
+	if err := c.BindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
 
+	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if nid == 0 || err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	node, err := nc.db.Node.GetById(uint(nid))
-
+	node, err := nc.node.GetTaggableNodeById(uint(nid), u)
 	if err != nil {
 		logrus.Warnf("Node %d not found: %s", nid, err.Error())
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	if !node.CanBeTaggedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
-		return
-	}
-
-	err = c.BindJSON(&params)
-
+	tags, err := nc.tag.FindOrCreateTags(params.Tags)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		logrus.Warnf("Can't find or create tags for node %d: %s", nid, err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CantSaveNode})
 		return
 	}
 
-	for i := 0; i < len(params.Tags); i += 1 {
-		params.Tags[i] = strings.ToLower(params.Tags[i])
-	}
-
-	if len(params.Tags) == 0 {
-		c.JSON(http.StatusOK, gin.H{"node": node})
+	if err := nc.node.UpdateNodeTags(node, tags); err != nil {
+		logrus.Warnf("Can't save node tags for node %d: %s\n tags: %+v\n", nid, err.Error(), tags)
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CantSaveNode})
 		return
 	}
-
-	nc.db.Where("title IN (?)", params.Tags).Find(&tags)
-
-	for _, v := range params.Tags {
-		if !models.TagArrayContains(tags, v) && len(v) > 0 {
-			tag := models.Tag{Title: v}
-			nc.db.Set("gorm:association_autoupdate", false).Save(&tag)
-			tags = append(tags, &tag)
-		}
-	}
-
-	nc.db.Model(&node).Association("Tags").Replace(tags)
 
 	c.JSON(http.StatusOK, gin.H{"node": node})
 }
@@ -389,69 +269,48 @@ func (nc *NodeController) PostTags(c *gin.Context) {
 // PostLike - POST /node/:id/like - likes or dislikes node
 func (nc NodeController) PostLike(c *gin.Context) {
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	d := nc.db
 	u := c.MustGet("User").(*models.User)
 
-	node := &models.Node{}
-
-	if nid == 0 || err != nil {
+	node, err := nc.node.GetNodeWithLikesAndFiles(int(nid), u.Role, u.ID)
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	d.First(&node, "id = ?", nid)
-
-	if node == nil || node.ID == 0 || !node.CanBeLiked() {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
+	if err := nc.node.UpdateNodeLikeByUser(node, u, !node.IsLiked); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": codes.CantSaveNode})
 		return
 	}
 
-	isLiked := d.Node.IsNodeLikedBy(node, u.ID)
-
-	if isLiked {
-		d.Model(&node).Association("Likes").Delete(u)
-	} else {
-		d.Model(&node).Association("Likes").Append(u)
-	}
-
-	c.JSON(http.StatusOK, gin.H{"is_liked": !isLiked})
+	c.JSON(http.StatusOK, gin.H{"is_liked": !node.IsLiked})
 }
 
 // LockNode - POST /node/:id/lock - safely deletes node
 func (nc NodeController) LockNode(c *gin.Context) {
-	d := nc.db
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeLockRequest{}
+	if err := c.BindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	err = c.BindJSON(&params)
-
+	node, err := nc.node.GetDeletedNode(uint(nid), u)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		logrus.Warnf("Can't get deleted node %d: %s", nid, err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	node := &models.Node{}
-
-	d.Unscoped().First(&node, "id = ?", nid)
-
-	if node == nil || node.ID == 0 || !node.CanBeEditedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
+	if err := nc.node.UpdateNodeLocked(node, params.IsLocked); err != nil {
+		logrus.Warnf("Can't lock node %d: %s", nid, err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"error": codes.CantSaveNode})
 		return
-	}
-
-	if params.IsLocked {
-		d.Unscoped().Model(&node).Update("deleted_at", time.Now().Truncate(time.Second))
-		nc.node.PushNodeDeleteNotification(*node)
-	} else {
-		d.Unscoped().Model(&node).Update("deleted_at", nil)
-		nc.node.PushNodeRestoreNotification(*node)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deleted_at": node.DeletedAt})
@@ -459,67 +318,56 @@ func (nc NodeController) LockNode(c *gin.Context) {
 
 // PostHeroic - POST /node/:id/heroic - sets heroic status to node
 func (nc NodeController) PostHeroic(c *gin.Context) {
-	d := nc.db
 	u := c.MustGet("User").(*models.User)
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
-
 	if err != nil || nid == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	node := &models.Node{}
-
-	d.First(&node, "id = ?", nid)
-
-	if node == nil || node.ID == 0 || !node.CanBeHeroedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
+	node, err := nc.node.GetHeroeableNodeById(uint(nid), u)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	d.Model(&node).Update("is_heroic", !node.IsHeroic)
+	if err := nc.node.UpdateNodeIsHeroic(node, !node.IsHeroic); err != nil {
+		logrus.Warnf("Can't update node isHeroic for node %d: %s", node.ID, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveNode})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"is_heroic": node.IsHeroic})
 }
 
 // PostCellView - POST /node/:id/cell-view - sets cel display for node
 func (nc NodeController) PostCellView(c *gin.Context) {
-	d := nc.db
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeCellViewPostRequest{}
+	if err := c.BindJSON(&params); err != nil || !constants.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
 
 	nid, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil || nid == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
+		return
+	}
 
+	node, err := nc.node.GetEditableNodeById(uint(nid), u)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
-		return
-	}
-
-	err = c.BindJSON(&params)
-
-	if err != nil || !constants.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
-		return
-	}
-
-	node := &models.Node{}
-
-	if nid == 0 {
+		logrus.Warnf(err.Error())
 		c.JSON(http.StatusNotFound, gin.H{"error": codes.NodeNotFound})
 		return
 	}
 
-	d.First(&node, "id = ?", nid)
-
-	if node == nil || node.ID == 0 || !node.CanBeEditedBy(u) {
-		c.JSON(http.StatusNotFound, gin.H{"error": codes.NotEnoughRights})
+	if err := nc.node.UpdateNodeFlow(node, params.Flow); err != nil {
+		logrus.Warnf("Can't update flow settings for node %d: %+v\nFlow: %+v", nid, err.Error(), params.Flow)
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveNode})
 		return
 	}
-
-	node.Flow = params.Flow
-
-	d.Model(&node).Update("flow", node.Flow)
 
 	c.JSON(http.StatusOK, gin.H{"flow": node.Flow})
 }
@@ -587,7 +435,7 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	node.UpdateDescription()
 	node.UpdateThumbnail()
 
-	if err = nc.db.Node.SaveNodeWithFiles(node); err != nil {
+	if err = nc.node.SaveNodeWithFiles(node); err != nil {
 		logrus.Warnf("Failed to save node %d: %s", node.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
