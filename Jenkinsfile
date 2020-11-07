@@ -37,15 +37,13 @@ pipeline {
         }
 
         stage('deploy') {
-            steps {
-                script {
-                    if ("${env.BRANCH_NAME}" != "master" && "${env.BRANCH_NAME}" != "develop") {
-                        println "Not a deployable branch"
-                        currentBuild.result = 'SUCCESS'
-                        return
-                    }
+            when {
+                expression {
+                    return env.BRANCH_NAME == 'master' || env.BRANCH_NAME == "develop";
                 }
+            }
 
+            steps {
                 sh "docker-compose up -d"
             }
         }
