@@ -6,6 +6,7 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	fileConstants "github.com/muerwre/vault-golang/feature/file/constants"
+	fileRepository "github.com/muerwre/vault-golang/feature/file/repository"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -18,13 +19,13 @@ import (
 )
 
 type FileUseCase struct {
-	db     db.DB
 	config app.Config
+	file   fileRepository.FileRepository
 }
 
 func (fu *FileUseCase) Init(db db.DB, config app.Config) *FileUseCase {
-	fu.db = db
 	fu.config = config
+	fu.file = *new(fileRepository.FileRepository).Init(db.DB)
 	return fu
 }
 
@@ -109,7 +110,7 @@ func (fu FileUseCase) UpdateFileMetadataIfNeeded(files []*models.File) []*models
 	for _, file := range files {
 		if file.FileHasInvalidMetatada() {
 			fu.FillMetadata(file)
-			fu.db.File.UpdateMetadata(file, file.Metadata)
+			fu.file.UpdateMetadata(file, file.Metadata)
 		}
 	}
 
@@ -117,7 +118,7 @@ func (fu FileUseCase) UpdateFileMetadataIfNeeded(files []*models.File) []*models
 }
 
 func (fu FileUseCase) SaveFile(file *models.File) error {
-	return fu.db.File.Save(file)
+	return fu.file.Save(file)
 }
 
 func (fu FileUseCase) CheckFileUploadSize(size int) error {

@@ -21,12 +21,10 @@ import (
 )
 
 type FileController struct {
-	//config  app.Config
 	usecase fileUsecase.FileUseCase
 }
 
 func (fc *FileController) Init(db db.DB, config app.Config) *FileController {
-	//fc.config = config
 	fc.usecase = *new(fileUsecase.FileUseCase).Init(db, config)
 	return fc
 }
