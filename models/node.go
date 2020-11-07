@@ -3,7 +3,8 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"github.com/muerwre/vault-golang/constants"
+	constants3 "github.com/muerwre/vault-golang/feature/file/constants"
+	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
 	"time"
 
 	"github.com/muerwre/vault-golang/utils"
@@ -90,11 +91,11 @@ func (s NodeFlow) Value() (driver.Value, error) {
 }
 
 func (n Node) IsFlowType() bool {
-	return constants.FLOW_NODE_TYPES.Contains(n.Type)
+	return constants2.FLOW_NODE_TYPES.Contains(n.Type)
 }
 
 func (n Node) CanBeCommented() bool {
-	return n.Type == constants.NODE_TYPES.BORIS || n.IsFlowType()
+	return n.Type == constants2.NODE_TYPES.BORIS || n.IsFlowType()
 }
 
 func (n Node) CanBeTaggedBy(user *User) bool {
@@ -117,11 +118,11 @@ func (n Node) CanBeHeroedBy(u *User) bool {
 // CanHasFile - checks if node can has file of type
 func (n Node) CanHasFile(f File) bool {
 	switch n.Type {
-	case constants.NODE_TYPES.IMAGE:
-		return f.Type == constants.FileTypeImage
+	case constants2.NODE_TYPES.IMAGE:
+		return f.Type == constants3.FileTypeImage
 
-	case constants.NODE_TYPES.AUDIO:
-		return f.Type == constants.FileTypeAudio || f.Type == constants.FileTypeImage
+	case constants2.NODE_TYPES.AUDIO:
+		return f.Type == constants3.FileTypeAudio || f.Type == constants3.FileTypeImage
 
 	default:
 		return false
@@ -131,9 +132,9 @@ func (n Node) CanHasFile(f File) bool {
 // CanHasBlock - checks if node can has block of type
 func (n Node) CanHasBlock(b NodeBlock) bool {
 	switch n.Type {
-	case constants.NODE_TYPES.TEXT:
+	case constants2.NODE_TYPES.TEXT:
 		return b.Type == BlockTypeText
-	case constants.NODE_TYPES.VIDEO:
+	case constants2.NODE_TYPES.VIDEO:
 		return b.Type == BlockTypeVideo
 	default:
 		return false
@@ -194,7 +195,7 @@ func (n Node) FirstFileOfType(t string) int {
 
 // UpdateDescription - generates node brief description from node's body
 func (n *Node) UpdateDescription() {
-	if n.Type == constants.NODE_TYPES.TEXT {
+	if n.Type == constants2.NODE_TYPES.TEXT {
 		textBlock := n.Blocks[n.FirstBlockOfType(BlockTypeText)]
 
 		if len(textBlock.Text) > 64 {
@@ -206,8 +207,8 @@ func (n *Node) UpdateDescription() {
 
 // UpdateDescription - generates node thumbnail image from node's body
 func (n *Node) UpdateThumbnail() {
-	if n.Type == constants.NODE_TYPES.IMAGE || n.Type == constants.NODE_TYPES.AUDIO {
-		i := n.FirstFileOfType(constants.FileTypeImage)
+	if n.Type == constants2.NODE_TYPES.IMAGE || n.Type == constants2.NODE_TYPES.AUDIO {
+		i := n.FirstFileOfType(constants3.FileTypeImage)
 
 		if i >= 0 {
 			n.Thumbnail = n.Files[i].Url
@@ -215,7 +216,7 @@ func (n *Node) UpdateThumbnail() {
 		}
 	}
 
-	if n.Type == constants.NODE_TYPES.VIDEO {
+	if n.Type == constants2.NODE_TYPES.VIDEO {
 		i := n.FirstBlockOfType(BlockTypeVideo)
 
 		if url := utils.GetThumbFromUrl(n.Blocks[i].Url); url != "" {
