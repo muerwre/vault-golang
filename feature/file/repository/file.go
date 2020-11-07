@@ -48,8 +48,8 @@ func (fr FileRepository) GetFilesByIds(ids []uint) ([]*models.File, error) {
 	return files, nil
 }
 
-func (fr FileRepository) Save(f *models.File) {
-	fr.db.Save(&f)
+func (fr FileRepository) Save(f *models.File) error {
+	return fr.db.Save(&f).Error
 }
 
 func (fr FileRepository) UpdateMetadata(f *models.File, m models.FileMetadata) error {

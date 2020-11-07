@@ -2,11 +2,11 @@ package controller
 
 import (
 	"github.com/muerwre/vault-golang/app"
-	usecase3 "github.com/muerwre/vault-golang/feature/file/usecase"
-	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
+	fileUsecase "github.com/muerwre/vault-golang/feature/file/usecase"
+	"github.com/muerwre/vault-golang/feature/node/constants"
 	"github.com/muerwre/vault-golang/feature/node/request"
 	"github.com/muerwre/vault-golang/feature/node/response"
-	usecase2 "github.com/muerwre/vault-golang/feature/node/usecase"
+	nodeUsecase "github.com/muerwre/vault-golang/feature/node/usecase"
 	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/notify"
 	"github.com/sirupsen/logrus"
@@ -23,13 +23,13 @@ import (
 
 type NodeController struct {
 	db   db.DB
-	node usecase2.NodeUsecase
-	file usecase3.FileUseCase
+	node nodeUsecase.NodeUsecase
+	file fileUsecase.FileUseCase
 }
 
 func (nc *NodeController) Init(db db.DB, config app.Config, notifier notify.Notifier) *NodeController {
-	nc.node = *new(usecase2.NodeUsecase).Init(db, notifier)
-	nc.file = *new(usecase3.FileUseCase).Init(db, config.UploadPath)
+	nc.node = *new(nodeUsecase.NodeUsecase).Init(db, notifier)
+	nc.file = *new(fileUsecase.FileUseCase).Init(db, config)
 
 	nc.db = db
 	return nc
@@ -498,7 +498,7 @@ func (nc NodeController) PostCellView(c *gin.Context) {
 
 	err = c.BindJSON(&params)
 
-	if err != nil || !constants2.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
+	if err != nil || !constants.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}

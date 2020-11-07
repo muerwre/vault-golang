@@ -1,31 +1,36 @@
 package usecase
 
 import (
+	"fmt"
+	"github.com/gabriel-vasile/mimetype"
+	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	fileConstants "github.com/muerwre/vault-golang/feature/file/constants"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"image"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 )
 
 type FileUseCase struct {
-	db         db.DB
-	uploadPath string
+	db     db.DB
+	config app.Config
 }
 
-func (fu *FileUseCase) Init(db db.DB, uploadPath string) *FileUseCase {
+func (fu *FileUseCase) Init(db db.DB, config app.Config) *FileUseCase {
 	fu.db = db
-	fu.uploadPath = uploadPath
-
+	fu.config = config
 	return fu
 }
 
 // FillMetadataAudio fills Audio file metadata
 func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
-	path := filepath.Join(fu.uploadPath, f.Path, f.Name)
+	path := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
 
 	duration := utils.GetAudioDuration(path)
 	artist, title := utils.GetAudioArtistTitle(path)
@@ -47,7 +52,7 @@ func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
 func (fu FileUseCase) FillMetadataImage(f *models.File) error {
 	var path string
 
-	file, err := os.Stat(filepath.Join(fu.uploadPath, f.Path))
+	file, err := os.Stat(filepath.Join(fu.config.UploadPath, f.Path))
 
 	if err != nil {
 		return err
@@ -55,9 +60,9 @@ func (fu FileUseCase) FillMetadataImage(f *models.File) error {
 
 	switch mode := file.Mode(); {
 	case mode.IsDir():
-		path = filepath.Join(fu.uploadPath, f.Path, f.Name)
+		path = filepath.Join(fu.config.UploadPath, f.Path, f.Name)
 	case mode.IsRegular():
-		path = filepath.Join(fu.uploadPath, f.Path)
+		path = filepath.Join(fu.config.UploadPath, f.Path)
 	}
 
 	if reader, err := os.Open(path); err == nil {
@@ -109,4 +114,40 @@ func (fu FileUseCase) UpdateFileMetadataIfNeeded(files []*models.File) []*models
 	}
 
 	return files
+}
+
+func (fu FileUseCase) SaveFile(file *models.File) error {
+	return fu.db.File.Save(file)
+}
+
+func (fu FileUseCase) CheckFileUploadSize(size int) error {
+	if size > fu.config.UploadMaxSizeMb {
+		return fmt.Errorf("file is too big for upload")
+	}
+
+	return nil
+}
+
+func (fu FileUseCase) CheckFileMimeAgainstUploadType(content []byte, fileType string) (mime string, err error) {
+	mime = mimetype.Detect(content).String()
+	inferredType := models.FileGetTypeByMime(mime)
+
+	if inferredType == "" || inferredType != fileType {
+		return "", fmt.Errorf(codes.UnknownFileType)
+	}
+
+	return mime, nil
+}
+
+func (fu FileUseCase) GenerateUploadFilename(name string, fileType string) (nameUnique string, fsFullDir string, pathCategorized string, err error) {
+	year, month, _ := time.Now().Date()
+	pathCategorized = filepath.Join("uploads", strconv.Itoa(year), strconv.Itoa(int(month)), fileType)
+	cleanedSafeName := filepath.Base(filepath.Clean(name))
+	fileExt := filepath.Ext(cleanedSafeName)
+	fileName := cleanedSafeName[:len(cleanedSafeName)-len(fileExt)]
+
+	nameUnique = fmt.Sprintf("%s-%d%s", fileName, time.Now().Unix(), fileExt)
+	fsFullDir = filepath.Join(fu.config.UploadPath, pathCategorized)
+
+	return nameUnique, fsFullDir, pathCategorized, nil
 }
