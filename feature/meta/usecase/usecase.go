@@ -15,7 +15,7 @@ type MetaUsecase struct {
 
 func (mu *MetaUsecase) Init(db db.DB, config app.Config) *MetaUsecase {
 	mu.youtube = *new(google.YoutubeService).Init(config.GoogleApiKey)
-	mu.meta = *new(repository.MetaRepository).Init(db.DB)
+	mu.meta = *db.Meta
 	return mu
 }
 

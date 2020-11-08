@@ -104,7 +104,12 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 	}
 
 	resp := new(response.UserCheckCredentialsResponse).Init(user, *lastSeenBoris)
-	token := d.User.GenerateTokenFor(user)
+	token, err := d.User.GenerateTokenFor(user)
+	if err != nil {
+		logrus.Warnf("Can't generate token for user %+v: %s", user, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": codes.CantLoadUser})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"user": resp, "token": token.Token})
 }
@@ -255,7 +260,12 @@ func (uc UserController) PostRestoreCode(c *gin.Context) {
 
 	d.Delete(&code, "id = ?", code.ID)
 
-	token := d.User.GenerateTokenFor(code.User)
+	token, err := d.User.GenerateTokenFor(code.User)
+	if err != nil {
+		logrus.Warnf("Can't generate token for user %+v: %s", code.User, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": codes.CantLoadUser})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"user": code.User, "token": token.Token})
 }

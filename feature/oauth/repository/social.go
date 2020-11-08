@@ -8,16 +8,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type SocialRepository struct {
+type OauthRepository struct {
 	db *gorm.DB
 }
 
-func (sr *SocialRepository) Init(db *gorm.DB) *SocialRepository {
+func (sr *OauthRepository) Init(db *gorm.DB) *OauthRepository {
 	sr.db = db
 	return sr
 }
 
-func (sr *SocialRepository) FindOne(provider string, id string) (*models.Social, error) {
+func (sr *OauthRepository) FindOne(provider string, id string) (*models.Social, error) {
 	social := &models.Social{}
 
 	err := sr.db.
@@ -34,17 +34,17 @@ func (sr *SocialRepository) FindOne(provider string, id string) (*models.Social,
 	return social, nil
 }
 
-func (sr *SocialRepository) Create(social *models.Social) {
-	sr.db.Create(&social)
+func (sr *OauthRepository) Create(social *models.Social) error {
+	return sr.db.Create(&social).Error
 }
 
-func (sr *SocialRepository) OfUser(id uint) ([]*models.Social, error) {
+func (sr *OauthRepository) OfUser(id uint) ([]*models.Social, error) {
 	list := make([]*models.Social, 0)
 	sr.db.Model(&list).Where("userId = ?", id).Scan(&list)
 	return list, nil
 }
 
-func (sr *SocialRepository) DeleteOfUser(uid uint, provider string, id string) error {
+func (sr *OauthRepository) DeleteOfUser(uid uint, provider string, id string) error {
 	sr.db.Delete(&models.Social{}, "userId = ? AND provider = ? AND account_id = ?", uid, provider, id)
 	return nil
 }

@@ -73,13 +73,13 @@ func (ur UserRepository) GetById(id uint) (user *models.User, err error) {
 	return user, err
 }
 
-func (ur UserRepository) GenerateTokenFor(u *models.User) *models.Token {
+func (ur UserRepository) GenerateTokenFor(u *models.User) (*models.Token, error) {
 	token := &models.Token{UserID: &u.ID}
 	token.New(u.Username)
 
-	ur.db.Create(&token)
+	err := ur.db.Create(&token).Error
 
-	return token
+	return token, err
 }
 
 func (ur UserRepository) GetUserNewMessages(user models.User, exclude int, last string) (messages []models.Message, err error) {
@@ -129,8 +129,8 @@ func (ur UserRepository) UpdateLastSeen(user *models.User) {
 	ur.db.Model(&models.User{}).Where("id = ?", user.ID).Update("last_seen", time.Now())
 }
 
-func (ur UserRepository) UpdatePhoto(uid uint, photoId uint) {
-	ur.db.Model(&models.User{}).Where("id = ?", uid).Update("photoId", photoId)
+func (ur UserRepository) UpdatePhoto(uid uint, photoId uint) error {
+	return ur.db.Model(&models.User{}).Where("id = ?", uid).Update("photoId", photoId).Error
 }
 
 func (ur UserRepository) GetFlowWatchers() ([]uint, error) {
