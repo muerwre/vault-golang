@@ -14,3 +14,9 @@ Do the `make build`, then copy `./build/*` somewhere and run
 
 ### Databases and migration
 Gorm will handle initial migration after first launch.
+
+### Architectural notes
+```text
+Model -> Repository -> DTO <--> Usecase -> Controller -> Router --> API
+--------- Storage --------      ----------- Feature -----------
+```
