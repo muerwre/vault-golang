@@ -10,16 +10,16 @@ import (
 )
 
 type FlowRouter struct {
-	nodeController controller.NodeController
-	api            utils.AppApi
+	node controller.NodeController
+	api  utils.AppApi
 }
 
 func (fr *FlowRouter) Init(api utils.AppApi, db db.DB, config app.Config, notifier notification.NotificationService) {
 	fr.api = api
-	fr.nodeController = *new(controller.NodeController).Init(db, config, notifier)
+	fr.node = *new(controller.NodeController).Init(db, config, notifier)
 }
 
 // FlowRouter for /node/*
 func (fr *FlowRouter) Handle(r *gin.RouterGroup) {
-	r.GET("/diff", fr.api.AuthOptional, fr.nodeController.GetDiff)
+	r.GET("/diff", fr.api.AuthOptional, fr.node.GetDiff)
 }

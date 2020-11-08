@@ -21,11 +21,11 @@ import (
 )
 
 type FileController struct {
-	usecase fileUsecase.FileUseCase
+	file fileUsecase.FileUseCase
 }
 
 func (fc *FileController) Init(db db.DB, config app.Config) *FileController {
-	fc.usecase = *new(fileUsecase.FileUseCase).Init(db, config)
+	fc.file = *new(fileUsecase.FileUseCase).Init(db, config)
 	return fc
 }
 
@@ -40,7 +40,7 @@ func (fc *FileController) UploadFile(c *gin.Context) {
 		return
 	}
 
-	if err = fc.usecase.CheckFileUploadSize(int(header.Size)); err != nil {
+	if err = fc.file.CheckFileUploadSize(int(header.Size)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.FilesIsTooBig})
 		return
 	}
@@ -94,7 +94,7 @@ func (fc *FileController) SaveFile(
 		return nil, fmt.Errorf(codes.EmptyRequest), nil
 	}
 
-	mime, err := fc.usecase.CheckFileMimeAgainstUploadType([]byte(content.String()), fileType)
+	mime, err := fc.file.CheckFileMimeAgainstUploadType([]byte(content.String()), fileType)
 
 	if err != nil {
 		return nil, fmt.Errorf(codes.UnknownFileType), nil
@@ -104,7 +104,7 @@ func (fc *FileController) SaveFile(
 		return nil, fmt.Errorf(codes.IncorrectData), nil
 	}
 
-	nameUnique, fsFullDir, pathCategorized, err := fc.usecase.GenerateUploadFilename(name, fileType)
+	nameUnique, fsFullDir, pathCategorized, err := fc.file.GenerateUploadFilename(name, fileType)
 	if err != nil {
 		logrus.Infof("Error while uploding file %s: %s", name, err.Error())
 		return nil, fmt.Errorf(codes.IncorrectData), nil
@@ -138,8 +138,8 @@ func (fc *FileController) SaveFile(
 		Type:     fileType,
 	}
 
-	fc.usecase.FillMetadata(&dbEntry)
-	fc.usecase.SaveFile(&dbEntry)
+	fc.file.FillMetadata(&dbEntry)
+	fc.file.SaveFile(&dbEntry)
 
 	return &dbEntry, nil, nil
 }
