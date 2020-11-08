@@ -3,19 +3,16 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/db"
-	usecase2 "github.com/muerwre/vault-golang/feature/notification/usecase"
+	"github.com/muerwre/vault-golang/feature/notification/usecase"
 	"net/http"
 )
 
 type NotificationController struct {
-	db      db.DB
-	usecase usecase2.NotificationUsecase
+	notification usecase.NotificationUsecase
 }
 
 func (nc *NotificationController) Init(db db.DB) *NotificationController {
-	nc.db = db
-	nc.usecase = *new(usecase2.NotificationUsecase).Init(db)
-
+	nc.notification = *new(usecase.NotificationUsecase).Init(db)
 	return nc
 }
 

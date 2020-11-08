@@ -23,7 +23,7 @@ type DB struct {
 	User                   *userRepository.UserRepository
 	File                   *fileRepository.FileRepository
 	Meta                   *metaRepository.MetaRepository
-	Social                 *oauthRepository.SocialRepository
+	Social                 *oauthRepository.OauthRepository
 	NodeView               *nodeRepository.NodeViewRepository
 	Message                *messageRepository.MessageRepository
 	Tag                    *tagRepository.TagRepository
@@ -73,7 +73,7 @@ func New() (*DB, error) {
 		User:                   new(userRepository.UserRepository).Init(db),
 		File:                   new(fileRepository.FileRepository).Init(db),
 		Meta:                   new(metaRepository.MetaRepository).Init(db),
-		Social:                 new(oauthRepository.SocialRepository).Init(db),
+		Social:                 new(oauthRepository.OauthRepository).Init(db),
 		NodeView:               new(nodeRepository.NodeViewRepository).Init(db),
 		Message:                new(messageRepository.MessageRepository).Init(db),
 		Tag:                    new(tagRepository.TagRepository).Init(db),

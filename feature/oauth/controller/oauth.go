@@ -1,14 +1,16 @@
 package controller
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	constants2 "github.com/muerwre/vault-golang/feature/file/constants"
 	"github.com/muerwre/vault-golang/feature/file/controller"
+	"github.com/muerwre/vault-golang/feature/oauth/constants"
 	request2 "github.com/muerwre/vault-golang/feature/oauth/request"
+	"github.com/muerwre/vault-golang/feature/oauth/usecase"
+	userUsecase "github.com/muerwre/vault-golang/feature/user/usecase"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -17,36 +19,17 @@ import (
 	"net/http"
 )
 
-const (
-	eventTypeProcessed string = "oauth_processed"
-	eventTypeError     string = "oauth_error"
-)
-
 type OAuthController struct {
-	config app.Config
-	db     db.DB
-
-	credentials    utils.OAuthCredentials
+	oauth          usecase.OauthUsecase
+	user           userUsecase.UserUsecase
 	fileController *controller.FileController
 }
 
 // TODO: reply to errors via c.HTML in endpoints, which opened in modals
 
 func (oc *OAuthController) Init(db db.DB, config app.Config) *OAuthController {
-	oc.config = config
-	oc.db = db
-
-	oc.credentials = utils.OAuthCredentials{
-		VkClientId:         oc.config.VkClientId,
-		VkClientSecret:     oc.config.VkClientSecret,
-		VkCallbackUrl:      oc.config.VkCallbackUrl,
-		GoogleClientId:     oc.config.GoogleClientId,
-		GoogleClientSecret: oc.config.GoogleClientSecret,
-		GoogleCallbackUrl:  oc.config.GoogleCallbackUrl,
-	}
-
-	oc.fileController = new(controller.FileController).Init(db, config)
-
+	oc.oauth = *new(usecase.OauthUsecase).Init(db, config)
+	oc.user = *new(userUsecase.UserUsecase).Init(db)
 	return oc
 }
 
@@ -66,48 +49,26 @@ func (oc OAuthController) ProviderMiddleware(c *gin.Context) {
 // Redirect redirects user to oauth endpoint, that redirects back to /process/:target?code= urls
 func (oc OAuthController) Redirect(c *gin.Context) {
 	provider := c.MustGet("Provider").(*utils.OAuthConfig)
-	config := provider.ConfigCreator(oc.credentials)
-	c.Redirect(http.StatusTemporaryRedirect, config.AuthCodeURL("pseudo-random"))
+	url := oc.oauth.GetRedirectUrlForProvider(provider)
+	c.Redirect(http.StatusTemporaryRedirect, url)
 	return
 }
 
 // GetRedirectData is a middleware, that fetches oauth data from provider and passes it further
 func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx := context.Background()
 		provider := c.MustGet("Provider").(*utils.OAuthConfig)
 		code := c.Query("code")
-
 		if code == "" {
-			utils.ReplyHtmlEventWithError(c, eventTypeError, codes.OAuthCodeIsEmpty)
+			utils.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthCodeIsEmpty)
 			c.Abort()
 			return
 		}
 
-		config := provider.ConfigCreator(oc.credentials)
-		token, err := config.Exchange(ctx, code)
-
+		data, err := oc.oauth.GetTokenData(provider, code)
 		if err != nil {
-			logrus.Warnf("Failed to get token: %v", err.Error())
-			utils.ReplyHtmlEventWithError(c, eventTypeError, codes.OAuthInvalidData)
-			c.Abort()
-			return
-		}
-
-		data, err := provider.Parser(token)
-
-		if err != nil {
-			logrus.Warnf("Failed to get token: %v", err.Error())
-			utils.ReplyHtmlEventWithError(c, eventTypeError, err.Error())
-			c.Abort()
-			return
-		}
-
-		data.Fetched, err = provider.Fetcher(data.Token)
-
-		if err != nil {
-			logrus.Warnf("Failed to get token: %v", err.Error())
-			utils.ReplyHtmlEventWithError(c, eventTypeError, err.Error())
+			logrus.Warnf("Failed to get oauth data: %v", err.Error())
+			utils.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthInvalidData)
 			c.Abort()
 			return
 		}
@@ -125,11 +86,11 @@ func (oc OAuthController) Process(c *gin.Context) {
 
 	if err != nil {
 		logrus.Warnf("Failed to create attach token: %v", err.Error())
-		utils.ReplyHtmlEventWithError(c, eventTypeError, codes.OAuthInvalidData)
+		utils.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthInvalidData)
 		return
 	}
 
-	utils.ReplytHtmlEventWithToken(c, eventTypeProcessed, token)
+	utils.ReplytHtmlEventWithToken(c, constants.EventTypeProcessed, token)
 }
 
 // AttachConfirm gets user oauth data from token and creates social connection for it
@@ -143,7 +104,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 		return
 	}
 
-	if exist, err := oc.db.Social.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
+	if exist, err := oc.oauth.GetSocialById(claim.Data.Provider, claim.Data.Id); err == nil {
 		// User already has this social account
 		if exist.User.ID == u.ID {
 			c.AbortWithStatusJSON(http.StatusOK, gin.H{"account": exist})
@@ -156,27 +117,22 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 	}
 
 	// Another user has it
-	if user, err := oc.db.User.GetByEmail(claim.Data.Email); err == nil && user.ID != u.ID {
+	if user, err := oc.user.GetByEmail(claim.Data.Email); err == nil && user.ID != u.ID {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.UserExistWithEmail})
 		return
 	}
 
-	social := &models.Social{
-		Provider:     claim.Data.Provider,
-		AccountId:    claim.Data.Id,
-		AccountPhoto: claim.Data.Fetched.Photo,
-		AccountName:  claim.Data.Fetched.Name,
-		User:         u,
+	social, err := oc.oauth.CreateSocialFromClaim(*claim, u)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": codes.CantSaveUser})
+		return
 	}
-
-	oc.db.Social.Create(social)
 
 	c.AbortWithStatusJSON(http.StatusOK, gin.H{"account": social})
 }
 
 func (oc OAuthController) Login(c *gin.Context) {
 	claim, err := utils.DecodeOauthClaimFromRequest(c)
-
 	if err != nil {
 		logrus.Warnf("Failed to perform login: %v", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})
@@ -184,25 +140,22 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	// Social exist, login user
-	if social, err := oc.db.Social.FindOne(claim.Data.Provider, claim.Data.Id); err == nil {
-		token := oc.db.User.GenerateTokenFor(social.User)
-
+	if social, err := oc.oauth.GetSocialById(claim.Data.Provider, claim.Data.Id); err == nil {
+		token, _ := oc.user.GenerateTokenFor(social.User)
 		// TODO: update social info here
-
 		c.JSON(http.StatusOK, gin.H{"token": token.Token})
 		return
 	}
 
 	// Procceed with registration
 	req := &request2.OAuthRegisterRequest{}
-
 	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
 	// Check if there's no account with this email
-	if _, err := oc.db.User.GetByEmail(claim.Data.Email); err == nil {
+	if _, err := oc.user.GetByEmail(claim.Data.Email); err == nil {
 		// TODO: check it
 		c.JSON(http.StatusConflict, gin.H{"error": codes.UserExistWithEmail})
 		return
@@ -219,7 +172,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	// Check if there's no account with this username
-	if _, err := oc.db.User.GetByUsername(req.Username); err == nil {
+	if _, err := oc.user.GetByUsername(req.Username); err == nil {
 		// TODO: check it
 		c.JSON(
 			http.StatusConflict,
@@ -233,7 +186,6 @@ func (oc OAuthController) Login(c *gin.Context) {
 	}
 
 	password, err := passwords.HashPassword(req.Password)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -248,18 +200,20 @@ func (oc OAuthController) Login(c *gin.Context) {
 		IsActivated: "1",
 	}
 
-	oc.db.User.Create(user)
-
-	social := &models.Social{
-		Provider:     claim.Data.Provider,
-		AccountId:    claim.Data.Id,
-		AccountPhoto: claim.Data.Fetched.Photo,
-		AccountName:  claim.Data.Fetched.Name,
-		User:         user,
+	oc.user.CreateUser(user)
+	social, err := oc.oauth.CreateSocialFromClaim(*claim, user)
+	if err != nil {
+		logrus.Warnf("Can't create social record:\nclaim: %+v\nuser:%+v\n%s", claim, user, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
+		return
 	}
 
-	oc.db.Social.Create(social)
-	token := oc.db.User.GenerateTokenFor(social.User)
+	token, err := oc.user.GenerateTokenFor(social.User)
+	if err != nil {
+		logrus.Warnf("Can't create token record: %s", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
+		return
+	}
 
 	// Send user a token to login
 	c.JSON(http.StatusOK, gin.H{"token": token.Token})
@@ -267,16 +221,15 @@ func (oc OAuthController) Login(c *gin.Context) {
 	if url := claim.Data.Fetched.Photo; url != "" {
 		// TODO: check it
 		if photo, err := oc.fileController.UploadRemotePic(url, models.FileTargetProfiles, constants2.FileTypeImage, user); err == nil {
-			oc.db.User.UpdatePhoto(user.ID, photo.ID)
+			oc.user.UpdateUserPhoto(user, photo)
 		}
 	}
 }
 
 // List returns users social accounts
 func (oc OAuthController) List(c *gin.Context) {
-	uid := c.MustGet("UID").(uint)
-	list, err := oc.db.Social.OfUser(uid)
-
+	u := c.MustGet("User").(*models.User)
+	list, err := oc.oauth.GetSocialsOfUser(u)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -286,14 +239,13 @@ func (oc OAuthController) List(c *gin.Context) {
 }
 
 func (oc OAuthController) Delete(c *gin.Context) {
-	uid := c.MustGet("UID").(uint)
+	u := c.MustGet("User").(*models.User)
 	id := c.Param("id")
 	provider := c.Param("provider")
 
-	err := oc.db.Social.DeleteOfUser(uid, provider, id)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := oc.oauth.DeleteSocialByUserProviderAndId(u, provider, id); err != nil {
+		logrus.Warnf("Can't delete social record for user:\nuser: %+v\nprovider: %s\nid: %s", u, provider, id)
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
 		return
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/muerwre/vault-golang/db"
 	constants3 "github.com/muerwre/vault-golang/feature/file/constants"
 	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
+	"github.com/muerwre/vault-golang/feature/user/repository"
 	"github.com/muerwre/vault-golang/feature/user/request"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -14,11 +15,13 @@ import (
 )
 
 type UserUsecase struct {
-	db db.DB
+	db   db.DB
+	user repository.UserRepository
 }
 
 func (uc *UserUsecase) Init(db db.DB) *UserUsecase {
 	uc.db = db
+	uc.user = *db.User
 	return uc
 }
 
@@ -184,4 +187,24 @@ func (uc UserUsecase) GetMessagesForUsers(fromID uint, toID uint, after time.Tim
 		Find(&messages).Error
 
 	return messages, err
+}
+
+func (uc UserUsecase) GetByEmail(email string) (*models.User, error) {
+	return uc.user.GetByEmail(email)
+}
+
+func (uc UserUsecase) GetByUsername(username string) (*models.User, error) {
+	return uc.user.GetByUsername(username)
+}
+
+func (uc UserUsecase) GenerateTokenFor(u *models.User) (*models.Token, error) {
+	return uc.user.GenerateTokenFor(u)
+}
+
+func (uc UserUsecase) CreateUser(user *models.User) error {
+	return uc.user.Create(user)
+}
+
+func (uc UserUsecase) UpdateUserPhoto(user *models.User, photo *models.File) error {
+	return uc.user.UpdatePhoto(user.ID, photo.ID)
 }
