@@ -16,7 +16,14 @@ Do the `make build`, then copy `./build/*` somewhere and run
 Gorm will handle initial migration after first launch.
 
 ### Architectural notes
+I'm trying to follow some kind of CLEAN architecture here, at least for 
+new and refactored code.
+
+Here's the scheme:
 ```text
-Model -> Repository -> DTO <--> Usecase -> Controller -> Router --> API
---------- Storage --------      ----------- Feature -----------
+Model <-> Repository <-> Dto <-> Usecase <-> Controller <-> Router <-.
+---------- Storage ---------     ------------ Feature ------------   |
+                                                                     |
+                                                    API --> Request -|
+                                                      ^-- Response <-                                                         
 ```
