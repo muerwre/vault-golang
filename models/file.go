@@ -3,7 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	constants2 "github.com/muerwre/vault-golang/feature/file/constants"
+	constants2 "github.com/muerwre/vault-golang/feature/upload/constants"
 )
 
 type FileMetadata struct {

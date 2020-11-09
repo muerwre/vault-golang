@@ -4,19 +4,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
-	controller2 "github.com/muerwre/vault-golang/feature/file/controller"
+	controller2 "github.com/muerwre/vault-golang/feature/upload/controller"
 	"github.com/muerwre/vault-golang/utils"
 )
 
 type UploadRouter struct {
-	controller *controller2.FileController
+	controller *controller2.UploadController
 	db         db.DB
 	config     app.Config
 	api        utils.AppApi
 }
 
 func (ur *UploadRouter) Init(api utils.AppApi, db db.DB, config app.Config) {
-	ur.controller = new(controller2.FileController).Init(db, config)
+	ur.controller = new(controller2.UploadController).Init(db, config)
 	ur.api = api
 	ur.db = db
 	ur.config = config

@@ -8,7 +8,7 @@ import (
 	"github.com/kolesa-team/go-webp/encoder"
 	"github.com/kolesa-team/go-webp/webp"
 	"github.com/lEx0/go-libjpeg-nrgba/jpeg"
-	constants2 "github.com/muerwre/vault-golang/feature/file/constants"
+	constants2 "github.com/muerwre/vault-golang/feature/upload/constants"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"image"

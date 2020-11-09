@@ -5,8 +5,8 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
-	fileConstants "github.com/muerwre/vault-golang/feature/file/constants"
-	fileRepository "github.com/muerwre/vault-golang/feature/file/repository"
+	fileConstants "github.com/muerwre/vault-golang/feature/upload/constants"
+	fileRepository "github.com/muerwre/vault-golang/feature/upload/repository"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
@@ -35,10 +35,10 @@ func (fu *FileUseCase) Init(db db.DB, config app.Config) *FileUseCase {
 
 // FillMetadataAudio fills Audio file metadata
 func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
-	path := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
+	p := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
 
-	duration := utils.GetAudioDuration(path)
-	artist, title := utils.GetAudioArtistTitle(path)
+	duration := utils.GetAudioDurationFromPath(p)
+	artist, title := utils.GetAudioArtistTitleFromPath(p)
 
 	if artist == "" && title == "" {
 		title = f.OrigName

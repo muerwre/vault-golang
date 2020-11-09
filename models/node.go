@@ -3,8 +3,8 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	constants3 "github.com/muerwre/vault-golang/feature/file/constants"
 	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
+	constants3 "github.com/muerwre/vault-golang/feature/upload/constants"
 	"time"
 
 	"github.com/muerwre/vault-golang/utils"

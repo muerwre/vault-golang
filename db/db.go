@@ -3,7 +3,6 @@ package db
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql" // needed for gorm
-	fileRepository "github.com/muerwre/vault-golang/feature/file/repository"
 	messageRepository "github.com/muerwre/vault-golang/feature/message/repository"
 	metaRepository "github.com/muerwre/vault-golang/feature/meta/repository"
 	nodeRepository "github.com/muerwre/vault-golang/feature/node/repository"
@@ -11,6 +10,7 @@ import (
 	oauthRepository "github.com/muerwre/vault-golang/feature/oauth/repository"
 	"github.com/muerwre/vault-golang/feature/search/repository"
 	tagRepository "github.com/muerwre/vault-golang/feature/tag/repository"
+	fileRepository "github.com/muerwre/vault-golang/feature/upload/repository"
 	userRepository "github.com/muerwre/vault-golang/feature/user/repository"
 	"github.com/muerwre/vault-golang/models"
 	"github.com/pkg/errors"

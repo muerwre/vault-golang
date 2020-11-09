@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func GetAudioDuration(path string) int {
+func GetAudioDurationFromPath(path string) int {
 	r, err := os.Open(path)
 	duration := 0.0
 
@@ -36,7 +36,7 @@ func GetAudioDuration(path string) int {
 	return int(duration)
 }
 
-func GetAudioArtistTitle(path string) (artist string, title string) {
+func GetAudioArtistTitleFromPath(path string) (artist string, title string) {
 	metadata, err := audio.ReadMetadata(path)
 
 	if err != nil {
