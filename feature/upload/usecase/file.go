@@ -169,7 +169,7 @@ func (fu *FileUseCase) UploadRemotePic(url string, target string, fileType strin
 
 	name := path.Base(url)
 
-	result, err, _ := fu.SaveFile(
+	result, err := fu.SaveFile(
 		resp.Body,
 		target,
 		fileType,
@@ -190,42 +190,41 @@ func (fu *FileUseCase) SaveFile(
 	fileType string,
 	name string,
 	user *models.User,
-) (result *models.File, error error, details error) {
+) (result *models.File, error error) {
 	content := strings.Builder{}
 	size, err := io.Copy(&content, reader)
 	if err != nil {
-		return nil, fmt.Errorf(codes.EmptyRequest), nil
+		return nil, err
 	}
 
 	mime, err := fu.CheckFileMimeAgainstUploadType([]byte(content.String()), fileType)
 
 	if err != nil {
-		return nil, fmt.Errorf(codes.UnknownFileType), nil
+		return nil, err
 	}
 
 	if !models.FileValidateTarget(target) {
-		return nil, fmt.Errorf(codes.IncorrectData), nil
+		return nil, fmt.Errorf("user tried to upload %s file to %s target", mime, target)
 	}
 
 	nameUnique, fsFullDir, pathCategorized, err := fu.GenerateUploadFilename(name, fileType)
 	if err != nil {
-		logrus.Infof("Error while uploding file %s: %s", name, err.Error())
-		return nil, fmt.Errorf(codes.IncorrectData), nil
+		return nil, fmt.Errorf("error while uploding file %s: %s", name, err.Error())
 	}
 
 	// recursively create destination folder
 	if err := os.MkdirAll(fsFullDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf(codes.IncorrectData), err
+		return nil, err
 	}
 
 	// create dir and write file
 	if out, err := os.Create(filepath.Join(fsFullDir, nameUnique)); err != nil {
-		return nil, fmt.Errorf(codes.IncorrectData), err
+		return nil, err
 	} else {
 		defer out.Close()
 
 		if _, err = out.WriteString(content.String()); err != nil {
-			return nil, fmt.Errorf(codes.IncorrectData), err
+			return nil, err
 		}
 	}
 
@@ -244,5 +243,5 @@ func (fu *FileUseCase) SaveFile(
 	fu.FillMetadata(&dbEntry)
 	fu.file.Save(&dbEntry)
 
-	return &dbEntry, nil, nil
+	return &dbEntry, nil
 }

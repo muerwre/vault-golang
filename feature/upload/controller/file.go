@@ -7,6 +7,7 @@ import (
 	"github.com/muerwre/vault-golang/db/models"
 	fileUsecase "github.com/muerwre/vault-golang/feature/upload/usecase"
 	"github.com/muerwre/vault-golang/utils/codes"
+	"github.com/sirupsen/logrus"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -38,10 +39,10 @@ func (uc *UploadController) UploadFile(c *gin.Context) {
 		return
 	}
 
-	dbEntry, err, details := uc.file.SaveFile(file, target, fileType, header.Filename, user)
-
+	dbEntry, err := uc.file.SaveFile(file, target, fileType, header.Filename, user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "details": details.Error()})
+		logrus.Warnf("Can't upload file: %s\nFile: %+v", err.Error(), file)
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.UnknownFileType})
 		return
 	}
 
