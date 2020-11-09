@@ -27,7 +27,7 @@ type NodeController struct {
 func (nc *NodeController) Init(db db.DB, config app.Config, notifier notification.NotificationService) *NodeController {
 	nc.node = *new(nodeUsecase.NodeUsecase).Init(db, notifier)
 	nc.file = *new(fileUsecase.FileUseCase).Init(db, config)
-	nc.tag = *new(tagUsecase.TagUsecase).Init(db, config)
+	nc.tag = *new(tagUsecase.TagUsecase).Init(db)
 
 	return nc
 }

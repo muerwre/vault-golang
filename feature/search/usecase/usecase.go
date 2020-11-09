@@ -5,7 +5,7 @@ import (
 	nodeRepository "github.com/muerwre/vault-golang/feature/node/repository"
 	"github.com/muerwre/vault-golang/feature/search/repository"
 	"github.com/muerwre/vault-golang/feature/search/request"
-	response2 "github.com/muerwre/vault-golang/feature/search/response"
+	"github.com/muerwre/vault-golang/feature/search/response"
 )
 
 type SearchUsecase struct {
@@ -19,9 +19,9 @@ func (su *SearchUsecase) Init(db db.DB) *SearchUsecase {
 	return su
 }
 
-func (su SearchUsecase) GetNodesForSearch(req request.SearchNodeRequest) *response2.SearchNodeResponse {
-	resp := &response2.SearchNodeResponse{
-		Nodes: make([]response2.SearchNodeResponseNode, 0),
+func (su SearchUsecase) GetNodesForSearch(req request.SearchNodeRequest) *response.SearchNodeResponse {
+	resp := &response.SearchNodeResponse{
+		Nodes: make([]response.SearchNodeResponseNode, 0),
 	}
 	if len(req.Text) == 0 {
 		return resp
@@ -29,7 +29,7 @@ func (su SearchUsecase) GetNodesForSearch(req request.SearchNodeRequest) *respon
 
 	nodes, count := su.node.GetForSearch(req.Text, req.Take, req.Skip)
 	for _, v := range nodes {
-		node := new(response2.SearchNodeResponseNode).Init(*v)
+		node := new(response.SearchNodeResponseNode).Init(*v)
 		resp.Nodes = append(resp.Nodes, *node)
 	}
 

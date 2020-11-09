@@ -68,7 +68,6 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 	}
 
 	mime, err := mimetype.DetectFile(filepath.Join(sr.config.UploadPath, src))
-
 	if err != nil {
 		c.Next()
 		return
