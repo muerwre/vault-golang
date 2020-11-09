@@ -3,13 +3,13 @@ package usecase
 import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
-	"github.com/muerwre/vault-golang/feature/meta/repository"
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
+	repository2 "github.com/muerwre/vault-golang/db/repository"
 	"github.com/muerwre/vault-golang/service/google"
 )
 
 type MetaUsecase struct {
-	meta    repository.MetaRepository
+	meta    repository2.MetaRepository
 	youtube google.YoutubeService
 }
 

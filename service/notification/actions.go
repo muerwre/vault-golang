@@ -1,7 +1,7 @@
 package notification
 
 import (
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
 	"github.com/sirupsen/logrus"
 )
 

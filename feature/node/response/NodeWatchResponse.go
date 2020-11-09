@@ -1,6 +1,6 @@
 package response
 
-import "github.com/muerwre/vault-golang/models"
+import "github.com/muerwre/vault-golang/db/models"
 
 const (
 	NodeWatchStatusActive   string = "active"

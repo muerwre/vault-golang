@@ -17,7 +17,6 @@ import (
 )
 
 func serveAPI(ctx context.Context, api *api.API) {
-	// router.LoadHTMLGlob("views/*")
 	router := api.Init()
 
 	hasCerts := len(api.Config.TlsFiles) == 2

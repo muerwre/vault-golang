@@ -3,16 +3,8 @@ package db
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql" // needed for gorm
-	fileRepository "github.com/muerwre/vault-golang/feature/file/repository"
-	messageRepository "github.com/muerwre/vault-golang/feature/message/repository"
-	metaRepository "github.com/muerwre/vault-golang/feature/meta/repository"
-	nodeRepository "github.com/muerwre/vault-golang/feature/node/repository"
-	notificationRepository "github.com/muerwre/vault-golang/feature/notification/repository"
-	oauthRepository "github.com/muerwre/vault-golang/feature/oauth/repository"
-	"github.com/muerwre/vault-golang/feature/search/repository"
-	tagRepository "github.com/muerwre/vault-golang/feature/tag/repository"
-	userRepository "github.com/muerwre/vault-golang/feature/user/repository"
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
+	repository2 "github.com/muerwre/vault-golang/db/repository"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -20,16 +12,16 @@ import (
 type DB struct {
 	*gorm.DB
 
-	Node                   *nodeRepository.NodeRepository
-	User                   *userRepository.UserRepository
-	File                   *fileRepository.FileRepository
-	Meta                   *metaRepository.MetaRepository
-	Social                 *oauthRepository.OauthRepository
-	NodeView               *nodeRepository.NodeViewRepository
-	Message                *messageRepository.MessageRepository
-	Tag                    *tagRepository.TagRepository
-	NotificationRepository *notificationRepository.NotificationRepository
-	Search                 *repository.SearchRepository
+	Node                   *repository2.NodeRepository
+	User                   *UserRepository
+	File                   *repository2.FileRepository
+	Meta                   *repository2.MetaRepository
+	Social                 *repository2.OauthRepository
+	NodeView               *repository2.NodeViewRepository
+	Message                *repository2.MessageRepository
+	Tag                    *repository2.TagRepository
+	NotificationRepository *repository2.NotificationRepository
+	Search                 *repository2.SearchRepository
 }
 
 func New() (*DB, error) {
@@ -71,15 +63,15 @@ func New() (*DB, error) {
 
 	return &DB{
 		DB:                     db,
-		Node:                   new(nodeRepository.NodeRepository).Init(db),
-		User:                   new(userRepository.UserRepository).Init(db),
-		File:                   new(fileRepository.FileRepository).Init(db),
-		Meta:                   new(metaRepository.MetaRepository).Init(db),
-		Social:                 new(oauthRepository.OauthRepository).Init(db),
-		NodeView:               new(nodeRepository.NodeViewRepository).Init(db),
-		Message:                new(messageRepository.MessageRepository).Init(db),
-		Tag:                    new(tagRepository.TagRepository).Init(db),
-		NotificationRepository: new(notificationRepository.NotificationRepository).Init(db),
-		Search:                 new(repository.SearchRepository).Init(db),
+		Node:                   new(repository2.NodeRepository).Init(db),
+		User:                   new(UserRepository).Init(db),
+		File:                   new(repository2.FileRepository).Init(db),
+		Meta:                   new(repository2.MetaRepository).Init(db),
+		Social:                 new(repository2.OauthRepository).Init(db),
+		NodeView:               new(repository2.NodeViewRepository).Init(db),
+		Message:                new(repository2.MessageRepository).Init(db),
+		Tag:                    new(repository2.TagRepository).Init(db),
+		NotificationRepository: new(repository2.NotificationRepository).Init(db),
+		Search:                 new(repository2.SearchRepository).Init(db),
 	}, nil
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/muerwre/vault-golang/app"
+	"github.com/muerwre/vault-golang/service/image"
 	"github.com/muerwre/vault-golang/utils"
 	"net/http"
 	"net/url"
@@ -73,7 +74,7 @@ func (sr *StaticRouter) FallbackMiddleware(c *gin.Context) {
 		return
 	}
 
-	buff, err := utils.CreateScaledImage(
+	buff, err := image.CreateScaledImage(
 		filepath.Join(sr.config.UploadPath, src),
 		filepath.Join(sr.config.UploadPath, dest),
 		preset,

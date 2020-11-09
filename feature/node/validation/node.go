@@ -2,10 +2,10 @@ package validation
 
 import (
 	"errors"
-	constants3 "github.com/muerwre/vault-golang/feature/file/constants"
 	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
+	constants3 "github.com/muerwre/vault-golang/feature/upload/constants"
 
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
 	"github.com/muerwre/vault-golang/utils/codes"
 )
 
