@@ -2,15 +2,14 @@ package usecase
 
 import (
 	"github.com/muerwre/vault-golang/db"
-	nodeRepository "github.com/muerwre/vault-golang/feature/node/repository"
-	"github.com/muerwre/vault-golang/feature/search/repository"
+	repository2 "github.com/muerwre/vault-golang/db/repository"
 	"github.com/muerwre/vault-golang/feature/search/request"
 	"github.com/muerwre/vault-golang/feature/search/response"
 )
 
 type SearchUsecase struct {
-	search *repository.SearchRepository
-	node   *nodeRepository.NodeRepository
+	search *repository2.SearchRepository
+	node   *repository2.NodeRepository
 }
 
 func (su *SearchUsecase) Init(db db.DB) *SearchUsecase {

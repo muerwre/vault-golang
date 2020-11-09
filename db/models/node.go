@@ -3,11 +3,10 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
+	utils2 "github.com/muerwre/vault-golang/feature/meta/utils"
 	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
 	constants3 "github.com/muerwre/vault-golang/feature/upload/constants"
 	"time"
-
-	"github.com/muerwre/vault-golang/utils"
 )
 
 type NodeBlock struct {
@@ -168,7 +167,7 @@ func (n *Node) ApplyBlocks(blocks []NodeBlock) {
 // IsValid - validates node block
 func (b NodeBlock) IsValid() bool {
 	return (b.Type == BlockTypeText && len(b.Text) > 0) ||
-		(b.Type == BlockTypeVideo && len(b.Url) > 0 && utils.GetThumbFromUrl(b.Url) != "")
+		(b.Type == BlockTypeVideo && len(b.Url) > 0 && utils2.GetThumbFromUrl(b.Url) != "")
 }
 
 // FirstBlockOfType - gets block file of type (t)
@@ -219,7 +218,7 @@ func (n *Node) UpdateThumbnail() {
 	if n.Type == constants2.NODE_TYPES.VIDEO {
 		i := n.FirstBlockOfType(BlockTypeVideo)
 
-		if url := utils.GetThumbFromUrl(n.Blocks[i].Url); url != "" {
+		if url := utils2.GetThumbFromUrl(n.Blocks[i].Url); url != "" {
 			n.Thumbnail = url
 
 			return

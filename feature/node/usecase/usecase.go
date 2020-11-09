@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/db/models"
+	repository2 "github.com/muerwre/vault-golang/db/repository"
 	"github.com/muerwre/vault-golang/feature/node/constants"
-	"github.com/muerwre/vault-golang/feature/node/repository"
 	"github.com/muerwre/vault-golang/feature/node/response"
 	validation2 "github.com/muerwre/vault-golang/feature/node/validation"
 	fileConstants "github.com/muerwre/vault-golang/feature/upload/constants"
-	fileRepository "github.com/muerwre/vault-golang/feature/upload/repository"
-	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/service/notification"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
@@ -21,15 +20,15 @@ import (
 type NodeUsecase struct {
 	db       db.DB // TODO: remove, use usecases:
 	notifier notification.NotificationService
-	node     repository.NodeRepository
-	file     fileRepository.FileRepository
+	node     repository2.NodeRepository
+	file     repository2.FileRepository
 }
 
 func (nu *NodeUsecase) Init(db db.DB, notifier notification.NotificationService) *NodeUsecase {
 	nu.db = db // TODO: remove, use usecases:
 	nu.notifier = notifier
-	nu.node = *new(repository.NodeRepository).Init(db.DB)
-	nu.file = *new(fileRepository.FileRepository).Init(db.DB)
+	nu.node = *new(repository2.NodeRepository).Init(db.DB)
+	nu.file = *new(repository2.FileRepository).Init(db.DB)
 	return nu
 }
 

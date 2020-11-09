@@ -3,17 +3,17 @@ package tagUsecase
 import (
 	"fmt"
 	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/db/models"
+	repository2 "github.com/muerwre/vault-golang/db/repository"
 	response2 "github.com/muerwre/vault-golang/feature/search/response"
-	"github.com/muerwre/vault-golang/feature/tag/repository"
 	"github.com/muerwre/vault-golang/feature/tag/utils"
-	"github.com/muerwre/vault-golang/models"
 	"net/url"
 	"strconv"
 	"strings"
 )
 
 type TagUsecase struct {
-	tag repository.TagRepository
+	tag repository2.TagRepository
 }
 
 func (uc *TagUsecase) Init(db db.DB) *TagUsecase {

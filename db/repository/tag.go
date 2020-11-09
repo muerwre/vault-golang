@@ -2,8 +2,8 @@ package repository
 
 import (
 	"github.com/jinzhu/gorm"
-	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/db/models"
+	utils2 "github.com/muerwre/vault-golang/db/utils"
 )
 
 type TagRepository struct {
@@ -30,7 +30,7 @@ func (tr TagRepository) GetNodesOfTag(tag models.Tag, limit int, offset int) ([]
 		return nil, 0, err
 	}
 
-	q := utils.WhereIsFlowNode(tr.db.Model(&t))
+	q := utils2.WhereIsFlowNode(tr.db.Model(&t))
 	r := q.Limit(limit).Offset(offset).Order("created_at DESC").Association("Nodes").Find(&nodes)
 
 	if err := r.Error; err != nil {

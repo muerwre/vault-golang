@@ -2,8 +2,8 @@ package google
 
 import (
 	"encoding/json"
+	"github.com/muerwre/vault-golang/db/models"
 	"github.com/muerwre/vault-golang/feature/meta/request"
-	"github.com/muerwre/vault-golang/models"
 	"io/ioutil"
 	"net/http"
 	"strings"

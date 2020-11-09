@@ -3,9 +3,9 @@ package repository
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"github.com/muerwre/vault-golang/db/models"
+	utils2 "github.com/muerwre/vault-golang/db/utils"
 	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
-	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/utils"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"sync"
 	"time"
@@ -125,7 +125,7 @@ func (nr NodeRepository) GetCommentsCount() (count int) {
 func (nr NodeRepository) GetFlowLastPost() (*models.Node, error) {
 	node := &models.Node{}
 
-	utils.WhereIsFlowNode(nr.db.Model(&node).Order("created_at DESC").Limit(1)).First(&node)
+	utils2.WhereIsFlowNode(nr.db.Model(&node).Order("created_at DESC").Limit(1)).First(&node)
 
 	if node.ID == 0 {
 		return nil, fmt.Errorf(codes.NodeNotFound)
@@ -200,7 +200,7 @@ func (nr NodeRepository) GetForSearch(
 		Order(fmt.Sprintf("description LIKE concat('%s', '%%') DESC", text)).
 		Order("created_at DESC ")
 
-	query = utils.WhereIsFlowNode(query)
+	query = utils2.WhereIsFlowNode(query)
 
 	query.Model(&models.Node{}).Count(&count)
 	query.Limit(take).Offset(skip).Find(&res)
@@ -297,7 +297,7 @@ func (nr NodeRepository) GetNodeLastComment(nid uint) (*models.Comment, error) {
 }
 
 func (nr NodeRepository) GetDiffNodesBefore(start *time.Time) ([]models.Node, error) {
-	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	q := utils2.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
 	r := &[]models.Node{}
 
 	err := q.Where("created_at > ?", start).
@@ -310,7 +310,7 @@ func (nr NodeRepository) GetDiffNodesBefore(start *time.Time) ([]models.Node, er
 }
 
 func (nr NodeRepository) GetDiffNodesAfter(end *time.Time, take uint) ([]models.Node, error) {
-	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	q := utils2.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
 	r := &[]models.Node{}
 
 	err := q.Where("created_at < ?", end).
@@ -323,7 +323,7 @@ func (nr NodeRepository) GetDiffNodesAfter(end *time.Time, take uint) ([]models.
 }
 
 func (nr NodeRepository) GetDiffHeroes() ([]models.Node, error) {
-	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	q := utils2.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
 	r := &[]models.Node{}
 
 	err := q.Order("RAND()").
@@ -336,7 +336,7 @@ func (nr NodeRepository) GetDiffHeroes() ([]models.Node, error) {
 }
 
 func (nr NodeRepository) GetDiffUpdated(uid uint, limit uint) ([]models.Node, error) {
-	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	q := utils2.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
 	r := &[]models.Node{}
 
 	err := q.Order("created_at DESC").
@@ -349,7 +349,7 @@ func (nr NodeRepository) GetDiffUpdated(uid uint, limit uint) ([]models.Node, er
 }
 
 func (nr NodeRepository) GetDiffRecent(limit uint, exclude []uint) ([]models.Node, error) {
-	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	q := utils2.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
 	r := &[]models.Node{}
 
 	err := q.Order("commented_at DESC, created_at DESC").
@@ -361,7 +361,7 @@ func (nr NodeRepository) GetDiffRecent(limit uint, exclude []uint) ([]models.Nod
 }
 
 func (nr NodeRepository) GetDiffValid(start *time.Time, end *time.Time) ([]uint, error) {
-	q := utils.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
+	q := utils2.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
 	r := []uint{}
 
 	rows, err := q.Table("node").

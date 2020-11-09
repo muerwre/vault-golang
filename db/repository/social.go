@@ -3,7 +3,7 @@ package repository
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 )

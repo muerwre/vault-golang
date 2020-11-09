@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"github.com/go-playground/validator"
 	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/db/models"
 	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
 	constants3 "github.com/muerwre/vault-golang/feature/upload/constants"
-	"github.com/muerwre/vault-golang/feature/user/repository"
 	"github.com/muerwre/vault-golang/feature/user/request"
-	"github.com/muerwre/vault-golang/models"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/passwords"
 	"time"
@@ -16,7 +15,7 @@ import (
 
 type UserUsecase struct {
 	db   db.DB
-	user repository.UserRepository
+	user db.UserRepository
 }
 
 func (uc *UserUsecase) Init(db db.DB) *UserUsecase {

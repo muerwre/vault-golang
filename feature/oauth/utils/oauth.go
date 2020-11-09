@@ -6,6 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	jwt2 "github.com/muerwre/vault-golang/service/jwt"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -249,7 +250,7 @@ func DecodeOauthClaimFromRequest(c *gin.Context) (*OauthUserDataClaim, error) {
 		return nil, err
 	}
 
-	result, err := DecodeJwtToken(req.Token, &OauthUserDataClaim{})
+	result, err := jwt2.DecodeJwtToken(req.Token, &OauthUserDataClaim{})
 
 	if err != nil {
 		return nil, err

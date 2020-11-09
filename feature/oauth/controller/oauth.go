@@ -5,14 +5,15 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/db/models"
 	"github.com/muerwre/vault-golang/feature/oauth/constants"
 	request2 "github.com/muerwre/vault-golang/feature/oauth/request"
 	"github.com/muerwre/vault-golang/feature/oauth/usecase"
+	utils2 "github.com/muerwre/vault-golang/feature/oauth/utils"
 	constants2 "github.com/muerwre/vault-golang/feature/upload/constants"
 	usecase2 "github.com/muerwre/vault-golang/feature/upload/usecase"
 	userUsecase "github.com/muerwre/vault-golang/feature/user/usecase"
-	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/service/jwt"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/passwords"
 	"github.com/sirupsen/logrus"
@@ -37,7 +38,7 @@ func (oc *OAuthController) Init(db db.DB, config app.Config) *OAuthController {
 // ProviderMiddleware generates Provider context by :provider url param
 func (oc OAuthController) ProviderMiddleware(c *gin.Context) {
 	provider := c.Param("provider")
-	current, err := utils.OAuthConfigs.GetByName(provider)
+	current, err := utils2.OAuthConfigs.GetByName(provider)
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
@@ -49,7 +50,7 @@ func (oc OAuthController) ProviderMiddleware(c *gin.Context) {
 
 // Redirect redirects user to oauth endpoint, that redirects back to /process/:target?code= urls
 func (oc OAuthController) Redirect(c *gin.Context) {
-	provider := c.MustGet("Provider").(*utils.OAuthConfig)
+	provider := c.MustGet("Provider").(*utils2.OAuthConfig)
 	url := oc.oauth.GetRedirectUrlForProvider(provider)
 	c.Redirect(http.StatusTemporaryRedirect, url)
 	return
@@ -58,10 +59,10 @@ func (oc OAuthController) Redirect(c *gin.Context) {
 // GetRedirectData is a middleware, that fetches oauth data from provider and passes it further
 func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		provider := c.MustGet("Provider").(*utils.OAuthConfig)
+		provider := c.MustGet("Provider").(*utils2.OAuthConfig)
 		code := c.Query("code")
 		if code == "" {
-			utils.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthCodeIsEmpty)
+			utils2.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthCodeIsEmpty)
 			c.Abort()
 			return
 		}
@@ -69,7 +70,7 @@ func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 		data, err := oc.oauth.GetTokenData(provider, code)
 		if err != nil {
 			logrus.Warnf("Failed to get oauth data: %v", err.Error())
-			utils.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthInvalidData)
+			utils2.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthInvalidData)
 			c.Abort()
 			return
 		}
@@ -81,23 +82,23 @@ func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
 
 // Process gets fetched from oauth data and encodes it as JWT to send back to frontend, so it can call AttachConfirm with it
 func (oc OAuthController) Process(c *gin.Context) {
-	ud := c.MustGet("UserData").(*utils.OauthUserData)
-	claim := new(utils.OauthUserDataClaim).Init(*ud)
-	token, err := utils.EncodeJwtToken(claim)
+	ud := c.MustGet("UserData").(*utils2.OauthUserData)
+	claim := new(utils2.OauthUserDataClaim).Init(*ud)
+	token, err := jwt.EncodeJwtToken(claim)
 
 	if err != nil {
 		logrus.Warnf("Failed to create attach token: %v", err.Error())
-		utils.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthInvalidData)
+		utils2.ReplyHtmlEventWithError(c, constants.EventTypeError, codes.OAuthInvalidData)
 		return
 	}
 
-	utils.ReplytHtmlEventWithToken(c, constants.EventTypeProcessed, token)
+	utils2.ReplytHtmlEventWithToken(c, constants.EventTypeProcessed, token)
 }
 
 // AttachConfirm gets user oauth data from token and creates social connection for it
 func (oc OAuthController) AttachConfirm(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
-	claim, err := utils.DecodeOauthClaimFromRequest(c)
+	claim, err := utils2.DecodeOauthClaimFromRequest(c)
 
 	if err != nil {
 		logrus.Warnf("Failed to perform attach confirm: %v", err.Error())
@@ -133,7 +134,7 @@ func (oc OAuthController) AttachConfirm(c *gin.Context) {
 }
 
 func (oc OAuthController) Login(c *gin.Context) {
-	claim, err := utils.DecodeOauthClaimFromRequest(c)
+	claim, err := utils2.DecodeOauthClaimFromRequest(c)
 	if err != nil {
 		logrus.Warnf("Failed to perform login: %v", err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": codes.OAuthInvalidData})

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/service/jwt"
 	"github.com/spf13/viper"
 	"path/filepath"
 )
@@ -61,7 +61,7 @@ func InitConfig() (*Config, error) {
 		config.Protocol = "https"
 	}
 
-	utils.InitJwtEngine(viper.GetString("Jwt.Secret"))
+	jwt.InitJwtEngine(viper.GetString("Jwt.Secret"))
 
 	return config, nil
 }

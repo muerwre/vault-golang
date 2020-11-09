@@ -1,9 +1,9 @@
-package repository
+package db
 
 import (
 	"errors"
 	"github.com/jinzhu/gorm"
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"time"
 )

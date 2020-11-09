@@ -1,7 +1,7 @@
 package response
 
 import (
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
 	"time"
 )
 

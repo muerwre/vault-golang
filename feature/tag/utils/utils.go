@@ -1,6 +1,6 @@
 package utils
 
-import "github.com/muerwre/vault-golang/models"
+import "github.com/muerwre/vault-golang/db/models"
 
 func TagArrayContains(s []*models.Tag, el string) bool {
 	for _, v := range s {

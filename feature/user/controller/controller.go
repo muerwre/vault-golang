@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
 	"github.com/muerwre/vault-golang/service/mail"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/passwords"

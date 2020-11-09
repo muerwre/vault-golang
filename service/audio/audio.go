@@ -1,4 +1,4 @@
-package utils
+package audio
 
 import (
 	"github.com/goulash/audio"

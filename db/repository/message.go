@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/jinzhu/gorm"
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
 )
 
 type MessageRepository struct {

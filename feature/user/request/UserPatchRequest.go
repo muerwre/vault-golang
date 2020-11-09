@@ -2,7 +2,7 @@ package request
 
 import (
 	"github.com/go-playground/validator"
-	"github.com/muerwre/vault-golang/models"
+	"github.com/muerwre/vault-golang/db/models"
 	"github.com/muerwre/vault-golang/utils/passwords"
 	"reflect"
 	"time"

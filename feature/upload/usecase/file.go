@@ -5,10 +5,10 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/db/models"
+	"github.com/muerwre/vault-golang/db/repository"
 	fileConstants "github.com/muerwre/vault-golang/feature/upload/constants"
-	fileRepository "github.com/muerwre/vault-golang/feature/upload/repository"
-	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/service/audio"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"image"
@@ -24,12 +24,12 @@ import (
 
 type FileUseCase struct {
 	config app.Config
-	file   fileRepository.FileRepository
+	file   repository.FileRepository
 }
 
 func (fu *FileUseCase) Init(db db.DB, config app.Config) *FileUseCase {
 	fu.config = config
-	fu.file = *new(fileRepository.FileRepository).Init(db.DB)
+	fu.file = *new(repository.FileRepository).Init(db.DB)
 	return fu
 }
 
@@ -37,8 +37,8 @@ func (fu *FileUseCase) Init(db db.DB, config app.Config) *FileUseCase {
 func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
 	p := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
 
-	duration := utils.GetAudioDurationFromPath(p)
-	artist, title := utils.GetAudioArtistTitleFromPath(p)
+	duration := audio.GetAudioDurationFromPath(p)
+	artist, title := audio.GetAudioArtistTitleFromPath(p)
 
 	if artist == "" && title == "" {
 		title = f.OrigName
