@@ -2,15 +2,15 @@ package app
 
 import (
 	"github.com/muerwre/vault-golang/db"
-	"github.com/muerwre/vault-golang/utils/mail"
-	"github.com/muerwre/vault-golang/utils/notify"
+	"github.com/muerwre/vault-golang/service/mail"
+	"github.com/muerwre/vault-golang/service/notification"
 )
 
 type App struct {
 	Config   *Config
 	DB       *db.DB
-	Mailer   *mail.Mailer
-	Notifier *notify.Notifier
+	Mailer   *mail.MailService
+	Notifier *notification.NotificationService
 }
 
 func New() (app *App, err error) {
@@ -24,10 +24,10 @@ func New() (app *App, err error) {
 		return nil, err
 	}
 
-	app.Notifier = new(notify.Notifier).Init(*app.DB)
+	app.Notifier = new(notification.NotificationService).Init(*app.DB)
 
 	if app.Config.SmtpHost != "" {
-		app.Mailer = new(mail.Mailer).Init(&mail.MailerConfig{
+		app.Mailer = new(mail.MailService).Init(&mail.MailerConfig{
 			Host:     app.Config.SmtpHost,
 			Port:     app.Config.SmtpPort,
 			User:     app.Config.SmtpUser,

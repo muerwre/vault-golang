@@ -16,7 +16,6 @@ package main
 
 	-- after release --
 	TODO: websockets https://github.com/gin-gonic/gin/issues/461
-	TODO: refactor GetDiff
 	TODO: FRONT remove other user's profile completely, replace it with hover popup and make settings big fullscreen with message dialogs and etc
 
 */

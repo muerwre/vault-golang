@@ -3,8 +3,8 @@ package db
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql" // needed for gorm
-	"github.com/muerwre/vault-golang/models"
-	"github.com/muerwre/vault-golang/repository"
+	"github.com/muerwre/vault-golang/db/models"
+	repository2 "github.com/muerwre/vault-golang/db/repository"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -12,15 +12,16 @@ import (
 type DB struct {
 	*gorm.DB
 
-	Node                   *repository.NodeRepository
-	User                   *repository.UserRepository
-	File                   *repository.FileRepository
-	Meta                   *repository.MetaRepository
-	Social                 *repository.SocialRepository
-	NodeView               *repository.NodeViewRepository
-	Message                *repository.MessageRepository
-	Tag                    *repository.TagRepository
-	NotificationRepository *repository.NotificationRepository
+	Node                   *repository2.NodeRepository
+	User                   *UserRepository
+	File                   *repository2.FileRepository
+	Meta                   *repository2.MetaRepository
+	Social                 *repository2.OauthRepository
+	NodeView               *repository2.NodeViewRepository
+	Message                *repository2.MessageRepository
+	Tag                    *repository2.TagRepository
+	NotificationRepository *repository2.NotificationRepository
+	Search                 *repository2.SearchRepository
 }
 
 func New() (*DB, error) {
@@ -62,14 +63,15 @@ func New() (*DB, error) {
 
 	return &DB{
 		DB:                     db,
-		Node:                   new(repository.NodeRepository).Init(db),
-		User:                   new(repository.UserRepository).Init(db),
-		File:                   new(repository.FileRepository).Init(db),
-		Meta:                   new(repository.MetaRepository).Init(db),
-		Social:                 new(repository.SocialRepository).Init(db),
-		NodeView:               new(repository.NodeViewRepository).Init(db),
-		Message:                new(repository.MessageRepository).Init(db),
-		Tag:                    new(repository.TagRepository).Init(db),
-		NotificationRepository: new(repository.NotificationRepository).Init(db),
+		Node:                   new(repository2.NodeRepository).Init(db),
+		User:                   new(UserRepository).Init(db),
+		File:                   new(repository2.FileRepository).Init(db),
+		Meta:                   new(repository2.MetaRepository).Init(db),
+		Social:                 new(repository2.OauthRepository).Init(db),
+		NodeView:               new(repository2.NodeViewRepository).Init(db),
+		Message:                new(repository2.MessageRepository).Init(db),
+		Tag:                    new(repository2.TagRepository).Init(db),
+		NotificationRepository: new(repository2.NotificationRepository).Init(db),
+		Search:                 new(repository2.SearchRepository).Init(db),
 	}, nil
 }
