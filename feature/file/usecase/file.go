@@ -12,9 +12,13 @@ import (
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"image"
+	"io"
+	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -117,9 +121,10 @@ func (fu FileUseCase) UpdateFileMetadataIfNeeded(files []*models.File) []*models
 	return files
 }
 
-func (fu FileUseCase) SaveFile(file *models.File) error {
-	return fu.file.Save(file)
-}
+//
+//func (fu FileUseCase) SaveFile(file *models.File) error {
+//	return fu.file.Save(file)
+//}
 
 func (fu FileUseCase) CheckFileUploadSize(size int) error {
 	if size > fu.config.UploadMaxSizeMb {
@@ -151,4 +156,93 @@ func (fu FileUseCase) GenerateUploadFilename(name string, fileType string) (name
 	fsFullDir = filepath.Join(fu.config.UploadPath, pathCategorized)
 
 	return nameUnique, fsFullDir, pathCategorized, nil
+}
+
+func (fu *FileUseCase) UploadRemotePic(url string, target string, fileType string, user *models.User) (*models.File, error) {
+	resp, err := http.Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	name := path.Base(url)
+
+	result, err, _ := fu.SaveFile(
+		resp.Body,
+		target,
+		fileType,
+		name,
+		user,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (fu *FileUseCase) SaveFile(
+	reader io.Reader,
+	target string,
+	fileType string,
+	name string,
+	user *models.User,
+) (result *models.File, error error, details error) {
+	content := strings.Builder{}
+	size, err := io.Copy(&content, reader)
+	if err != nil {
+		return nil, fmt.Errorf(codes.EmptyRequest), nil
+	}
+
+	mime, err := fu.CheckFileMimeAgainstUploadType([]byte(content.String()), fileType)
+
+	if err != nil {
+		return nil, fmt.Errorf(codes.UnknownFileType), nil
+	}
+
+	if !models.FileValidateTarget(target) {
+		return nil, fmt.Errorf(codes.IncorrectData), nil
+	}
+
+	nameUnique, fsFullDir, pathCategorized, err := fu.GenerateUploadFilename(name, fileType)
+	if err != nil {
+		logrus.Infof("Error while uploding file %s: %s", name, err.Error())
+		return nil, fmt.Errorf(codes.IncorrectData), nil
+	}
+
+	// recursively create destination folder
+	if err := os.MkdirAll(fsFullDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf(codes.IncorrectData), err
+	}
+
+	// create dir and write file
+	if out, err := os.Create(filepath.Join(fsFullDir, nameUnique)); err != nil {
+		return nil, fmt.Errorf(codes.IncorrectData), err
+	} else {
+		defer out.Close()
+
+		if _, err = out.WriteString(content.String()); err != nil {
+			return nil, fmt.Errorf(codes.IncorrectData), err
+		}
+	}
+
+	dbEntry := models.File{
+		User:     user,
+		Mime:     mime,
+		FullPath: filepath.Join(pathCategorized, nameUnique),
+		Name:     nameUnique,
+		Path:     pathCategorized,
+		OrigName: name,
+		Url:      fmt.Sprintf("REMOTE_CURRENT://%s/%s", pathCategorized, nameUnique),
+		Size:     int(size),
+		Type:     fileType,
+	}
+
+	fu.FillMetadata(&dbEntry)
+	fu.file.Save(&dbEntry)
+
+	return &dbEntry, nil, nil
 }

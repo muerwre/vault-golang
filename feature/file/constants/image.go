@@ -18,15 +18,6 @@ const (
 	ImagePresetSmallHero string = "small_hero"
 )
 
-var ImagePresetNames = []string{
-	ImagePreset1600,
-	ImagePreset600,
-	ImagePreset300,
-	ImagePresetAvatar,
-	ImagePresetCover,
-	ImagePresetSmallHero,
-}
-
 const (
 	FileTypeImage string = "image"
 	FileTypeAudio string = "audio"

@@ -6,7 +6,7 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	constants2 "github.com/muerwre/vault-golang/feature/file/constants"
-	"github.com/muerwre/vault-golang/feature/file/controller"
+	usecase2 "github.com/muerwre/vault-golang/feature/file/usecase"
 	"github.com/muerwre/vault-golang/feature/oauth/constants"
 	request2 "github.com/muerwre/vault-golang/feature/oauth/request"
 	"github.com/muerwre/vault-golang/feature/oauth/usecase"
@@ -20,9 +20,9 @@ import (
 )
 
 type OAuthController struct {
-	oauth          usecase.OauthUsecase
-	user           userUsecase.UserUsecase
-	fileController *controller.FileController
+	oauth usecase.OauthUsecase
+	user  userUsecase.UserUsecase
+	file  usecase2.FileUseCase
 }
 
 // TODO: reply to errors via c.HTML in endpoints, which opened in modals
@@ -30,6 +30,7 @@ type OAuthController struct {
 func (oc *OAuthController) Init(db db.DB, config app.Config) *OAuthController {
 	oc.oauth = *new(usecase.OauthUsecase).Init(db, config)
 	oc.user = *new(userUsecase.UserUsecase).Init(db)
+	oc.file = *new(usecase2.FileUseCase).Init(db, config)
 	return oc
 }
 
@@ -220,7 +221,7 @@ func (oc OAuthController) Login(c *gin.Context) {
 
 	if url := claim.Data.Fetched.Photo; url != "" {
 		// TODO: check it
-		if photo, err := oc.fileController.UploadRemotePic(url, models.FileTargetProfiles, constants2.FileTypeImage, user); err == nil {
+		if photo, err := oc.file.UploadRemotePic(url, models.FileTargetProfiles, constants2.FileTypeImage, user); err == nil {
 			oc.user.UpdateUserPhoto(user, photo)
 		}
 	}
