@@ -2,9 +2,9 @@ package tagUsecase
 
 import (
 	"fmt"
-	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	response2 "github.com/muerwre/vault-golang/feature/search/response"
+	"github.com/muerwre/vault-golang/feature/tag/repository"
 	"github.com/muerwre/vault-golang/feature/tag/utils"
 	"github.com/muerwre/vault-golang/models"
 	"net/url"
@@ -13,13 +13,11 @@ import (
 )
 
 type TagUsecase struct {
-	db   db.DB
-	conf app.Config
+	tag repository.TagRepository
 }
 
-func (uc *TagUsecase) Init(db db.DB, conf app.Config) *TagUsecase {
-	uc.db = db
-	uc.conf = conf
+func (uc *TagUsecase) Init(db db.DB) *TagUsecase {
+	uc.tag = *db.Tag
 	return uc
 }
 
@@ -28,7 +26,7 @@ func (uc TagUsecase) GetTagByName(name string) (tag *models.Tag, err error) {
 		return nil, fmt.Errorf("attempting to fetch empty tag")
 	}
 
-	return uc.db.Tag.GetByName(name)
+	return uc.tag.GetByName(name)
 }
 
 func (uc TagUsecase) GetNodesOfTag(tag models.Tag, limit string, offset string) ([]response2.SearchNodeResponseNode, int, error) {
@@ -42,7 +40,7 @@ func (uc TagUsecase) GetNodesOfTag(tag models.Tag, limit string, offset string) 
 		o = 0
 	}
 
-	nodes, count, err := uc.db.Tag.GetNodesOfTag(tag, l, o)
+	nodes, count, err := uc.tag.GetNodesOfTag(tag, l, o)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -62,7 +60,7 @@ func (uc TagUsecase) GetTagsForAutocomplete(s string) ([]string, error) {
 		return nil, nil
 	}
 
-	tags, err := uc.db.Tag.GetLike(search)
+	tags, err := uc.tag.GetLike(search)
 
 	if err != nil {
 		return nil, err
@@ -88,7 +86,7 @@ func (uc TagUsecase) FindOrCreateTags(titles []string) ([]*models.Tag, error) {
 	}
 
 	// load tags
-	tags, err := uc.db.Tag.FindTagsByTitleList(titles)
+	tags, err := uc.tag.FindTagsByTitleList(titles)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +94,7 @@ func (uc TagUsecase) FindOrCreateTags(titles []string) ([]*models.Tag, error) {
 	// create missed tags
 	for _, v := range titles {
 		if !utils.TagArrayContains(tags, v) && len(v) > 0 {
-			if tag, err := uc.db.Tag.CreateTagFromTitle(v); err == nil {
+			if tag, err := uc.tag.CreateTagFromTitle(v); err == nil {
 				tags = append(tags, tag)
 			}
 		}

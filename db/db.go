@@ -9,6 +9,7 @@ import (
 	nodeRepository "github.com/muerwre/vault-golang/feature/node/repository"
 	notificationRepository "github.com/muerwre/vault-golang/feature/notification/repository"
 	oauthRepository "github.com/muerwre/vault-golang/feature/oauth/repository"
+	"github.com/muerwre/vault-golang/feature/search/repository"
 	tagRepository "github.com/muerwre/vault-golang/feature/tag/repository"
 	userRepository "github.com/muerwre/vault-golang/feature/user/repository"
 	"github.com/muerwre/vault-golang/models"
@@ -28,6 +29,7 @@ type DB struct {
 	Message                *messageRepository.MessageRepository
 	Tag                    *tagRepository.TagRepository
 	NotificationRepository *notificationRepository.NotificationRepository
+	Search                 *repository.SearchRepository
 }
 
 func New() (*DB, error) {
@@ -78,5 +80,6 @@ func New() (*DB, error) {
 		Message:                new(messageRepository.MessageRepository).Init(db),
 		Tag:                    new(tagRepository.TagRepository).Init(db),
 		NotificationRepository: new(notificationRepository.NotificationRepository).Init(db),
+		Search:                 new(repository.SearchRepository).Init(db),
 	}, nil
 }

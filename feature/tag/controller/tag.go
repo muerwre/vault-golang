@@ -21,7 +21,7 @@ type TagController struct {
 func (tc *TagController) Init(db db.DB, conf app.Config) *TagController {
 	tc.db = db
 	tc.conf = conf
-	tc.tag = *new(usecase2.TagUsecase).Init(db, conf)
+	tc.tag = *new(usecase2.TagUsecase).Init(db)
 
 	return tc
 }

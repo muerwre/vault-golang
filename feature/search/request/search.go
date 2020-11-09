@@ -14,4 +14,12 @@ type SearchNodeRequest struct {
 func (r *SearchNodeRequest) Sanitize() {
 	re := regexp.MustCompile(`[^А-Яа-я\w\s-.,\!\?]+`)
 	r.Text = strings.TrimSpace(re.ReplaceAllString(r.Text, ""))
+
+	if r.Take <= 0 {
+		r.Take = 20
+	}
+
+	if r.Skip < 0 {
+		r.Skip = 0
+	}
 }
