@@ -22,6 +22,7 @@ type DB struct {
 	Tag                    *repository2.TagRepository
 	NotificationRepository *repository2.NotificationRepository
 	Search                 *repository2.SearchRepository
+	Comment                *repository2.CommentRepository
 }
 
 func New() (*DB, error) {
@@ -73,5 +74,6 @@ func New() (*DB, error) {
 		Tag:                    new(repository2.TagRepository).Init(db),
 		NotificationRepository: new(repository2.NotificationRepository).Init(db),
 		Search:                 new(repository2.SearchRepository).Init(db),
+		Comment:                new(repository2.CommentRepository).Init(db),
 	}, nil
 }

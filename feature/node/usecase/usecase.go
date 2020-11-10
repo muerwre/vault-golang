@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/db/models"
 	repository2 "github.com/muerwre/vault-golang/db/repository"
@@ -18,17 +17,19 @@ import (
 )
 
 type NodeUsecase struct {
-	db       db.DB // TODO: remove, use usecases:
 	notifier notification.NotificationService
 	node     repository2.NodeRepository
 	file     repository2.FileRepository
+	comment  repository2.CommentRepository
+	nodeView repository2.NodeViewRepository
 }
 
 func (nu *NodeUsecase) Init(db db.DB, notifier notification.NotificationService) *NodeUsecase {
-	nu.db = db // TODO: remove, use usecases:
 	nu.notifier = notifier
-	nu.node = *new(repository2.NodeRepository).Init(db.DB)
-	nu.file = *new(repository2.FileRepository).Init(db.DB)
+	nu.node = *db.Node
+	nu.file = *db.File
+	nu.comment = *db.Comment
+	nu.nodeView = *db.NodeView
 	return nu
 }
 
@@ -49,22 +50,12 @@ func (nu NodeUsecase) UpdateCommentFiles(data *models.Comment, comment *models.C
 
 	// Loading that files
 	if len(data.FilesOrder) > 0 {
-		ids, _ := data.FilesOrder.Value()
-
-		comment.Files = make([]*models.File, 0)
-
-		query := nu.db.
-			Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
-			Find(
-				&comment.Files,
-				"id IN (?) AND TYPE IN (?)",
-				[]uint(data.FilesOrder),
-				constants.CommentFileTypes,
-			)
-
-		if query.Error != nil {
-			return nil, query.Error
+		files, err := nu.file.GetByIdList(data.FilesOrder, constants.CommentFileTypes)
+		if err != nil {
+			return nil, err
 		}
+
+		comment.Files = files
 
 		for i := 0; i < len(comment.Files); i += 1 { // TODO: limit files count
 			comment.FilesOrder = append(comment.FilesOrder, comment.Files[i].ID)
@@ -85,15 +76,11 @@ func (nu NodeUsecase) UpdateCommentFiles(data *models.Comment, comment *models.C
 }
 
 func (nu *NodeUsecase) SetFilesTarget(files []uint, target string) {
-	if len(files) > 0 {
-		nu.db.Model(&models.File{}).Where("id IN (?)", []uint(files)).Update("target", target)
-	}
+	nu.file.SetFilesTarget(files, target)
 }
 
 func (nu *NodeUsecase) UnsetFilesTarget(files []uint) {
-	if len(files) > 0 {
-		nu.db.Model(&models.File{}).Where("id IN (?)", files).Update("target", nil)
-	}
+	nu.file.UnsetFilesTarget(files)
 }
 
 func (nu *NodeUsecase) ValidateAndUpdateCommentText(data *models.Comment, comment *models.Comment) error {
@@ -111,24 +98,30 @@ func (nu *NodeUsecase) ValidateAndUpdateCommentText(data *models.Comment, commen
 }
 
 func (nu *NodeUsecase) LoadCommentFromData(id uint, node *models.Node, user *models.User) (*models.Comment, error) {
-	comment := &models.Comment{
-		Files: make([]*models.File, 0),
-	}
-
 	if id != 0 {
-		nu.db.Preload("User").Preload("User.Photo").First(&comment, "id = ?", id)
+		comment, err := nu.comment.LoadCommentWithUserAndPhoto(id)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if *comment.NodeID != node.ID || !comment.CanBeEditedBy(user) {
+			return nil, fmt.Errorf(codes.NotEnoughRights)
+		}
+
+		return comment, nil
 	} else {
+		comment := &models.Comment{
+			Files: make([]*models.File, 0),
+		}
+
 		comment.Node = node
 		comment.NodeID = &node.ID
 		comment.User = user
 		comment.UserID = &user.ID
-	}
 
-	if *comment.NodeID != node.ID || !comment.CanBeEditedBy(user) {
-		return nil, fmt.Errorf(codes.NotEnoughRights)
+		return comment, nil
 	}
-
-	return comment, nil
 }
 
 func (nu NodeUsecase) UpdateFilesMetadata(data []*models.File, comment []*models.File) {
@@ -152,17 +145,14 @@ func (nu NodeUsecase) UpdateFilesMetadata(data []*models.File, comment []*models
 }
 
 func (nu NodeUsecase) UpdateNodeCoverIfChanged(data models.Node, node *models.Node) error {
-	// ValidatePatchRequest node cover
 	if data.Cover != nil {
-		node.Cover = &models.File{}
-
-		query := nu.db.First(node.Cover, "id = ?", data.Cover.ID)
-
-		if query.Error != nil {
-			return query.Error
+		cover, err := nu.file.GetById(data.Cover.ID)
+		if err != nil {
+			return err
 		}
 
-		node.CoverID = &node.Cover.ID
+		node.Cover = cover
+		node.CoverID = &cover.ID
 	} else {
 		node.Cover = nil
 		node.CoverID = nil
@@ -196,29 +186,37 @@ func (nu NodeUsecase) UpdateNodeBlocks(data models.Node, node *models.Node) erro
 }
 
 func (nu NodeUsecase) LoadNodeFromData(data models.Node, u *models.User) (*models.Node, error) {
-	node := &models.Node{}
-
 	if data.ID != 0 {
-		nu.db.Preload("User").Preload("User.Photo").First(&node, "id = ?", data.ID)
-		node.Cover = nil
+		node, err := nu.node.GetNodeWithUser(data.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		if node.Type == "" || !constants.FLOW_NODE_TYPES.Contains(node.Type) {
+			return nil, fmt.Errorf(codes.IncorrectType)
+		}
+
+		if !node.CanBeEditedBy(u) {
+			return nil, fmt.Errorf(codes.NotEnoughRights)
+		}
+
+		return node, nil
 	} else {
-		node.User = u
-		node.UserID = &u.ID
-		node.Type = data.Type
-		node.IsPublic = true
-		node.IsPromoted = true
-		node.Tags = make([]*models.Tag, 0)
-	}
+		if data.Type == "" || !constants.FLOW_NODE_TYPES.Contains(data.Type) {
+			return nil, fmt.Errorf(codes.IncorrectType)
+		}
 
-	if node.Type == "" || !constants.FLOW_NODE_TYPES.Contains(node.Type) {
-		return nil, fmt.Errorf(codes.IncorrectType)
-	}
+		node := &models.Node{
+			User:       u,
+			UserID:     &u.ID,
+			Type:       data.Type,
+			IsPublic:   true,
+			IsPromoted: true,
+			Tags:       make([]*models.Tag, 0),
+		}
 
-	if !node.CanBeEditedBy(u) {
-		return nil, fmt.Errorf(codes.NotEnoughRights)
+		return node, nil
 	}
-
-	return node, nil
 }
 
 func (nu NodeUsecase) UpdateNodeFiles(data models.Node, node *models.Node) ([]uint, error) {
@@ -238,19 +236,13 @@ func (nu NodeUsecase) UpdateNodeFiles(data models.Node, node *models.Node) ([]ui
 	}
 
 	if len(data.FilesOrder) > 0 {
-		ids, _ := data.FilesOrder.Value()
+		files, err := nu.file.GetByIdList(data.FilesOrder, constants.NodeFileTypes)
 
-		data.Files = make([]*models.File, 0)
-
-		query := nu.db.
-			Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
-			Find(&data.Files, "id IN (?)", []uint(data.FilesOrder))
-
-		if query.Error != nil {
-			return nil, query.Error
+		if err != nil {
+			return nil, err
 		}
 
-		node.ApplyFiles(data.Files)
+		node.ApplyFiles(files)
 	} else {
 		node.Files = make([]*models.File, 0)
 		node.FilesOrder = make(models.CommaUintArray, 0)
@@ -277,7 +269,7 @@ func (nu NodeUsecase) UnsetNodeCoverTarget(data models.Node, node *models.Node) 
 func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.Comment) {
 	if node.Description == "" && *comment.UserID == *node.UserID && len(comment.Text) >= 64 {
 		node.Description = comment.Text
-		nu.db.Model(&models.Node{}).Where("id = ?", node.ID).Update("description", comment.Text)
+		_ = nu.node.UpdateDecription(node.ID, comment.Text)
 	}
 }
 
@@ -285,27 +277,22 @@ func (nu NodeUsecase) UpdateNodeCommentedAt(nid uint) {
 	lastComment, _ := nu.node.GetNodeLastComment(nid)
 
 	if lastComment == nil {
-		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", nil)
+		_ = nu.node.UpdateCommentedAt(nid, nil)
 	} else {
-		nu.db.Model(&models.Node{}).Where("id = ?", nid).Update("commented_at", lastComment.CreatedAt)
+		_ = nu.node.UpdateCommentedAt(nid, &lastComment.CreatedAt)
 	}
 }
 
 func (nu NodeUsecase) UpdateNodeSeen(nid uint, uid uint) {
-	nu.db.NodeView.UpdateView(uid, nid)
+	nu.nodeView.UpdateView(uid, nid)
 }
 
 func (nu NodeUsecase) DeleteComment(comment *models.Comment) error {
-	return nu.db.Delete(&comment).Error
+	return nu.comment.Delete(comment)
 }
 
 func (nu NodeUsecase) RestoreComment(comment *models.Comment) error {
-	comment.DeletedAt = nil
-
-	return nu.db.Model(&comment).
-		Unscoped().
-		Where("id = ?", comment.ID).
-		Update("deletedAt", nil).Error
+	return nu.comment.UnDelete(comment)
 }
 
 func (nu NodeUsecase) SeparateNodeTags(tags []*models.Tag) ([]uint, []uint) {
@@ -329,8 +316,8 @@ func (nu NodeUsecase) GetNodeRelated(nid uint) (*response.NodeRelatedResponse, e
 		Similar: []models.NodeRelatedItem{},
 	}
 
-	node := &models.Node{}
-	if err := nu.db.Preload("Tags").First(&node, "id = ?", nid).Error; err != nil || len(node.Tags) == 0 {
+	node, err := nu.node.GetWithTags(nid)
+	if err != nil || len(node.Tags) == 0 {
 		return related, nil
 	}
 
@@ -361,11 +348,12 @@ func (nu NodeUsecase) PushNodeNotification(node models.Node, t string) error {
 		ItemId:    node.ID,
 	}
 
+	// TODO: add notifier FN for this
 	select {
 	case nu.notifier.Chan <- note:
 		return nil
 	default:
-		return fmt.Errorf("Can't push %s notification, chan closed", t)
+		return fmt.Errorf("can't push %s notification, chan closed", t)
 	}
 }
 
@@ -440,7 +428,7 @@ func (nu NodeUsecase) GetNodeWithLikesAndFiles(id int, role string, uid uint) (*
 
 	if uid != 0 {
 		node.IsLiked = nu.node.IsNodeLikedBy(node, uid)
-		nu.db.NodeView.UpdateView(uid, node.ID)
+		nu.nodeView.UpdateView(uid, node.ID)
 	}
 
 	node.LikeCount = nu.node.GetNodeLikeCount(node)
