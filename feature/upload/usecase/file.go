@@ -23,19 +23,21 @@ import (
 )
 
 type FileUseCase struct {
-	config app.Config
-	file   repository.FileRepository
+	uploadPath      string
+	uploadMaxSizeMb int
+	file            repository.FileRepository
 }
 
 func (fu *FileUseCase) Init(db db.DB, config app.Config) *FileUseCase {
-	fu.config = config
+	fu.uploadPath = config.UploadPath
+	fu.uploadMaxSizeMb = config.UploadMaxSizeMb
 	fu.file = *new(repository.FileRepository).Init(db.DB)
 	return fu
 }
 
 // FillMetadataAudio fills Audio file metadata
 func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
-	p := filepath.Join(fu.config.UploadPath, f.Path, f.Name)
+	p := filepath.Join(fu.uploadPath, f.Path, f.Name)
 
 	duration := audio.GetAudioDurationFromPath(p)
 	artist, title := audio.GetAudioArtistTitleFromPath(p)
@@ -57,7 +59,7 @@ func (fu FileUseCase) FillMetadataAudio(f *models.File) error {
 func (fu FileUseCase) FillMetadataImage(f *models.File) error {
 	var path string
 
-	file, err := os.Stat(filepath.Join(fu.config.UploadPath, f.Path))
+	file, err := os.Stat(filepath.Join(fu.uploadPath, f.Path))
 
 	if err != nil {
 		return err
@@ -65,9 +67,9 @@ func (fu FileUseCase) FillMetadataImage(f *models.File) error {
 
 	switch mode := file.Mode(); {
 	case mode.IsDir():
-		path = filepath.Join(fu.config.UploadPath, f.Path, f.Name)
+		path = filepath.Join(fu.uploadPath, f.Path, f.Name)
 	case mode.IsRegular():
-		path = filepath.Join(fu.config.UploadPath, f.Path)
+		path = filepath.Join(fu.uploadPath, f.Path)
 	}
 
 	if reader, err := os.Open(path); err == nil {
@@ -121,13 +123,8 @@ func (fu FileUseCase) UpdateFileMetadataIfNeeded(files []*models.File) []*models
 	return files
 }
 
-//
-//func (fu FileUseCase) SaveFile(file *models.File) error {
-//	return fu.file.Save(file)
-//}
-
 func (fu FileUseCase) CheckFileUploadSize(size int) error {
-	if size > fu.config.UploadMaxSizeMb {
+	if size > fu.uploadMaxSizeMb {
 		return fmt.Errorf("file is too big for upload")
 	}
 
@@ -153,7 +150,7 @@ func (fu FileUseCase) GenerateUploadFilename(name string, fileType string) (name
 	fileName := cleanedSafeName[:len(cleanedSafeName)-len(fileExt)]
 
 	nameUnique = fmt.Sprintf("%s-%d%s", fileName, time.Now().Unix(), fileExt)
-	fsFullDir = filepath.Join(fu.config.UploadPath, pathCategorized)
+	fsFullDir = filepath.Join(fu.uploadPath, pathCategorized)
 
 	return nameUnique, fsFullDir, pathCategorized, nil
 }
