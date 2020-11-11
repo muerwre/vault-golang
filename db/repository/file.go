@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/db/models"
 )
@@ -61,4 +62,36 @@ func (fr FileRepository) GetById(id uint) (*models.File, error) {
 	query := fr.db.First(&file, "id = ?", id)
 
 	return file, query.Error
+}
+
+func (fr FileRepository) GetByIdList(order models.CommaUintArray, types []string) ([]*models.File, error) {
+	ids, _ := order.Value()
+	files := make([]*models.File, 0)
+
+	err := fr.db.
+		Order(gorm.Expr(fmt.Sprintf("FIELD(id, %s)", ids))).
+		Find(
+			&files,
+			"id IN (?) AND TYPE IN (?)",
+			[]uint(order),
+			types,
+		).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func (fr FileRepository) SetFilesTarget(files []uint, target string) {
+	if len(files) > 0 {
+		fr.db.Model(&models.File{}).Where("id IN (?)", files).Update("target", target)
+	}
+}
+
+func (fr FileRepository) UnsetFilesTarget(files []uint) {
+	if len(files) > 0 {
+		fr.db.Model(&models.File{}).Where("id IN (?)", files).Update("target", nil)
+	}
 }

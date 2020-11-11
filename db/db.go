@@ -13,7 +13,7 @@ type DB struct {
 	*gorm.DB
 
 	Node                   *repository2.NodeRepository
-	User                   *UserRepository
+	User                   *repository2.UserRepository
 	File                   *repository2.FileRepository
 	Meta                   *repository2.MetaRepository
 	Social                 *repository2.OauthRepository
@@ -22,6 +22,8 @@ type DB struct {
 	Tag                    *repository2.TagRepository
 	NotificationRepository *repository2.NotificationRepository
 	Search                 *repository2.SearchRepository
+	Comment                *repository2.CommentRepository
+	MessageView            *repository2.MessageViewRepository
 }
 
 func New() (*DB, error) {
@@ -64,7 +66,7 @@ func New() (*DB, error) {
 	return &DB{
 		DB:                     db,
 		Node:                   new(repository2.NodeRepository).Init(db),
-		User:                   new(UserRepository).Init(db),
+		User:                   new(repository2.UserRepository).Init(db),
 		File:                   new(repository2.FileRepository).Init(db),
 		Meta:                   new(repository2.MetaRepository).Init(db),
 		Social:                 new(repository2.OauthRepository).Init(db),
@@ -73,5 +75,7 @@ func New() (*DB, error) {
 		Tag:                    new(repository2.TagRepository).Init(db),
 		NotificationRepository: new(repository2.NotificationRepository).Init(db),
 		Search:                 new(repository2.SearchRepository).Init(db),
+		Comment:                new(repository2.CommentRepository).Init(db),
+		MessageView:            new(repository2.MessageViewRepository).Init(db),
 	}, nil
 }
