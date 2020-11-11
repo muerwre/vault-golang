@@ -42,7 +42,7 @@ func (or *OauthRouter) Handle(r *gin.RouterGroup) *OauthRouter {
 		router.DELETE("/:id", or.api.AuthRequired, or.controller.Delete)
 	}
 
-	authenticated := r.Group("/", or.api.AuthRequired)
+	authenticated := r.Group("/", or.api.AuthRequired, or.api.WithUser(false))
 	{
 		authenticated.GET("/", or.controller.List)
 	}
