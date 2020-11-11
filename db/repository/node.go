@@ -420,3 +420,23 @@ func (nr NodeRepository) UpdateNodeIsHeroic(node *models.Node, isHeroic bool) er
 func (nr NodeRepository) UpdateNodeFlow(node *models.Node, flow models.NodeFlow) error {
 	return nr.db.Model(&node).Update("flow", flow).Error
 }
+
+func (nr NodeRepository) GetNodeWithUser(id uint) (*models.Node, error) {
+	node := &models.Node{}
+	err := nr.db.Preload("User").Preload("User.Photo").First(&node, "id = ?", id).Error
+	return node, err
+}
+
+func (nr NodeRepository) UpdateDecription(id uint, text string) error {
+	return nr.db.Model(&models.Node{}).Where("id = ?", id).Update("description", text).Error
+}
+
+func (nr NodeRepository) UpdateCommentedAt(id uint, time *time.Time) error {
+	return nr.db.Model(&models.Node{}).Where("id = ?", id).Update("commented_at", time).Error
+}
+
+func (nr NodeRepository) GetWithTags(id uint) (*models.Node, error) {
+	node := &models.Node{}
+	err := nr.db.Preload("Tags").First(&node, "id = ?", id).Error
+	return node, err
+}
