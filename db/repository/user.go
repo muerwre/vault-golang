@@ -132,19 +132,3 @@ func (ur UserRepository) UpdateLastSeen(user *models.User) {
 func (ur UserRepository) UpdatePhoto(uid uint, photoId uint) error {
 	return ur.db.Model(&models.User{}).Where("id = ?", uid).Update("photoId", photoId).Error
 }
-
-func (ur UserRepository) GetFlowWatchers() ([]uint, error) {
-	var users []*models.NotificationSettings
-
-	if err := ur.db.Model(&models.NotificationSettings{}).Where("subscribed_to_flow = ?", true).Find(&users).Error; err != nil {
-		return nil, err
-	}
-
-	ids := make([]uint, len(users))
-
-	for k, v := range users {
-		ids[k] = *v.UserID
-	}
-
-	return ids, nil
-}

@@ -7,8 +7,7 @@ import (
 )
 
 func (n NotificationServiceUsecase) OnNodeCreate(item dto.NotificationDto) {
-	// TODO: fetch recipients here
-	recipients, err := n.user.GetFlowWatchers()
+	recipients, err := n.notificationSettings.GetFlowWatchers()
 
 	if err != nil {
 		logrus.Warnf("Can't get watchers for node %d", item.ItemId)

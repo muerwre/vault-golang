@@ -10,6 +10,6 @@ type NotificationUsecase struct {
 }
 
 func (u *NotificationUsecase) Init(db db.DB) *NotificationUsecase {
-	u.notification = *db.NotificationRepository
+	u.notification = *db.Notification
 	return u
 }
