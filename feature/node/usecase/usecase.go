@@ -9,7 +9,9 @@ import (
 	"github.com/muerwre/vault-golang/feature/node/response"
 	validation2 "github.com/muerwre/vault-golang/feature/node/validation"
 	fileConstants "github.com/muerwre/vault-golang/feature/upload/constants"
-	"github.com/muerwre/vault-golang/service/notification"
+	constants2 "github.com/muerwre/vault-golang/service/notification/constants"
+	"github.com/muerwre/vault-golang/service/notification/controller"
+	"github.com/muerwre/vault-golang/service/notification/dto"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"sync"
@@ -17,14 +19,14 @@ import (
 )
 
 type NodeUsecase struct {
-	notifier notification.NotificationService
+	notifier controller.NotificationService
 	node     repository2.NodeRepository
 	file     repository2.FileRepository
 	comment  repository2.CommentRepository
 	nodeView repository2.NodeViewRepository
 }
 
-func (nu *NodeUsecase) Init(db db.DB, notifier notification.NotificationService) *NodeUsecase {
+func (nu *NodeUsecase) Init(db db.DB, notifier controller.NotificationService) *NodeUsecase {
 	nu.notifier = notifier
 	nu.node = *db.Node
 	nu.file = *db.File
@@ -341,7 +343,7 @@ func (nu NodeUsecase) GetNodeRelated(nid uint) (*response.NodeRelatedResponse, e
 }
 
 func (nu NodeUsecase) PushNodeNotification(node models.Node, t string) error {
-	note := &notification.NotifierItem{
+	note := &dto.NotificationDto{
 		CreatedAt: node.CreatedAt,
 		Timestamp: time.Now(),
 		Type:      t,
@@ -358,15 +360,15 @@ func (nu NodeUsecase) PushNodeNotification(node models.Node, t string) error {
 }
 
 func (nu NodeUsecase) PushNodeCreateNotification(node models.Node) error {
-	return nu.PushNodeNotification(node, notification.NotifierTypeNodeCreate)
+	return nu.PushNodeNotification(node, constants2.NotifierTypeNodeCreate)
 }
 
 func (nu NodeUsecase) PushNodeDeleteNotification(node models.Node) error {
-	return nu.PushNodeNotification(node, notification.NotifierTypeNodeDelete)
+	return nu.PushNodeNotification(node, constants2.NotifierTypeNodeDelete)
 }
 
 func (nu NodeUsecase) PushNodeRestoreNotification(node models.Node) error {
-	return nu.PushNodeNotification(node, notification.NotifierTypeNodeRestore)
+	return nu.PushNodeNotification(node, constants2.NotifierTypeNodeRestore)
 }
 
 func (nu NodeUsecase) PushNodeCreateNotificationIfNeeded(data models.Node, node models.Node) error {
@@ -388,7 +390,7 @@ func (nu NodeUsecase) PushCommentCreateNotificationIfNeeded(data models.Comment,
 }
 
 func (nu NodeUsecase) PushCommentNotification(comment models.Comment, t string) error {
-	note := &notification.NotifierItem{
+	note := &dto.NotificationDto{
 		CreatedAt: comment.CreatedAt,
 		Timestamp: time.Now(),
 		Type:      t,
@@ -404,15 +406,15 @@ func (nu NodeUsecase) PushCommentNotification(comment models.Comment, t string) 
 }
 
 func (nu NodeUsecase) PushCommentCreateNotification(comment models.Comment) error {
-	return nu.PushCommentNotification(comment, notification.NotifierTypeCommentCreate)
+	return nu.PushCommentNotification(comment, constants2.NotifierTypeCommentCreate)
 }
 
 func (nu NodeUsecase) PushCommentDeleteNotification(comment models.Comment) error {
-	return nu.PushCommentNotification(comment, notification.NotifierTypeCommentDelete)
+	return nu.PushCommentNotification(comment, constants2.NotifierTypeCommentDelete)
 }
 
 func (nu NodeUsecase) PushCommentRestoreNotification(comment models.Comment) error {
-	return nu.PushCommentNotification(comment, notification.NotifierTypeCommentRestore)
+	return nu.PushCommentNotification(comment, constants2.NotifierTypeCommentRestore)
 }
 
 func (nu NodeUsecase) GetNodeWithLikesAndFiles(id int, role string, uid uint) (*models.Node, error) {

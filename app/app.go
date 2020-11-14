@@ -3,14 +3,14 @@ package app
 import (
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/service/mail"
-	"github.com/muerwre/vault-golang/service/notification"
+	"github.com/muerwre/vault-golang/service/notification/controller"
 )
 
 type App struct {
 	Config   *Config
 	DB       *db.DB
 	Mailer   *mail.MailService
-	Notifier *notification.NotificationService
+	Notifier *controller.NotificationService
 }
 
 func New() (app *App, err error) {
@@ -24,7 +24,7 @@ func New() (app *App, err error) {
 		return nil, err
 	}
 
-	app.Notifier = new(notification.NotificationService).Init(*app.DB)
+	app.Notifier = new(controller.NotificationService).Init(*app.DB)
 
 	if app.Config.SmtpHost != "" {
 		app.Mailer = new(mail.MailService).Init(&mail.MailerConfig{

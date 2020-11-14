@@ -5,7 +5,7 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	"github.com/muerwre/vault-golang/feature/node/controller"
-	"github.com/muerwre/vault-golang/service/notification"
+	controller2 "github.com/muerwre/vault-golang/service/notification/controller"
 	"github.com/muerwre/vault-golang/utils"
 )
 
@@ -14,7 +14,7 @@ type FlowRouter struct {
 	api  utils.AppApi
 }
 
-func (fr *FlowRouter) Init(api utils.AppApi, db db.DB, config app.Config, notifier notification.NotificationService) {
+func (fr *FlowRouter) Init(api utils.AppApi, db db.DB, config app.Config, notifier controller2.NotificationService) {
 	fr.api = api
 	fr.node = *new(controller.NodeController).Init(db, config, notifier)
 }

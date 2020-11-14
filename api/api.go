@@ -16,7 +16,7 @@ import (
 	uploadRouting "github.com/muerwre/vault-golang/feature/upload/routing"
 	userRouting "github.com/muerwre/vault-golang/feature/user/routing"
 	"github.com/muerwre/vault-golang/service/mail"
-	"github.com/muerwre/vault-golang/service/notification"
+	"github.com/muerwre/vault-golang/service/notification/controller"
 )
 
 type API struct {
@@ -25,7 +25,7 @@ type API struct {
 	app      *app.App
 	db       db.DB
 	mailer   mail.MailService
-	notifier notification.NotificationService
+	notifier controller.NotificationService
 
 	node               *nodeRouting.NodeRouter
 	user               *userRouting.UserRouter
