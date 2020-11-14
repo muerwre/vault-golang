@@ -188,7 +188,7 @@ func (nu NodeUsecase) UpdateNodeBlocks(data models.Node, node *models.Node) erro
 }
 
 func (nu NodeUsecase) LoadNodeFromData(data models.Node, u *models.User) (*models.Node, error) {
-	if data.ID != 0 {
+	if data.Model != nil && data.ID != 0 {
 		node, err := nu.node.GetNodeWithUser(data.ID)
 		if err != nil {
 			return nil, err

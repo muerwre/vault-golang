@@ -40,10 +40,10 @@ func (s StringArray) Value() (driver.Value, error) {
 }
 
 func (s *CommaUintArray) Scan(src interface{}) error {
-	strings := strings.Split(string(src.([]byte)), ",")
+	strs := strings.Split(string(src.([]byte)), ",")
 	var numbers []uint
 
-	for _, k := range strings {
+	for _, k := range strs {
 		val, err := strconv.ParseUint(k, 10, 32)
 
 		if err == nil {
