@@ -29,3 +29,25 @@ func (nr NotificationSettingsRepository) GetFlowWatchers() ([]uint, error) {
 
 	return ids, nil
 }
+
+func (nr NotificationSettingsRepository) UpdateSettings(uid uint, ns *models.NotificationSettings) (*models.NotificationSettings, error) {
+	settings := &models.NotificationSettings{
+		UserID: &uid,
+	}
+	nr.db.FirstOrCreate(settings, "userID = ?", uid)
+
+	settings.SubscribedToFlow = ns.SubscribedToFlow
+	settings.SubscribedToComments = ns.SubscribedToComments
+
+	err := nr.db.Save(&settings).Error
+
+	return settings, err
+}
+
+func (nr NotificationSettingsRepository) GetForUserId(uid uint) (*models.NotificationSettings, error) {
+	settings := &models.NotificationSettings{
+		UserID: &uid,
+	}
+	err := nr.db.FirstOrCreate(settings, "userID = ?", uid).Error
+	return settings, err
+}

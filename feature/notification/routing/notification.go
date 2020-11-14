@@ -15,7 +15,6 @@ type NotificationRouter struct {
 func (r *NotificationRouter) Init(api utils.AppApi, db db.DB) *NotificationRouter {
 	r.api = api
 	r.controller = *new(controller.NotificationController).Init(db)
-
 	return r
 }
 
@@ -27,6 +26,7 @@ func (r *NotificationRouter) Handle(g *gin.RouterGroup) *NotificationRouter {
 		node.DELETE("/:id", r.controller.NodeDelete)
 	}
 
+	g.GET("/", r.api.AuthRequired, r.controller.GetSettings)
 	g.POST("/", r.api.AuthRequired, r.controller.PostSettings)
 
 	return r

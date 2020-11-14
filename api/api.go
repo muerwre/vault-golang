@@ -37,7 +37,7 @@ type API struct {
 	oauth              *oauthRouting.OauthRouter
 	search             *searchRouting.SearchRouter
 	tag                *tagRouting.TagRouter
-	notificationRouter notificationRouting.NotificationRouter
+	notificationRouter *notificationRouting.NotificationRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -82,6 +82,7 @@ func (a *API) Init() *gin.Engine {
 	a.search = new(searchRouting.SearchRouter).Init(a, a.db).Handle(r.Group("/search"))
 	a.oauth = new(oauthRouting.OauthRouter).Init(a, a.db, a.Config).Handle(r.Group("/oauth"))
 	a.tag = new(tagRouting.TagRouter).Init(a, a.db, a.Config).Handle(r.Group("/tag"))
+	a.notificationRouter = new(notificationRouting.NotificationRouter).Init(a, a.db).Handle(r.Group("/notifications"))
 
 	// TODO: do the same for:
 	a.stats = &statsRouting.StatsRouter{}
