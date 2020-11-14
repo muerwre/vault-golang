@@ -16,14 +16,22 @@ func (nc *NotificationController) Init(db db.DB) *NotificationController {
 	return nc
 }
 
+// PostSettings changes user subscription settings
+func (nc NotificationController) PostSettings(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// NodeGet returns node notification subscription status
 func (nc NotificationController) NodeGet(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func (nc NotificationController) NodeWatch(c *gin.Context) {
+// NodePost creates node notification subscription
+func (nc NotificationController) NodePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func (nc NotificationController) NodeUnwatch(c *gin.Context) {
+// NodeDelete removes node notification subscription
+func (nc NotificationController) NodeDelete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
