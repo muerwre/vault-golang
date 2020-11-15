@@ -39,7 +39,7 @@ steps:
         from_secret: rsync_key
       RSYNC_USER:
         from_secret: rsync_user
-      PLUGIN_ARGS: -zz
+      PLUGIN_ARGS: -zz -O
     settings:
       port: 22522
       hosts:
