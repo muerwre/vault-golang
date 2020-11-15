@@ -54,7 +54,7 @@ steps:
       envs: [rsync_path_develop]
       port: 22522
       script:
-        - echo ${{RSYNC_PATH}} /tmp/drone/7.log
+        - echo $${RSYNC_PATH} /tmp/drone/7.log
         - tar -xf /tmp/vault-staging-backend/app.tar -C $${RSYNC_PATH}
 #        - cd /tmp/vault-staging-backend/
 #        - cp -a /tmp/vault-staging-backend/ $${RSYNC_PATH}
