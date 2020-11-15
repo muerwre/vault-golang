@@ -51,7 +51,7 @@ steps:
       include:
         - "app.tar"
       exclude:
-        - "**.*"
+        - "*"
       script:
         - cd ~/packages
         - tar -xf app.tar -C ~/app
