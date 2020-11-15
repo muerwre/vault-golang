@@ -1,0 +1,36 @@
+---
+# Build
+kind: pipeline
+name: build
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: build-test
+    image: golang:1.15
+    commands:
+      - go mod download
+      - make build
+---
+# Deploy
+kind: pipeline
+name: deploy
+
+depends_on:
+  - build
+
+trigger:
+  status:
+    - success
+
+steps:
+  - name: deploy-develop
+    image: python:3.7.2
+    commands:
+      - echo "HI"
+    when:
+      branch: master
+      event:
+        - push
