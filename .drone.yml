@@ -13,28 +13,34 @@ steps:
     commands:
       - go mod download
       - make build
----
-# Deploy
-kind: pipeline
-name: deploy
+  -  name: deploy-dev
+     image: golang:1.15
+     commands:
+       - echo "HI"
 
-depends_on:
-  - build
-
-trigger:
-  status:
-    - success
-environment:
-  env:
-    from_secret: VAULT_STAGING_BACKEND_ENV
-steps:
-  - name: deploy-develop
-    image: python:3.7.2
-    commands:
-      - echo "HI"
-      - echo "SECRET IS: ${VAULT_STAGING_BACKEND_ENV}"
-      - echo $VAULT_STAGING_BACKEND_ENV
-    when:
-      branch: master
-      event:
-        - push
+#
+#---
+## Deploy
+#kind: pipeline
+#name: deploy
+#
+#depends_on:
+#  - build
+#
+#trigger:
+#  status:
+#    - success
+#environment:
+#  env:
+#    from_secret: VAULT_STAGING_BACKEND_ENV
+#steps:
+#  - name: deploy-develop
+#    image: python:3.7.2
+#    commands:
+#      - echo "HI"
+#      - echo "SECRET IS: ${VAULT_STAGING_BACKEND_ENV}"
+#      - echo $VAULT_STAGING_BACKEND_ENV
+#    when:
+#      branch: master
+#      event:
+#        - push
