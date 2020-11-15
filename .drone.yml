@@ -40,7 +40,7 @@ steps:
 #        - cd /tmp/vault-staging-backend/
 #        - docker-compose build
 #        - docker-compose up -d
-        - tar -xf ./app.tar -C ./
+#        - tar -xf ./app.tar -C ./
   - name: build
     image: appleboy/drone-ssh
     environment:
