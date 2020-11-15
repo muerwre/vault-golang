@@ -45,13 +45,13 @@ steps:
       host: vault48.org
       username: derek
       key:
-        from_secret: ssh_key
+        from_secret: rsync_key
       envs:
         - rsync_user
       port: 22522
       script:
         - mkdir /tmp/drone
         - export RSYNC_USER=$rsync_user
-        - echo $RSCYN_USER > /tmp/drone/1.log
+        - echo $RSYNC_USER > /tmp/drone/1.log
 
 
