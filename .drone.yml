@@ -8,7 +8,7 @@ platform:
 
 steps:
   - name: compress
-    image: golang:1.15
+    image: alpine
     commands:
       - rm -rf ./app.tar
       - tar -cjf ./app.tar -C ./ .
