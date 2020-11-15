@@ -11,8 +11,8 @@ steps:
     image: golang:1.15
     commands:
       - rm -rf ./app.tar
-      - tar -cvf ./app.tar -C ./ .
-  - name: upload-develop
+      - tar -cjf ./app.tar -C ./ .
+  - name: upload
     image: drillster/drone-rsync
     when:
       branch:
@@ -59,7 +59,7 @@ steps:
       port: 22522
       script:
         - mkdir -p $${BUILD_PATH}/${DRONE_BRANCH}
-        - tar -xf /tmp/vault-golang-${DRONE_BRANCH}/app.tar -C $${BUILD_PATH}/${DRONE_BRANCH}
+        - tar -xjf /tmp/vault-golang-${DRONE_BRANCH}/app.tar -C $${BUILD_PATH}/${DRONE_BRANCH}
         - cp -a $${ENV_PATH}/${DRONE_BRANCH}/. $${BUILD_PATH}/${DRONE_BRANCH}
         - cd $${BUILD_PATH}/${DRONE_BRANCH}
         - docker-compose build
