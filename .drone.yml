@@ -78,5 +78,5 @@ steps:
       format: markdown
       message: >
         {{#success build.status}}✅{{else}}❌{{/success}}
-        [{{ build.link }}](#{{build.number}} {{repo.name}}/{{commit.branch}})
+        [{{build.number}} {{repo.name}}/{{commit.branch}}]({{ build.link }})
         ```{{ commit.message }}```
