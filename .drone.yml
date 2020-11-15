@@ -38,14 +38,14 @@ steps:
         - "*"
       script:
 #        - cd /opt/deploys/drone/vault/staging/backend
-#        - tar -xf ./app.tar -C ./
 #        - docker-compose build
 #        - docker-compose up -d
+        - tar -xf ./app.tar -C ./
   - name: build
     image: appleboy/drone-ssh
     environment:
-      RSYNC_USER:
-        from_secret: rsync_user
+      RSYNC_PATH:
+        from_secret: rsync_path_develop
     settings:
       host: vault48.org
       username: derek
@@ -54,4 +54,5 @@ steps:
       envs: [rsync_user]
       port: 22522
       script:
-        - echo $${RSYNC_USER} > /tmp/drone/4.log
+        - cd $${RSYNC_USER}
+        - ls ./
