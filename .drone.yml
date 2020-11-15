@@ -60,9 +60,10 @@ steps:
       script_stop: true
       script:
         - mkdir -p $${BUILD_PATH}/${DRONE_BRANCH}
-        - tar -xjf /tmp/vault-golang-${DRONE_BRANCH}/app.tar.bz2 -C $${BUILD_PATH}/${DRONE_BRANCH}
-        - cp -a $${ENV_PATH}/${DRONE_BRANCH}/. $${BUILD_PATH}/${DRONE_BRANCH}
         - cd $${BUILD_PATH}/${DRONE_BRANCH}
+        - rm -rf ./*
+        - tar -xjf /tmp/vault-golang-${DRONE_BRANCH}/app.tar.bz2 -C ./
+        - cp -a $${ENV_PATH}/${DRONE_BRANCH}/. $${BUILD_PATH}/${DRONE_BRANCH}
         - docker-compose build
         - docker-compose up -d
   - name: telgram_notify
