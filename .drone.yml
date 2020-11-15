@@ -54,6 +54,7 @@ steps:
         - export RSYNC_USER=$rsync_user
         - echo $RSYNC_USER > /tmp/drone/1.log
         - echo $RSYNC_USER
+        - echo $rsync_user > /tmp/drone/2.log
 
 
 
