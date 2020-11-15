@@ -42,17 +42,13 @@ steps:
       source: ./
       user: ${rsync_user}
       key: ${rsync_key}
-      target: ~/packages
+      target: /opt/deploys/drone/vault/staging/backend
       include:
         - "app.tar"
       exclude:
         - "*"
       script:
-#        - cd ~/packages
-#        - tar -xf ~/packages/app.tar -C ~/app
-#        - echo $SOME_VAR > /tmp/4.log
-        - echo $SOME_VAR
-        - echo ${SOME_VAR}
-        - echo $${SOME_VAR}
+        - cd /opt/deploys/drone/vault/staging/backend
+        - tar -xf ./app.tar -C ./
 
 
