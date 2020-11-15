@@ -19,6 +19,13 @@ steps:
       - tar -rvf ./app.tar -C ./docker/vault wait-for-it.sh
       - tar -rvf ./app.tar -C ./ ./templates
       - ls ./
+    when:
+      branch: never
+  - name: compress
+    image: golang:1.15
+    commands:
+      - tar -cvf ./app.tar -C ./ .
+      - rm -rf ./app.tar
   - name: rsync
     image: drillster/drone-rsync
     environment:
