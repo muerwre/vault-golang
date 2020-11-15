@@ -27,7 +27,7 @@ steps:
       source: ./
       user: ${rsync_user}
       key: ${rsync_key}
-      target: /opt/deploys/drone/vault/staging/backend
+      target: /opt/deploys/drone/vault/staging/backend/${rsync_user}
       include:
         - "app.tar"
       exclude:
@@ -37,7 +37,6 @@ steps:
 #        - tar -xf ./app.tar -C ./
 #        - docker-compose build
 #        - docker-compose up -d
-        - echo $${RSYNC_USER} > /tmp/drone/4_1.log
   - name: build
     image: appleboy/drone-ssh
     environment:
