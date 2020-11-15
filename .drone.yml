@@ -1,5 +1,3 @@
----
-# Build
 kind: pipeline
 name: build
 
@@ -8,6 +6,12 @@ platform:
   arch: amd64
 
 steps:
+  - name: build-test
+    image: golang:1.15
+    commands:
+      - apt-get update && apt-get install -y libjpeg-dev libwebp-dev -q
+      - go mod download
+      - make build
   - name: deploy-dev
     image: golang:1.15
     when:
@@ -19,42 +23,5 @@ steps:
         from_secret: VAULT_STAGING_BACKEND_ENV
     commands:
       - echo "HI"
-      - echo ${VAULT_STAGING_BACKEND_ENV}
       - echo $env_location
-      - echo ${env_location}
-  - name: build-test
-    image: golang:1.15
-    commands:
-      - apt-get update && apt-get install -y libjpeg-dev libwebp-dev -q
-      - go mod download
-      - make build
-    when:
-      branch: some_name_here
-
-
-#
-#---
-## Deploy
-#kind: pipeline
-#name: deploy
-#
-#depends_on:
-#  - build
-#
-#trigger:
-#  status:
-#    - success
-#environment:
-#  env:
-#    from_secret: VAULT_STAGING_BACKEND_ENV
-#steps:
-#  - name: deploy-develop
-#    image: python:3.7.2
-#    commands:
-#      - echo "HI"
-#      - echo "SECRET IS: ${VAULT_STAGING_BACKEND_ENV}"
-#      - echo $VAULT_STAGING_BACKEND_ENV
-#    when:
-#      branch: master
-#      event:
-#        - push
+      - ls ./
