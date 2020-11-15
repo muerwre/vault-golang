@@ -19,19 +19,6 @@ steps:
       - tar -rvf ./app.tar -C ./docker/vault wait-for-it.sh
       - tar -rvf ./app.tar -C ./ ./templates
       - ls ./
-#    when:
-#      branch: nothing
-  - name: deploy-dev
-    image: golang:1.15
-    when:
-      branch: develop
-      event:
-        - push
-    environment:
-      env_location:
-        from_secret: VAULT_STAGING_BACKEND_ENV
-    commands:
-      - echo $env_location
   - name: rsync
     image: drillster/drone-rsync
     environment:
