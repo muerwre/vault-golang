@@ -80,5 +80,5 @@ steps:
       format: markdown
       message: >
         {{#success build.status}}🤓{{else}}😨{{/success}}
-        {{ datetime build.finished "01.02.2006 15:04:05" "UTC" }} {{repo.name}} [{{commit.branch}}]({{ build.link }})
+        {{ datetime build.finished "01.02.2006 15:04:05" "UTC" }} [{{repo.name}} / {{commit.branch}}]({{ build.link }})
         ```{{ commit.message }}```
