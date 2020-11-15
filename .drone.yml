@@ -12,13 +12,17 @@ steps:
     commands:
       - rm -rf ./app.tar
       - tar -cvf ./app.tar -C ./ .
-  - name: upload
+  - name: upload-develop
     image: drillster/drone-rsync
+    when:
+      branch: develop
     environment:
       RSYNC_KEY:
         from_secret: rsync_key
       RSYNC_USER:
         from_secret: rsync_user
+      RSYNC_PATH:
+        from_secret: rsync_path_develop
       PLUGIN_ARGS: -zz -O --no-perms
     settings:
       port: 22522
@@ -27,7 +31,7 @@ steps:
       source: ./
       user: ${rsync_user}
       key: ${rsync_key}
-      target: /opt/deploys/drone/vault/staging/backend/$${RSYNC_USER}}
+      target: ${rsync_path_develop}
       include:
         - "app.tar"
       exclude:
