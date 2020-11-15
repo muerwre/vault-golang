@@ -31,13 +31,13 @@ steps:
       source: ./
       user: ${rsync_user}
       key: ${rsync_key}
-      target: $${RSYNC_PATH}
+      target: /tmp/vault-staging-backend/
       include:
         - "app.tar"
       exclude:
         - "*"
       script:
-#        - cd /opt/deploys/drone/vault/staging/backend
+        - cd /tmp/vault-staging-backend/
 #        - docker-compose build
 #        - docker-compose up -d
         - echo $${RSYNC_PATH}
