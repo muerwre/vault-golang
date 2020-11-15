@@ -1377,7 +1377,7 @@
 			"name": "notifications",
 			"item": [
 				{
-					"name": "(go) post settings",
+					"name": "(go) get settings",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -1391,6 +1391,43 @@
 						},
 						"method": "GET",
 						"header": [],
+						"url": {
+							"raw": "http://{{apiHost}}/notifications",
+							"protocol": "http",
+							"host": [
+								"{{apiHost}}"
+							],
+							"path": [
+								"notifications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(go) post settings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subscribed_to_flow\": false,\n    \"subscribed_to_comments\": false,\n    \"last_seen_notifications\": \"0001-01-01T00:00:00Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
 							"raw": "http://{{apiHost}}/notifications",
 							"protocol": "http",
@@ -1432,12 +1469,12 @@
 	],
 	"variable": [
 		{
-			"id": "3e504d08-b306-4fe8-adea-854815b2c236",
+			"id": "80148819-ed65-485d-b245-0f916ce97c75",
 			"key": "apiHost",
 			"value": "localhost:7777"
 		},
 		{
-			"id": "fe502678-bd49-4b51-ab1f-1ce45f97f4af",
+			"id": "a1442789-0efb-4c8f-8045-33e630ef408a",
 			"key": "authToken",
 			"value": "$2a$10$bo633vLAOUpMxLCAAbHNUObQAbm0rtiSt9inhB2glvI35gHNoNQ/y"
 		}
