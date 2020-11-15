@@ -25,7 +25,6 @@ steps:
     image: golang:1.15
     commands:
       - tar -cvf ./app.tar -C ./ .
-      - rm -rf ./app.tar
   - name: rsync
     image: drillster/drone-rsync
     environment:
