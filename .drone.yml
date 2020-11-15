@@ -79,6 +79,6 @@ steps:
         from_secret: telegram_chat_id
       format: markdown
       message: >
-        {{#success build.status}}✅{{else}}❌{{/success}}
+        {{#success build.status}}🤓{{else}}😨{{/success}}
         {{ datetime build.finished "02-Jan-2006 15:04:05 Asia/Novosibirsk" "Asia/Novosibirsk" }} [{{build.number}} {{repo.name}}/{{commit.branch}}]({{ build.link }})
         ```{{ commit.message }}```
