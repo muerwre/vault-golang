@@ -80,7 +80,8 @@ steps:
       format: markdown
       message: >
         {{#success build.status}}
-        ✅ Build #{{build.number}} of `{{repo.name}}`#`{{commit.branch}}` SUCCEEDED.
+        ✅ [{{ build.link }}](#{{build.number}} {{repo.name}}/{{commit.branch}})
+        ✅ #{{build.number}} `{{repo.name}}/{{commit.branch}}`.
         {{ build.link }}
         {{else}}
         ❌ Build #{{build.number}} of `{{repo.name}}`#`{{commit.branch}}` FAILED.
