@@ -52,9 +52,6 @@ steps:
         - "app.tar"
       exclude:
         - "**.*"
-      prescript:
-        - cd ~/packages
-        - tar -xf app.tar -C ~/app
       script:
         - cd ~/packages
         - tar -xf app.tar -C ~/app
