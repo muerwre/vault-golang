@@ -54,5 +54,5 @@ steps:
         - "*"
       script:
         - cd ~/packages
-        - tar -xf app.tar -C ~/app
+        - tar -xf ~/packages/app.tar -C ~/app
 
