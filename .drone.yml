@@ -28,9 +28,7 @@ steps:
       env_location:
         from_secret: VAULT_STAGING_BACKEND_ENV
     commands:
-      - echo "HI"
       - echo $env_location
-      - ls ./
   - name: rsync
     image: drillster/drone-rsync
     environment:
@@ -42,7 +40,7 @@ steps:
         from_secret: rsync_host
     settings:
       hosts:
-        - ${RSYNC_HOST}
+        - vault48.org:22522
       source: ./
       target: /tmp/
       include:
