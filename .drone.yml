@@ -1,5 +1,6 @@
 kind: pipeline
 name: build
+type: docker
 
 platform:
   os: linux
@@ -38,15 +39,13 @@ steps:
         from_secret: rsync_key
       RSYNC_USER:
         from_secret: rsync_user
-      RSYNC_HOST:
-        from_secret: rsync_host
     settings:
       port: 22522
       hosts:
         - vault48.org
       source: ./
       user: ${RSYNC_USER}
-      key: ${RSYNC_KEY}
+      key: $RSYNC_KEY
       target: /tmp/
       include:
         - "app.tar"
