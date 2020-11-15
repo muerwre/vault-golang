@@ -41,7 +41,8 @@ steps:
       RSYNC_HOST:
         from_secret: rsync_host
     settings:
-      hosts: [${RSYNC_HOST}]
+      hosts:
+        - ${RSYNC_HOST}
       source: ./
       target: /tmp/
       include:
