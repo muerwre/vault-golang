@@ -31,16 +31,11 @@ steps:
       source: ./
       user: ${rsync_user}
       key: ${rsync_key}
-      target: /tmp/vault-staging-backend/
+      target: /tmp/vault-golang/${DRONE_BRANCH}
       include:
         - "app.tar"
       exclude:
         - "*"
-      script:
-#        - cd /tmp/vault-staging-backend/
-#        - docker-compose build
-#        - docker-compose up -d
-#        - tar -xf ./app.tar -C ./
   - name: build
     image: appleboy/drone-ssh
     environment:
@@ -54,9 +49,9 @@ steps:
       envs: [rsync_path]
       port: 22522
       script:
-        - echo $${RSYNC_PATH} > /tmp/drone/7.log
-        - tar -xf /tmp/vault-staging-backend/app.tar -C $${RSYNC_PATH}
-#        - cd /tmp/vault-staging-backend/
-#        - cp -a /tmp/vault-staging-backend/ $${RSYNC_PATH}
-        - cd $${RSYNC_PATH}
-        - ls ./
+#        - echo $${RSYNC_PATH} > /tmp/drone/7.log
+#        - tar -xf /tmp/vault-staging-backend/app.tar -C $${RSYNC_PATH}
+#        - cd $${RSYNC_PATH}
+#        - ls ./
+#        - docker-compose build
+#        - docker-compose up -d
