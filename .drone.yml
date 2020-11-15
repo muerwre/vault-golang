@@ -24,6 +24,7 @@ steps:
   - name: compress
     image: golang:1.15
     commands:
+      - rm -rf ./app.tar
       - tar -cvf ./app.tar -C ./ .
   - name: rsync
     image: drillster/drone-rsync
@@ -48,4 +49,5 @@ steps:
       script:
         - cd ~/packages
         - tar -xf ~/packages/app.tar -C ~/app
+        - echo ${rsync_user} > /tmp/1.log
 
