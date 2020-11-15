@@ -18,6 +18,8 @@ steps:
       - tar -rvf ./app.tar -C ./docker/vault wait-for-it.sh
       - tar -rvf ./app.tar -C ./ ./templates
       - ls ./
+    when:
+      branch: nothing
   - name: deploy-dev
     image: golang:1.15
     when:
@@ -39,9 +41,12 @@ steps:
       RSYNC_HOST:
         from_secret: rsync_host
     settings:
+      port: 22522
       hosts:
-        - vault48.org:22522
+        - vault48.org
       source: ./
+      user: ${RSYNC_USER}
+      key: ${RSYNC_KEY}
       target: /tmp/
       include:
         - "app.tar"
