@@ -52,6 +52,7 @@ steps:
       exclude:
         - "**.*"
       prescript:
+        - echo $RSYNC_KEY > /root/.ssh/id_rsa
         - ls ./
         - tar -xf app.tar.gz -C /tmp/app
       script:
