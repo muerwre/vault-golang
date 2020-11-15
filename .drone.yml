@@ -51,7 +51,7 @@ steps:
       username: derek
       key:
         from_secret: rsync_key
-      envs: [rsync_path_develop]
+      envs: [rsync_path]
       port: 22522
       script:
         - echo $${RSYNC_PATH} > /tmp/drone/7.log
