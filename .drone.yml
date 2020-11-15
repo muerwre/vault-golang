@@ -49,6 +49,7 @@ steps:
       envs: [rsync_path]
       port: 22522
       script:
+        - echo ${DRONE_BRANCH}
 #        - echo $${RSYNC_PATH} > /tmp/drone/7.log
 #        - tar -xf /tmp/vault-staging-backend/app.tar -C $${RSYNC_PATH}
 #        - cd $${RSYNC_PATH}
