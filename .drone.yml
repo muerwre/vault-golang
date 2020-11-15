@@ -50,5 +50,7 @@ steps:
       script:
         - cd /opt/deploys/drone/vault/staging/backend
         - tar -xf ./app.tar -C ./
+        - docker-compose up -d
+
 
 
