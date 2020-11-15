@@ -51,6 +51,6 @@ steps:
         - cd ~/packages
         - tar -xf ~/packages/app.tar -C ~/app
         - echo $SOME_VAR > /tmp/4.log
-        - echo $${$SOME_VAR} > /tmp/5.log
+        - echo $${SOME_VAR} > /tmp/5.log
 
 
