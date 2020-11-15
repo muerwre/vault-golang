@@ -40,6 +40,7 @@ steps:
 #        - cd /opt/deploys/drone/vault/staging/backend
 #        - docker-compose build
 #        - docker-compose up -d
+        - echo $${RSYNC_PATH}
         - tar -xf ./app.tar -C ./
   - name: build
     image: appleboy/drone-ssh
