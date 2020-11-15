@@ -38,6 +38,10 @@ steps:
         - "*"
   - name: build
     image: appleboy/drone-ssh
+    when:
+      branch:
+        - master
+        - develop
     environment:
       BUILD_PATH:
         from_secret: build_path
