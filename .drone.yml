@@ -79,11 +79,6 @@ steps:
         from_secret: telegram_chat_id
       format: markdown
       message: >
-        {{#success build.status}}
-        ✅ [{{ build.link }}](#{{build.number}} {{repo.name}}/{{commit.branch}})
+        {{#success build.status}}✅{{else}}❌{{/success}}
+        [{{ build.link }}](#{{build.number}} {{repo.name}}/{{commit.branch}})
         ```{{ commit.message }}```
-        {{else}}
-        ❌ [{{ build.link }}](#{{build.number}} {{repo.name}}/{{commit.branch}})
-        ```{{ commit.message }}```
-        {{/success}}
-        other
