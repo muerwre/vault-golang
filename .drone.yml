@@ -64,7 +64,6 @@ steps:
         - cd $${BUILD_PATH}/${DRONE_BRANCH}
         - docker-compose build
         - docker-compose up -d
-  # Notify Telegram that tests are passed
   - name: telgram_notify
     image: appleboy/drone-telegram
     when:
@@ -72,7 +71,6 @@ steps:
         - success
         - failure
     settings:
-      # The secrets below can be entered from the Drone UI for this repo
       token:
         from_secret: telegram_token
       to:
