@@ -7,20 +7,6 @@ platform:
   arch: amd64
 
 steps:
-  - name: build-test
-    image: golang:1.15
-    commands:
-      - apt-get update && apt-get install -y libjpeg-dev libwebp-dev -q
-      - go mod download
-      - make build
-      - ls ./
-      - rm -rf ./app.tar
-      - tar -cvf ./app.tar -C ./bin vault
-      - tar -rvf ./app.tar -C ./docker/vault wait-for-it.sh
-      - tar -rvf ./app.tar -C ./ ./templates
-      - ls ./
-    when:
-      branch: never
   - name: compress
     image: golang:1.15
     commands:
@@ -28,6 +14,8 @@ steps:
       - tar -cvf ./app.tar -C ./ .
   - name: rsync
     image: drillster/drone-rsync
+    when:
+      branch: never
     environment:
       RSYNC_KEY:
         from_secret: rsync_key
