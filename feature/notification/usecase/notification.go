@@ -1,12 +1,17 @@
 package usecase
 
-import "github.com/muerwre/vault-golang/db"
+import (
+	"github.com/muerwre/vault-golang/db"
+	"github.com/muerwre/vault-golang/db/repository"
+)
 
 type NotificationUsecase struct {
-	db db.DB
+	notification         repository.NotificationRepository
+	notificationSettings repository.NotificationSettingsRepository
 }
 
 func (u *NotificationUsecase) Init(db db.DB) *NotificationUsecase {
-	u.db = db
+	u.notification = *db.Notification
+	u.notificationSettings = *db.NotificationSettings
 	return u
 }

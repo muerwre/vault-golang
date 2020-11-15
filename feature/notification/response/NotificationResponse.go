@@ -5,23 +5,21 @@ import (
 	"time"
 )
 
-var NotificationTypes = struct {
-	Message string
-}{
-	Message: "message",
-}
+const (
+	NotificationTypeMessage = "message"
+)
 
 type Content interface {
 }
 
-type Notification struct {
+type NotificationResponse struct {
 	Type      string    `json:"type"`
 	CreatedAt time.Time `json:"created_at"`
 	Content   `json:"content"`
 }
 
-func (n *Notification) FromMessage(m models.Message) {
-	n.Type = NotificationTypes.Message
+func (n *NotificationResponse) FromMessage(m models.Message) {
+	n.Type = NotificationTypeMessage
 	n.CreatedAt = m.CreatedAt
 	n.Content = m
 }

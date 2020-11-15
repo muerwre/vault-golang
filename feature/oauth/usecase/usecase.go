@@ -11,7 +11,7 @@ import (
 
 type OauthUsecase struct {
 	credentials utils2.OAuthCredentials
-	oauth       *repository2.OauthRepository
+	oauth       repository2.OauthRepository
 }
 
 func (ou *OauthUsecase) Init(db db.DB, config app.Config) *OauthUsecase {
@@ -23,7 +23,7 @@ func (ou *OauthUsecase) Init(db db.DB, config app.Config) *OauthUsecase {
 		GoogleClientSecret: config.GoogleClientSecret,
 		GoogleCallbackUrl:  config.GoogleCallbackUrl,
 	}
-	ou.oauth = db.Social
+	ou.oauth = *db.Social
 	return ou
 }
 

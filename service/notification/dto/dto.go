@@ -1,8 +1,8 @@
-package notification
+package dto
 
 import "time"
 
-type NotifierItem struct {
+type NotificationDto struct {
 	Type      string
 	ItemId    uint
 	CreatedAt time.Time

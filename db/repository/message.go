@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/db/models"
+	"time"
 )
 
 type MessageRepository struct {
@@ -51,4 +52,18 @@ func (r *MessageRepository) Delete(ID uint) error {
 
 func (r *MessageRepository) Restore(ID uint) error {
 	return r.db.Model(&models.Message{}).Unscoped().Where("id = ?", ID).Update("deleted_at", nil).Error
+}
+
+func (r *MessageRepository) GetMessagesForUsers(fromID uint, toID uint, after time.Time, before time.Time, limit int) ([]models.Message, error) {
+	messages := []models.Message{}
+
+	err := r.db.Preload("From").
+		Preload("To").
+		Where("(fromId = ? AND toId = ?) OR (fromId = ? AND toId = ?)", fromID, toID, toID, fromID).
+		Where("created_at > ? AND created_at < ?", after, before).
+		Limit(limit).
+		Order("created_at DESC").
+		Find(&messages).Error
+
+	return messages, err
 }

@@ -11,7 +11,7 @@ import (
 	nodeUsecase "github.com/muerwre/vault-golang/feature/node/usecase"
 	tagUsecase "github.com/muerwre/vault-golang/feature/tag/usecase"
 	fileUsecase "github.com/muerwre/vault-golang/feature/upload/usecase"
-	"github.com/muerwre/vault-golang/service/notification"
+	"github.com/muerwre/vault-golang/service/notification/controller"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -24,7 +24,7 @@ type NodeController struct {
 	tag  tagUsecase.TagUsecase
 }
 
-func (nc *NodeController) Init(db db.DB, config app.Config, notifier notification.NotificationService) *NodeController {
+func (nc *NodeController) Init(db db.DB, config app.Config, notifier controller.NotificationService) *NodeController {
 	nc.node = *new(nodeUsecase.NodeUsecase).Init(db, notifier)
 	nc.file = *new(fileUsecase.FileUseCase).Init(db, config)
 	nc.tag = *new(tagUsecase.TagUsecase).Init(db)

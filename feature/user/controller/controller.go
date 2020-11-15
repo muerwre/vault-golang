@@ -358,7 +358,7 @@ func (uc *UserController) GetUpdates(c *gin.Context) {
 	messages, err := d.User.GetUserNewMessages(*user, exclude, last)
 
 	boris, _ := d.Node.GetNodeBoris()
-	notifications := make([]response2.Notification, len(messages))
+	notifications := make([]response2.NotificationResponse, len(messages))
 
 	for k := range notifications {
 		notifications[k].FromMessage(messages[k])

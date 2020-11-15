@@ -8,13 +8,13 @@ import (
 )
 
 type SearchUsecase struct {
-	search *repository2.SearchRepository
-	node   *repository2.NodeRepository
+	search repository2.SearchRepository
+	node   repository2.NodeRepository
 }
 
 func (su *SearchUsecase) Init(db db.DB) *SearchUsecase {
-	su.search = db.Search
-	su.node = db.Node
+	su.search = *db.Search
+	su.node = *db.Node
 	return su
 }
 

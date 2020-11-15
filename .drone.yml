@@ -8,11 +8,11 @@ platform:
 
 steps:
   - name: compress
-    image: golang:1.15
+    image: alpine
     commands:
-      - rm -rf ./app.tar
-      - tar -cvf ./app.tar -C ./ .
-  - name: upload-develop
+      - rm -rf ./app.tar.bz2
+      - tar -cjf ./app.tar.bz2 -C ./ .
+  - name: upload
     image: drillster/drone-rsync
     when:
       branch:
@@ -59,8 +59,24 @@ steps:
       port: 22522
       script:
         - mkdir -p $${BUILD_PATH}/${DRONE_BRANCH}
-        - tar -xf /tmp/vault-golang-${DRONE_BRANCH}/app.tar -C $${BUILD_PATH}/${DRONE_BRANCH}
+        - tar -xjf /tmp/vault-golang-${DRONE_BRANCH}/app.tar.bz2 -C $${BUILD_PATH}/${DRONE_BRANCH}
         - cp -a $${ENV_PATH}/${DRONE_BRANCH}/. $${BUILD_PATH}/${DRONE_BRANCH}
         - cd $${BUILD_PATH}/${DRONE_BRANCH}
         - docker-compose build
         - docker-compose up -d
+  - name: telgram_notify
+    image: appleboy/drone-telegram
+    when:
+      status:
+        - success
+        - failure
+    settings:
+      token:
+        from_secret: telegram_token
+      to:
+        from_secret: telegram_chat_id
+      format: markdown
+      message: >
+        {{#success build.status}}✅{{else}}❌{{/success}}
+        [{{ build.link }}](#{{build.number}} {{repo.name}}/{{commit.branch}})
+        ```{{ commit.message }}```
