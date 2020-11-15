@@ -53,5 +53,7 @@ steps:
         - mkdir /tmp/drone
         - export RSYNC_USER=$rsync_user
         - echo $RSYNC_USER > /tmp/drone/1.log
+        - echo $RSYNC_USER
+
 
 
