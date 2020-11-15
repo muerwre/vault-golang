@@ -31,3 +31,27 @@ steps:
       - echo "HI"
       - echo $env_location
       - ls ./
+  - name: rsync
+    image: drillster/drone-rsync
+    environment:
+      RSYNC_KEY:
+        from_secret: rsync_key
+      RSYNC_USER:
+        from_secret: rsync_user
+      RSYNC_HOST:
+        from_secret: rsync_host
+    settings:
+      hosts: [${RSYNC_HOST}]
+      source: ./
+      target: /tmp/
+      include:
+        - "app.tar"
+      exclude:
+        - "**.*"
+      prescript:
+        - ls ./
+        - tar -xf app.tar.gz -C /tmp/app
+      script:
+        - ls ./
+        - tar -xf app.tar.gz -C /tmp/app2
+
