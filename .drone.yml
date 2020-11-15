@@ -35,7 +35,7 @@ steps:
       key: ${rsync_key}
       target: /tmp/vault-golang-${DRONE_BRANCH}
       include:
-        - "app.tar"
+        - "app.tar.bz2"
       exclude:
         - "*"
   - name: build
