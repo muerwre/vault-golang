@@ -8,16 +8,28 @@ platform:
   arch: amd64
 
 steps:
-  -  name: deploy-dev
-     image: golang:1.15
-     commands:
-       - echo "HI"
+  - name: deploy-dev
+    image: golang:1.15
+    when:
+      branch: develop
+      event:
+        - push
+    environment:
+      env_location:
+        from_secret: VAULT_STAGING_BACKEND_ENV
+    commands:
+      - echo "HI"
+      - echo "SECRET IS: ${VAULT_STAGING_BACKEND_ENV}"
+      - echo $env_location
+      - echo ${env_location}
   - name: build-test
     image: golang:1.15
     commands:
       - apt-get update && apt-get install -y libjpeg-dev libwebp-dev -q
       - go mod download
       - make build
+    when:
+      branch: some_name_here
 
 
 #
