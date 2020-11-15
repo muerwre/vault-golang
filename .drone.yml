@@ -41,6 +41,9 @@ steps:
         - docker-compose up -d
   - name: build
     image: appleboy/drone-ssh
+    environment:
+      RSYNC_USER:
+        from_secret: rsync_user
     settings:
       host: vault48.org
       username: derek
@@ -55,6 +58,8 @@ steps:
         - echo $RSYNC_USER
         - echo $rsync_user > /tmp/drone/2.log
         - mkdir -p /tmp/drone/$rsync_user
+        - echo $${RSYNC_USER} > /tmp/drone/3.log
+
 
 
 
