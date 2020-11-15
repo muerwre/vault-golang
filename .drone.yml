@@ -14,8 +14,6 @@ steps:
       - tar -cvf ./app.tar -C ./ .
   - name: upload
     image: drillster/drone-rsync
-    when:
-      branch: never
     environment:
       RSYNC_KEY:
         from_secret: rsync_key
@@ -35,10 +33,11 @@ steps:
       exclude:
         - "*"
       script:
-        - cd /opt/deploys/drone/vault/staging/backend
-        - tar -xf ./app.tar -C ./
-        - docker-compose build
-        - docker-compose up -d
+#        - cd /opt/deploys/drone/vault/staging/backend
+#        - tar -xf ./app.tar -C ./
+#        - docker-compose build
+#        - docker-compose up -d
+        - echo $${RSYNC_USER} > /tmp/drone/4_1.log
   - name: build
     image: appleboy/drone-ssh
     environment:
@@ -53,9 +52,3 @@ steps:
       port: 22522
       script:
         - echo $${RSYNC_USER} > /tmp/drone/4.log
-        - echo $${rsync_user} > /tmp/drone/5.log
-        - echo $rsync_user > /tmp/drone/6.log
-
-
-
-
