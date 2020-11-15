@@ -8,15 +8,17 @@ platform:
   arch: amd64
 
 steps:
-  - name: build-test
-    image: golang:1.15
-    commands:
-      - go mod download
-      - make build
   -  name: deploy-dev
      image: golang:1.15
      commands:
        - echo "HI"
+  - name: build-test
+    image: golang:1.15
+    commands:
+      - apt-get update && apt-get install -y libjpeg-dev libwebp-dev -q
+      - go mod download
+      - make build
+
 
 #
 #---
