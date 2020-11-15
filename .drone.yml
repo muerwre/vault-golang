@@ -57,6 +57,7 @@ steps:
         from_secret: rsync_key
       envs: [build_path, env_path]
       port: 22522
+      script_stop: true
       script:
         - mkdir -p $${BUILD_PATH}/${DRONE_BRANCH}
         - tar -xjf /tmp/vault-golang-${DRONE_BRANCH}/app.tar.bz2 -C $${BUILD_PATH}/${DRONE_BRANCH}
