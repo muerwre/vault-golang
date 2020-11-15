@@ -44,8 +44,8 @@ steps:
       hosts:
         - vault48.org
       source: ./
-      user: ${RSYNC_USER}
-      key: ${RSYNC_KEY}
+      user: ${rsync_user}
+      key: ${rsync_key}
       target: /tmp/
       include:
         - "app.tar"
