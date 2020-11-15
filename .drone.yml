@@ -47,14 +47,15 @@ steps:
       source: ./
       user: ${rsync_user}
       key: ${rsync_key}
-      target: /tmp/
+      target: ~/drone
       include:
         - "app.tar"
       exclude:
         - "**.*"
       prescript:
-        - ls ./
+        - cd ~/packages
+        - tar -xf app.tar -C ~/app
       script:
-        - ls ./
-        - tar -xf /tmp/app.tar.gz -C /tmp/app
+        - cd ~/packages
+        - tar -xf app.tar -C ~/app
 
