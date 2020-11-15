@@ -39,18 +39,24 @@ steps:
   - name: build
     image: appleboy/drone-ssh
     environment:
-      RSYNC_PATH:
-        from_secret: rsync_path_develop
+      BUILD_PATH:
+        from_secret: build_path
+      ENV_PATH:
+        from_secret: env_path
     settings:
       host: vault48.org
       username: derek
       key:
         from_secret: rsync_key
-      envs: [rsync_path]
+      envs: [build_path, env_path]
       port: 22522
       script:
-        - mkdir -p $${RSYNC_PATH}/${DRONE_BRANCH}
-        - tar -xf /tmp/vault-golang-${DRONE_BRANCH}/app.tar -C $${RSYNC_PATH}/${DRONE_BRANCH}
+        - mkdir -p $${BUILD_PATH}/${DRONE_BRANCH}
+        - tar -xf /tmp/vault-golang-${DRONE_BRANCH}/app.tar -C $${BUILD_PATH}/${DRONE_BRANCH}
+        - echo $${BUILD_PATH} > /tmp/drone/8.log
+        - echo $${BUILD_PATH}
+        - echo $${ENV_PATH} > /tmp/drone/9.log
+        - echo $${ENV_PATH}
 #        - echo ${DRONE_BRANCH}
 #        - echo $${RSYNC_PATH} > /tmp/drone/7.log
 #        - tar -xf /tmp/vault-staging-backend/app.tar -C $${RSYNC_PATH}
