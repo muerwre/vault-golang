@@ -19,8 +19,8 @@ steps:
       - tar -rvf ./app.tar -C ./docker/vault wait-for-it.sh
       - tar -rvf ./app.tar -C ./ ./templates
       - ls ./
-    when:
-      branch: nothing
+#    when:
+#      branch: nothing
   - name: deploy-dev
     image: golang:1.15
     when:
