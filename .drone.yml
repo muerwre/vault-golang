@@ -81,9 +81,9 @@ steps:
       message: >
         {{#success build.status}}
         ✅ [{{ build.link }}](#{{build.number}} {{repo.name}}/{{commit.branch}})
-        ✅ #{{build.number}} `{{repo.name}}/{{commit.branch}}`.
-        {{ build.link }}
+        ```{{ commit.message }}```
         {{else}}
-        ❌ Build #{{build.number}} of `{{repo.name}}`#`{{commit.branch}}` FAILED.
-        {{ build.link }}
+        ❌ [{{ build.link }}](#{{build.number}} {{repo.name}}/{{commit.branch}})
+        ```{{ commit.message }}```
         {{/success}}
+        other
