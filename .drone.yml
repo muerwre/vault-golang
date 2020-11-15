@@ -19,7 +19,7 @@ steps:
         from_secret: VAULT_STAGING_BACKEND_ENV
     commands:
       - echo "HI"
-      - echo "SECRET IS: ${VAULT_STAGING_BACKEND_ENV}"
+      - echo ${VAULT_STAGING_BACKEND_ENV}
       - echo $env_location
       - echo ${env_location}
   - name: build-test
