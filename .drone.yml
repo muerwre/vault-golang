@@ -44,7 +44,7 @@ steps:
       hosts:
         - vault48.org
       source: ./
-      user: ${RSYNC_USER}
+      user: $RSYNC_USER
       key: $RSYNC_KEY
       target: /tmp/
       include:
