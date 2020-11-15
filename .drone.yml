@@ -15,7 +15,9 @@ steps:
   - name: upload-develop
     image: drillster/drone-rsync
     when:
-      branch: develop
+      branch:
+        - master
+        - develop
     environment:
       RSYNC_KEY:
         from_secret: rsync_key
@@ -49,7 +51,8 @@ steps:
         from_secret: env_path
     settings:
       host: vault48.org
-      username: derek
+      username:
+        from_secret: rsync_user
       key:
         from_secret: rsync_key
       envs: [build_path, env_path]
