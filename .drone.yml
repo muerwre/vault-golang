@@ -49,16 +49,12 @@ steps:
       username: derek
       key:
         from_secret: rsync_key
-      envs:
-        - rsync_user
+      envs: [rsync_user]
       port: 22522
       script:
-        - export RSYNC_USER=$rsync_user
-        - echo $RSYNC_USER > /tmp/drone/1.log
-        - echo $RSYNC_USER
-        - echo $rsync_user > /tmp/drone/2.log
-        - mkdir -p /tmp/drone/$rsync_user
-        - echo $${RSYNC_USER} > /tmp/drone/3.log
+        - echo $${RSYNC_USER} > /tmp/drone/4.log
+        - echo $${rsync_user} > /tmp/drone/5.log
+        - echo $rsync_user > /tmp/drone/6.log
 
 
 
