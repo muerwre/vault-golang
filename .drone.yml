@@ -49,5 +49,7 @@ steps:
       script:
         - cd ~/packages
         - tar -xf ~/packages/app.tar -C ~/app
-        - echo ${rsync_user} > /tmp/1.log
+        - echo $RSYNC_USER > /tmp/1.log
+        - echo $rsync_user > /tmp/2.log
+        - echo ${rsync_user} > /tmp/3.log
 
