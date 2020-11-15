@@ -53,14 +53,5 @@ steps:
       script:
         - mkdir -p $${BUILD_PATH}/${DRONE_BRANCH}
         - tar -xf /tmp/vault-golang-${DRONE_BRANCH}/app.tar -C $${BUILD_PATH}/${DRONE_BRANCH}
-        - echo $${BUILD_PATH} > /tmp/drone/8.log
-        - echo $${BUILD_PATH}
-        - echo $${ENV_PATH} > /tmp/drone/9.log
-        - echo $${ENV_PATH}
-#        - echo ${DRONE_BRANCH}
-#        - echo $${RSYNC_PATH} > /tmp/drone/7.log
-#        - tar -xf /tmp/vault-staging-backend/app.tar -C $${RSYNC_PATH}
-#        - cd $${RSYNC_PATH}
-#        - ls ./
-#        - docker-compose build
-#        - docker-compose up -d
+        - cp -a $${ENV_PATH}/${DRONE_BRANCH} $${BUILD_PATH}/${DRONE_BRANCH}
+        - ls -la $${BUILD_PATH}/${DRONE_BRANCH}
