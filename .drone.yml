@@ -12,6 +12,12 @@ steps:
       - apt-get update && apt-get install -y libjpeg-dev libwebp-dev -q
       - go mod download
       - make build
+      - ls ./
+      - rm -rf ./app.tar
+      - tar -cvf ./app.tar -C ./bin vault
+      - tar -rvf ./app.tar -C ./docker/vault wait-for-it.sh
+      - tar -rvf ./app.tar -C ./ ./templates
+      - ls ./
   - name: deploy-dev
     image: golang:1.15
     when:
