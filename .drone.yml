@@ -27,7 +27,7 @@ steps:
       source: ./
       user: ${rsync_user}
       key: ${rsync_key}
-      target: /opt/deploys/drone/vault/staging/backend/${rsync_user}
+      target: /opt/deploys/drone/vault/staging/backend/$${RSYNC_USER}}
       include:
         - "app.tar"
       exclude:
