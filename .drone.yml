@@ -50,7 +50,7 @@ steps:
       port: 22522
       script:
         - mkdir -p $${RSYNC_PATH}/${DRONE_BRANCH}
-        - tar -xf /tmp/vault-golang-${DRONE_BRANCH} -C $${RSYNC_PATH}/${DRONE_BRANCH}
+        - tar -xf /tmp/vault-golang-${DRONE_BRANCH}/app.tar -C $${RSYNC_PATH}/${DRONE_BRANCH}
 #        - echo ${DRONE_BRANCH}
 #        - echo $${RSYNC_PATH} > /tmp/drone/7.log
 #        - tar -xf /tmp/vault-staging-backend/app.tar -C $${RSYNC_PATH}
