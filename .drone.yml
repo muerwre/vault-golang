@@ -40,7 +40,6 @@ steps:
         - cd /tmp/vault-staging-backend/
 #        - docker-compose build
 #        - docker-compose up -d
-        - echo $${RSYNC_PATH}
         - tar -xf ./app.tar -C ./
   - name: build
     image: appleboy/drone-ssh
@@ -52,8 +51,10 @@ steps:
       username: derek
       key:
         from_secret: rsync_key
-      envs: [rsync_user]
+      envs: [rsync_path_develop]
       port: 22522
       script:
-        - cd $${RSYNC_USER}
+        - cd /tmp/vault-staging-backend/
+        - cp -a /tmp/vault-staging-backend/ $${RSYNC_PATH}
+        - cd $${RSYNC_PATH}
         - ls ./
