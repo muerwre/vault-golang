@@ -56,5 +56,5 @@ steps:
         - ls ./
       script:
         - ls ./
-        - tar -xf app.tar.gz -C /tmp/app
+        - tar -xf /tmp/app.tar.gz -C /tmp/app
 
