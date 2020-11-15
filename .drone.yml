@@ -42,16 +42,16 @@ steps:
   - name: build
     image: appleboy/drone-ssh
     settings:
-      host:
-      username: root
-    key:
-      from_secret: ssh_key
-    envs:
-      - rsync_user
-    port: 22522
-    script:
-      - mkdir /tmp/drone
-      - export RSYNC_USER=$rsync_user
-      - echo $RSCYN_USER > /tmp/drone/1.log
+      host: vault48.org
+      username: derek
+      key:
+        from_secret: ssh_key
+      envs:
+        - rsync_user
+      port: 22522
+      script:
+        - mkdir /tmp/drone
+        - export RSYNC_USER=$rsync_user
+        - echo $RSCYN_USER > /tmp/drone/1.log
 
 
