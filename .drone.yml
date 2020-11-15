@@ -44,18 +44,15 @@ steps:
       hosts:
         - vault48.org
       source: ./
-      user: $RSYNC_USER
-      key: $RSYNC_KEY
+      user: ${RSYNC_USER}
+      key: ${RSYNC_KEY}
       target: /tmp/
       include:
         - "app.tar"
       exclude:
         - "**.*"
       prescript:
-        - echo $RSYNC_KEY > /root/.ssh/id_rsa
         - ls ./
-        - tar -xf app.tar.gz -C /tmp/app
       script:
         - ls ./
-        - tar -xf app.tar.gz -C /tmp/app2
 
