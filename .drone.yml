@@ -34,6 +34,7 @@ steps:
       RSYNC_USER:
         from_secret: rsync_user
       PLUGIN_ARGS: -zz -O --no-perms
+      SOME_VAR: asdasd
     settings:
       port: 22522
       hosts:
@@ -49,7 +50,5 @@ steps:
       script:
         - cd ~/packages
         - tar -xf ~/packages/app.tar -C ~/app
-        - echo $RSYNC_USER > /tmp/1.log
-        - echo $rsync_user > /tmp/2.log
-        - echo ${rsync_user} > /tmp/3.log
+        - echo $SOME_VAR > /tmp/4.log
 
