@@ -9,6 +9,10 @@ platform:
 steps:
   - name: compress
     image: alpine
+    when:
+      branch:
+        - master
+        - develop
     commands:
       - rm -rf ./app.tar.bz2
       - tar -cjf ./app.tar.bz2 -C ./ .
@@ -72,6 +76,9 @@ steps:
       status:
         - success
         - failure
+      branch:
+        - master
+        - develop
     settings:
       token:
         from_secret: telegram_token
