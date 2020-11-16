@@ -6,9 +6,9 @@ import (
 )
 
 type NotificationSettingsResponse struct {
-	SubscribedToFlow      bool      `json:"subscribed_to_flow"`
-	SubscribedToComments  bool      `json:"subscribed_to_comments"`
-	LastSeenNotifications time.Time `json:"last_seen_notifications"`
+	SubscribedToFlow      bool      `json:"flow"`
+	SubscribedToComments  bool      `json:"comments"`
+	LastSeenNotifications time.Time `json:"last_seen"`
 }
 
 func (r *NotificationSettingsResponse) FromModel(m *models.NotificationSettings) *NotificationSettingsResponse {
