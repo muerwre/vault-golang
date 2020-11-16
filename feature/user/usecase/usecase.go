@@ -8,6 +8,7 @@ import (
 	"github.com/muerwre/vault-golang/db/repository"
 	constants2 "github.com/muerwre/vault-golang/feature/node/constants"
 	constants3 "github.com/muerwre/vault-golang/feature/upload/constants"
+	"github.com/muerwre/vault-golang/feature/user/dto"
 	"github.com/muerwre/vault-golang/feature/user/request"
 	"github.com/muerwre/vault-golang/utils/codes"
 	"github.com/muerwre/vault-golang/utils/passwords"
@@ -15,11 +16,12 @@ import (
 )
 
 type UserUsecase struct {
-	user        repository.UserRepository
-	file        repository.FileRepository
-	nodeView    repository.NodeViewRepository
-	message     repository.MessageRepository
-	messageView repository.MessageViewRepository
+	user                 repository.UserRepository
+	file                 repository.FileRepository
+	nodeView             repository.NodeViewRepository
+	message              repository.MessageRepository
+	messageView          repository.MessageViewRepository
+	notificationSettings repository.NotificationSettingsRepository
 }
 
 func (uc *UserUsecase) Init(db db.DB) *UserUsecase {
@@ -28,6 +30,7 @@ func (uc *UserUsecase) Init(db db.DB) *UserUsecase {
 	uc.nodeView = *db.NodeView
 	uc.message = *db.Message
 	uc.messageView = *db.MessageView
+	uc.notificationSettings = *db.NotificationSettings
 	return uc
 }
 
@@ -97,20 +100,29 @@ func (uc UserUsecase) ValidatePatchRequest(data *request.UserPatchRequest, u mod
 	return errors
 }
 
-func (uc UserUsecase) GetUserForCheckCredentials(uid uint) (user *models.User, lastSeenBoris *time.Time, err error) {
-	user, err = uc.user.GetById(uid)
-
+func (uc UserUsecase) GetUserForCheckCredentials(uid uint) (*dto.UserDetailedDto, error) {
+	user, err := uc.user.GetById(uid)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	view, err := uc.nodeView.GetOrCreateOne(uid, constants2.BorisNodeId)
-
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return user, &view.Visited, nil
+	settings, err := uc.notificationSettings.GetForUserId(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &dto.UserDetailedDto{
+		User:                 user,
+		LastSeenBoris:        view,
+		NotificationSettings: settings,
+	}
+
+	return res, nil
 }
 
 func (uc UserUsecase) FillMessageFromData(from models.User, recp string, data request.UserMessageRequest) (*models.Message, error) {

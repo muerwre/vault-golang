@@ -20,8 +20,8 @@ func (nc *NotificationController) Init(db db.DB) *NotificationController {
 	return nc
 }
 
-// GetSettings changes user subscription settings
-func (nc NotificationController) GetSettings(c *gin.Context) {
+// GetNotifications returns user notifications
+func (nc NotificationController) GetNotifications(c *gin.Context) {
 	u := c.MustGet("UID").(uint)
 
 	settings, err := nc.notification.GetUserNotificationSettings(u)

@@ -26,7 +26,7 @@ func (r *NotificationRouter) Handle(g *gin.RouterGroup) *NotificationRouter {
 		node.DELETE("/:id", r.controller.NodeDelete)
 	}
 
-	g.GET("/", r.api.AuthRequired, r.controller.GetSettings)
+	g.GET("/", r.api.AuthRequired, r.controller.GetNotifications)
 	g.POST("/", r.api.AuthRequired, r.controller.PostSettings)
 
 	return r

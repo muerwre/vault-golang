@@ -40,7 +40,7 @@ func (uc *UserController) Init(db db.DB, mailer mail.MailService, config app.Con
 func (uc *UserController) CheckCredentials(c *gin.Context) {
 	user := c.MustGet("User").(*models.User)
 
-	user, lastSeenBoris, err := uc.usecase.GetUserForCheckCredentials(user.ID)
+	detailedUserDto, err := uc.usecase.GetUserForCheckCredentials(user.ID)
 
 	if err != nil {
 		logrus.Warnf("Can't load current user %s:", err.Error())
@@ -48,7 +48,7 @@ func (uc *UserController) CheckCredentials(c *gin.Context) {
 		return
 	}
 
-	resp := new(response.UserCheckCredentialsResponse).Init(user, *lastSeenBoris)
+	resp := new(response.UserCheckCredentialsResponse).FromDto(detailedUserDto)
 
 	uc.DB.User.UpdateLastSeen(user)
 
@@ -96,14 +96,14 @@ func (uc *UserController) LoginUser(c *gin.Context) {
 		}
 	}
 
-	user, lastSeenBoris, err := uc.usecase.GetUserForCheckCredentials(user.ID)
+	userDto, err := uc.usecase.GetUserForCheckCredentials(user.ID)
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": codes.UserNotFound})
 		return
 	}
 
-	resp := new(response.UserCheckCredentialsResponse).Init(user, *lastSeenBoris)
+	resp := new(response.UserCheckCredentialsResponse).FromDto(userDto)
 	token, err := d.User.GenerateTokenFor(user)
 	if err != nil {
 		logrus.Warnf("Can't generate token for user %+v: %s", user, err.Error())
