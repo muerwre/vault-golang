@@ -427,12 +427,12 @@ func (nr NodeRepository) GetNodeWithUserAndTags(id uint) (*models.Node, error) {
 	return node, err
 }
 
-func (nr NodeRepository) UpdateDecription(id uint, text string) error {
+func (nr NodeRepository) UpdateDescription(id uint, text string) error {
 	return nr.db.Model(&models.Node{}).Where("id = ?", id).Update("description", text).Error
 }
 
 func (nr NodeRepository) UpdateCommentedAt(id uint, time *time.Time) error {
-	return nr.db.Model(&models.Node{}).Where("id = ?", id).Update("commented_at", time).Error
+	return nr.db.Model(&models.Node{}).Where("id = ?", id).Update("commented_at", *time).Error
 }
 
 func (nr NodeRepository) GetWithTags(id uint) (*models.Node, error) {

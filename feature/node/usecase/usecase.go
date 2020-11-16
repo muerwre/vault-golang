@@ -271,7 +271,7 @@ func (nu NodeUsecase) UnsetNodeCoverTarget(data models.Node, node *models.Node) 
 func (nu NodeUsecase) UpdateBriefFromComment(node *models.Node, comment *models.Comment) {
 	if node.Description == "" && *comment.UserID == *node.UserID && len(comment.Text) >= 64 {
 		node.Description = comment.Text
-		_ = nu.node.UpdateDecription(node.ID, comment.Text)
+		_ = nu.node.UpdateDescription(node.ID, comment.Text)
 	}
 }
 
