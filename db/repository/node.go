@@ -421,9 +421,9 @@ func (nr NodeRepository) UpdateNodeFlow(node *models.Node, flow models.NodeFlow)
 	return nr.db.Model(&node).Update("flow", flow).Error
 }
 
-func (nr NodeRepository) GetNodeWithUser(id uint) (*models.Node, error) {
+func (nr NodeRepository) GetNodeWithUserAndTags(id uint) (*models.Node, error) {
 	node := &models.Node{}
-	err := nr.db.Preload("User").Preload("User.Photo").First(&node, "id = ?", id).Error
+	err := nr.db.Preload("User").Preload("User.Photo").Preload("Tags").First(&node, "id = ?", id).Error
 	return node, err
 }
 
