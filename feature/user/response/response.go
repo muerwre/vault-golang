@@ -8,18 +8,18 @@ import (
 )
 
 type UserCheckCredentialsResponse struct {
-	ID               uint                                  `json:"id"`
-	Username         string                                `json:"username"`
-	Email            string                                `json:"email"`
-	Role             string                                `json:"role"`
-	Fullname         string                                `json:"fullname"`
-	Description      string                                `json:"description"`
-	Cover            response2.ShallowFileResponse         `json:"cover"`
-	Photo            response2.ShallowFileResponse         `json:"photo"`
-	LastSeen         time.Time                             `json:"last_seen"`
-	LastSeenMessages time.Time                             `json:"last_seen_messages"`
-	LastSeenBoris    time.Time                             `json:"last_seen_boris"`
-	Notifications    response.NotificationSettingsResponse `json:"notifications"`
+	ID               uint                                   `json:"id"`
+	Username         string                                 `json:"username"`
+	Email            string                                 `json:"email"`
+	Role             string                                 `json:"role"`
+	Fullname         string                                 `json:"fullname"`
+	Description      string                                 `json:"description"`
+	LastSeen         time.Time                              `json:"last_seen"`
+	LastSeenMessages time.Time                              `json:"last_seen_messages"`
+	LastSeenBoris    time.Time                              `json:"last_seen_boris"`
+	Photo            *response2.ShallowFileResponse         `json:"photo"`
+	Cover            *response2.ShallowFileResponse         `json:"cover"`
+	Notifications    *response.NotificationSettingsResponse `json:"notifications"`
 }
 
 func (uccr *UserCheckCredentialsResponse) FromDto(user *dto.UserDetailedDto) *UserCheckCredentialsResponse {
@@ -32,18 +32,8 @@ func (uccr *UserCheckCredentialsResponse) FromDto(user *dto.UserDetailedDto) *Us
 	uccr.LastSeen = user.User.LastSeen
 	uccr.LastSeenMessages = user.User.LastSeenMessages
 	uccr.LastSeenBoris = user.LastSeenBoris.Visited
-
-	if user.NotificationSettings != nil {
-		uccr.Notifications = *new(response.NotificationSettingsResponse).FromModel(user.NotificationSettings)
-	}
-
-	if user.User.Cover != nil {
-		uccr.Cover = *new(response2.ShallowFileResponse).FromModel(user.User.Cover)
-	}
-
-	if user.User.Photo != nil {
-		uccr.Photo = *new(response2.ShallowFileResponse).FromModel(user.User.Photo)
-	}
-
+	uccr.Notifications = new(response.NotificationSettingsResponse).FromModel(user.NotificationSettings)
+	uccr.Cover = new(response2.ShallowFileResponse).FromModel(user.User.Cover)
+	uccr.Photo = new(response2.ShallowFileResponse).FromModel(user.User.Photo)
 	return uccr
 }
