@@ -17,7 +17,7 @@ func (sr *StatsRouter) Init(api utils.AppApi, db db.DB) {
 	sr.db = db
 }
 
-// FlowRouter for /node/*
+// StatsRouter for /stats/*
 func (sr *StatsRouter) Handle(r *gin.RouterGroup) {
 	r.GET("/", sr.controller.GetStats)
 }
