@@ -28,6 +28,7 @@ services:
     depends_on:
       - db
   postfix:
+    restart: always
     build:
       context: .
       dockerfile: docker/postfix/Dockerfile
