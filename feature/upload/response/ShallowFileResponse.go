@@ -10,6 +10,10 @@ type ShallowFileResponse struct {
 }
 
 func (r *ShallowFileResponse) FromModel(m *models.File) *ShallowFileResponse {
+	if m == nil {
+		return nil
+	}
+
 	r.Id = m.ID
 	r.Url = m.Url
 	r.Metadata = m.Metadata
