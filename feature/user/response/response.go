@@ -29,12 +29,21 @@ func (uccr *UserCheckCredentialsResponse) FromDto(user *dto.UserDetailedDto) *Us
 	uccr.Role = user.User.Role
 	uccr.Fullname = user.User.Fullname
 	uccr.Description = user.User.Description
-	uccr.Cover = *new(response2.ShallowFileResponse).FromModel(user.User.Cover)
-	uccr.Photo = *new(response2.ShallowFileResponse).FromModel(user.User.Photo)
 	uccr.LastSeen = user.User.LastSeen
 	uccr.LastSeenMessages = user.User.LastSeenMessages
 	uccr.LastSeenBoris = user.LastSeenBoris.Visited
-	uccr.Notifications = *new(response.NotificationSettingsResponse).FromModel(user.NotificationSettings)
+
+	if user.NotificationSettings != nil {
+		uccr.Notifications = *new(response.NotificationSettingsResponse).FromModel(user.NotificationSettings)
+	}
+
+	if user.User.Cover != nil {
+		uccr.Cover = *new(response2.ShallowFileResponse).FromModel(user.User.Cover)
+	}
+
+	if user.User.Photo != nil {
+		uccr.Photo = *new(response2.ShallowFileResponse).FromModel(user.User.Photo)
+	}
 
 	return uccr
 }

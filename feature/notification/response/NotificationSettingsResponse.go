@@ -12,6 +12,10 @@ type NotificationSettingsResponse struct {
 }
 
 func (r *NotificationSettingsResponse) FromModel(m *models.NotificationSettings) *NotificationSettingsResponse {
+	if m == nil {
+		return nil
+	}
+
 	r.SubscribedToComments = m.SubscribedToComments
 	r.SubscribedToFlow = m.SubscribedToFlow
 	r.LastSeenNotifications = m.LastSeenNotifications
