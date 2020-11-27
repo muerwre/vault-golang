@@ -246,7 +246,7 @@ func (oc OAuthController) Delete(c *gin.Context) {
 	provider := c.Param("provider")
 
 	if err := oc.oauth.DeleteSocialByUserProviderAndId(uid, provider, id); err != nil {
-		logrus.Warnf("Can't delete social record for user:\nuser: %d\nprovider: %s\nid: %s", uid, provider, id)
+		logrus.Warnf("Can't delete social record for user:\nuid: %d\nprovider: %s\nid: %s\n%s", uid, provider, id, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
 		return
 	}
