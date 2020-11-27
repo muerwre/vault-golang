@@ -202,7 +202,12 @@ func (oc OAuthController) Login(c *gin.Context) {
 		IsActivated: "1",
 	}
 
-	oc.user.CreateUser(user)
+	if err = oc.user.CreateUser(user); err != nil {
+		logrus.Warnf("Can't create social record:\nclaim: %+v\nuser:%+v\n%s", claim, user, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
+		return
+	}
+
 	social, err := oc.oauth.CreateSocialFromClaim(*claim, user)
 	if err != nil {
 		logrus.Warnf("Can't create social record:\nclaim: %+v\nuser:%+v\n%s", claim, user, err.Error())
