@@ -241,12 +241,12 @@ func (oc OAuthController) List(c *gin.Context) {
 }
 
 func (oc OAuthController) Delete(c *gin.Context) {
-	u := c.MustGet("User").(*models.User)
+	uid := c.MustGet("UID").(uint)
 	id := c.Param("id")
 	provider := c.Param("provider")
 
-	if err := oc.oauth.DeleteSocialByUserProviderAndId(u, provider, id); err != nil {
-		logrus.Warnf("Can't delete social record for user:\nuser: %+v\nprovider: %s\nid: %s", u, provider, id)
+	if err := oc.oauth.DeleteSocialByUserProviderAndId(uid, provider, id); err != nil {
+		logrus.Warnf("Can't delete social record for user:\nuser: %d\nprovider: %s\nid: %s", uid, provider, id)
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
 		return
 	}
