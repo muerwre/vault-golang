@@ -57,7 +57,7 @@ func (oc OAuthController) Redirect(c *gin.Context) {
 }
 
 // GetRedirectData is a middleware, that fetches oauth data from provider and passes it further
-func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
+func (oc OAuthController) GetRedirectData() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		provider := c.MustGet("Provider").(*utils2.OAuthConfig)
 		code := c.Query("code")

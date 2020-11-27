@@ -5,7 +5,6 @@ import (
 	"github.com/muerwre/vault-golang/app"
 	"github.com/muerwre/vault-golang/db"
 	controller2 "github.com/muerwre/vault-golang/feature/oauth/controller"
-	utils2 "github.com/muerwre/vault-golang/feature/oauth/utils"
 	"github.com/muerwre/vault-golang/utils"
 )
 
@@ -37,7 +36,7 @@ func (or *OauthRouter) Handle(r *gin.RouterGroup) *OauthRouter {
 	router := r.Group("/:provider", or.controller.ProviderMiddleware)
 	{
 		router.GET("/redirect/", or.controller.Redirect)
-		router.GET("/process/", or.controller.GetRedirectData(utils2.ProcessTargetAttach), or.controller.Process)
+		router.GET("/process/", or.controller.GetRedirectData(), or.controller.Process)
 
 		router.DELETE("/:id", or.api.AuthRequired, or.controller.Delete)
 	}
