@@ -6,6 +6,7 @@ import (
 )
 
 type NodePostRequest struct {
+	ID          uint                  `gorm:"primary_key" json:"id"`
 	Title       string                `json:"title"`
 	Type        string                `json:"type"`
 	IsPublic    bool                  `json:"is_public"`
@@ -25,7 +26,9 @@ type NodePostRequest struct {
 
 func (r *NodePostRequest) ToNode() *models.Node {
 	n := &models.Node{
-		Model: &models.Model{},
+		Model: &models.Model{
+			ID: r.ID,
+		},
 	}
 
 	n.Title = r.Title
