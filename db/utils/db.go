@@ -12,3 +12,10 @@ func WhereIsFlowNode(d *gorm.DB) *gorm.DB {
 		structs.Values(constants2.FLOW_NODE_TYPES),
 	)
 }
+
+func WhereIsLabNode(d *gorm.DB) *gorm.DB {
+	return d.Where(
+		"deleted_at IS NULL AND is_promoted = 0 AND is_public = 1 AND type IN (?)",
+		structs.Values(constants2.FLOW_NODE_TYPES),
+	)
+}
