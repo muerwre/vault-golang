@@ -395,14 +395,16 @@ func (nc NodeController) PostNode(c *gin.Context) {
 		return
 	}
 
-	data := models.Node{}
+	data := request.NodePostRequest{}
 
 	if err := c.BindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}
 
-	node, err := nc.node.LoadNodeFromData(data, user)
+	n := data.ToNode()
+
+	node, err := nc.node.LoadNodeFromData(*n, user)
 
 	if err != nil {
 		logrus.Warnf("Can't load node from data: %s\nData:\n%+v", err.Error(), data)
@@ -411,24 +413,25 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	}
 
 	// Update previous node cover target to be null if its changed
-	if err = nc.node.UpdateNodeCoverIfChanged(data, node); err != nil {
+	if err = nc.node.UpdateNodeCoverIfChanged(*n, node); err != nil {
 		logrus.Warnf("Can't load node cover from data: %s\nData:\n%+v", err.Error(), data)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	lostFiles, err := nc.node.UpdateNodeFiles(data, node)
+	lostFiles, err := nc.node.UpdateNodeFiles(*n, node)
 
 	if err != nil {
-		logrus.Warnf("Can't load node files while updating node %d: %s", data.ID, err.Error())
+		logrus.Warnf("Can't load node files while updating node %d: %s", n.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	nc.node.UpdateNodeTitle(data, node)
+	nc.node.UpdateNodeTitle(*n, node)
+	nc.node.UpdateNodeVisibility(*n, node)
 
-	if err = nc.node.UpdateNodeBlocks(data, node); err != nil {
-		logrus.Warnf("Received suspicious blocks while updating node %d: %s", data.ID, err.Error())
+	if err = nc.node.UpdateNodeBlocks(*n, node); err != nil {
+		logrus.Warnf("Received suspicious blocks while updating node %d: %s", n.ID, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -445,9 +448,9 @@ func (nc NodeController) PostNode(c *gin.Context) {
 	nc.node.UpdateFilesMetadata(data.Files, node.Files)
 	nc.node.SetFilesTarget(node.FilesOrder, "node")
 	nc.node.UnsetFilesTarget(lostFiles)
-	nc.node.UnsetNodeCoverTarget(data, node)
+	nc.node.UnsetNodeCoverTarget(*n, node)
 
-	if err = nc.node.PushNodeCreateNotificationIfNeeded(data, *node); err != nil {
+	if err = nc.node.PushNodeCreateNotificationIfNeeded(*n, *node); err != nil {
 		logrus.Warnf(err.Error())
 	}
 

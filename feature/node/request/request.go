@@ -35,10 +35,6 @@ type NodeCellViewPostRequest struct {
 	Flow models.NodeFlow `json:"flow"`
 }
 
-type NodePostRequest struct {
-	Node models.Node `json:"node"`
-}
-
 type NodeLockCommentRequest struct {
 	IsLocked bool `json:"is_locked"`
 }

@@ -171,6 +171,11 @@ func (nu NodeUsecase) UpdateNodeTitle(data models.Node, node *models.Node) {
 	}
 }
 
+func (nu NodeUsecase) UpdateNodeVisibility(data models.Node, node *models.Node) {
+	node.IsPublic = data.IsPublic
+	node.IsPromoted = data.IsPromoted
+}
+
 func (nu NodeUsecase) UpdateNodeBlocks(data models.Node, node *models.Node) error {
 	node.ApplyBlocks(data.Blocks)
 
