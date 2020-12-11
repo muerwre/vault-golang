@@ -102,19 +102,19 @@ func (nr NodeRepository) GetNodeTypeCount(t string) int {
 }
 
 func (nr NodeRepository) GetImagesCount() int {
-	return nr.GetNodeTypeCount(constants2.NODE_TYPES.IMAGE)
+	return nr.GetNodeTypeCount(constants2.NodeTypeImage)
 }
 
 func (nr NodeRepository) GetAudiosCount() int {
-	return nr.GetNodeTypeCount(constants2.NODE_TYPES.AUDIO)
+	return nr.GetNodeTypeCount(constants2.NodeTypeAudio)
 }
 
 func (nr NodeRepository) GetVideosCount() int {
-	return nr.GetNodeTypeCount(constants2.NODE_TYPES.VIDEO)
+	return nr.GetNodeTypeCount(constants2.NodeTypeVideo)
 }
 
 func (nr NodeRepository) GetTextsCount() int {
-	return nr.GetNodeTypeCount(constants2.NODE_TYPES.TEXT)
+	return nr.GetNodeTypeCount(constants2.NodeTypeText)
 }
 
 func (nr NodeRepository) GetCommentsCount() (count int) {

@@ -346,7 +346,7 @@ func (nc NodeController) PostHeroic(c *gin.Context) {
 func (nc NodeController) PostCellView(c *gin.Context) {
 	u := c.MustGet("User").(*models.User)
 	params := request.NodeCellViewPostRequest{}
-	if err := c.BindJSON(&params); err != nil || !constants.NODE_FLOW_DISPLAY.Contains(params.Flow.Display) {
+	if err := c.BindJSON(&params); err != nil || !constants.NodeFlowDisplay.Contains(params.Flow.Display) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.IncorrectData})
 		return
 	}

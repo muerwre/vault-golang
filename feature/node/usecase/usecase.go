@@ -199,7 +199,7 @@ func (nu NodeUsecase) LoadNodeFromData(data models.Node, u *models.User) (*model
 			return nil, err
 		}
 
-		if node.Type == "" || !constants.FLOW_NODE_TYPES.Contains(node.Type) {
+		if node.Type == "" || !constants.FlowNodeTypes.Contains(node.Type) {
 			return nil, fmt.Errorf(codes.IncorrectType)
 		}
 
@@ -209,7 +209,7 @@ func (nu NodeUsecase) LoadNodeFromData(data models.Node, u *models.User) (*model
 
 		return node, nil
 	} else {
-		if data.Type == "" || !constants.FLOW_NODE_TYPES.Contains(data.Type) {
+		if data.Type == "" || !constants.FlowNodeTypes.Contains(data.Type) {
 			return nil, fmt.Errorf(codes.IncorrectType)
 		}
 
