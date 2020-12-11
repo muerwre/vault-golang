@@ -445,3 +445,18 @@ func (nr NodeRepository) GetWithTags(id uint) (*models.Node, error) {
 	err := nr.db.Preload("Tags").First(&node, "id = ?", id).Error
 	return node, err
 }
+
+func (nr NodeRepository) GetLabNodes(after time.Time, limit int) ([]models.Node, int, error) {
+	nodes := &[]models.Node{}
+	count := 0
+
+	q := utils2.WhereIsLabNode(nr.db.Model(&nodes).Order("updated_at DESC").Where("updated_at <= ?", after))
+
+	if err := q.Limit(limit).Preload("User").Preload("User.Photo").Find(&nodes).Error; err != nil {
+		return nil, 0, err
+	}
+
+	q.Count(&count)
+
+	return *nodes, count, nil
+}

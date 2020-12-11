@@ -1,5 +1,7 @@
 package constants
 
+import "github.com/muerwre/vault-golang/utils"
+
 const BorisNodeId = 696
 const MaxCommentLength = 1024 * 2
 const MaxNodeTitleLength = 256
@@ -19,18 +21,6 @@ const (
 	NodeFlowDisplayQuadro     string = "quadro"
 )
 
-type StringArray []string
-
-var FlowNodeTypes = &StringArray{NodeTypeImage, NodeTypeVideo, NodeTypeText, NodeTypeAudio}
-var LabNodeTypes = &StringArray{NodeTypeText}
-var NodeFlowDisplay = &StringArray{NodeFlowDisplaySingle, NodeFlowDisplayVertical, NodeFlowDisplayHorizontal, NodeFlowDisplayQuadro}
-
-func (f StringArray) Contains(t string) bool {
-	for _, a := range f {
-		if a == t {
-			return true
-		}
-	}
-
-	return false
-}
+var FlowNodeTypes = &utils.EnumStringArray{NodeTypeImage, NodeTypeVideo, NodeTypeText, NodeTypeAudio}
+var LabNodeTypes = &utils.EnumStringArray{NodeTypeText}
+var NodeFlowDisplay = &utils.EnumStringArray{NodeFlowDisplaySingle, NodeFlowDisplayVertical, NodeFlowDisplayHorizontal, NodeFlowDisplayQuadro}
