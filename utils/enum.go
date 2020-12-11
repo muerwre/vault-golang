@@ -1,10 +1,5 @@
 package utils
 
-import (
-	"database/sql/driver"
-	"strings"
-)
-
 type EnumStringArray []string
 
 // Contains determines if element is in a string array
@@ -19,7 +14,6 @@ func (f EnumStringArray) Contains(t string) bool {
 }
 
 // Value used to pass this array as sql filter
-func (f EnumStringArray) Value() (driver.Value, error) {
-	val := strings.Join(f, ",")
-	return val, nil
+func (f EnumStringArray) AsCondition() []string {
+	return []string(f)
 }
