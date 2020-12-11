@@ -22,7 +22,7 @@ const (
 type StringArray []string
 
 var FlowNodeTypes = &StringArray{NodeTypeImage, NodeTypeVideo, NodeTypeText, NodeTypeAudio}
-var ValidNodeTypes = &StringArray{NodeTypeImage, NodeTypeVideo, NodeTypeText, NodeTypeAudio, NodeTypeBoris}
+var LabNodeTypes = &StringArray{NodeTypeText}
 var NodeFlowDisplay = &StringArray{NodeFlowDisplaySingle, NodeFlowDisplayVertical, NodeFlowDisplayHorizontal, NodeFlowDisplayQuadro}
 
 func (f StringArray) Contains(t string) bool {
