@@ -14,7 +14,7 @@ check: prepare_linter
 build: clean
 	CGO_ENABLED=1 GOOS=${GOOS} go build -o bin/${APP} \
 		-ldflags "-X main.version=${RELEASE} -X main.commit=${COMMIT} -X main.buildTime=${BUILD_TIME}" \
-
+			cmd/app/main.go
 .PHONY: clean
 clean:
 	@rm -f bin/${APP}
