@@ -27,8 +27,9 @@ func (cr CommentRepository) LoadCommentWithUserAndPhoto(id uint) (*models.Commen
 }
 
 func (cr CommentRepository) Delete(comment *models.Comment) error {
-	return cr.db.Delete(&comment).Error
+	return cr.db.Delete(comment).Error
 }
+
 func (cr CommentRepository) UnDelete(comment *models.Comment) error {
 	comment.DeletedAt = nil
 	return cr.db.Model(&comment).Unscoped().
