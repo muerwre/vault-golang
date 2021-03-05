@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/muerwre/vault-golang/internal/db/models"
+	"time"
 )
 
 type CommentRepository struct {
@@ -31,8 +32,9 @@ func (cr CommentRepository) Delete(comment *models.Comment) error {
 }
 
 func (cr CommentRepository) UnDelete(comment *models.Comment) error {
-	comment.DeletedAt = nil
-	return cr.db.Model(&comment).Unscoped().
+	now := time.Now()
+	comment.DeletedAt = &now
+	return cr.db.Model(comment).Unscoped().
 		Where("id = ?", comment.ID).
 		Update("deletedAt", nil).Error
 }

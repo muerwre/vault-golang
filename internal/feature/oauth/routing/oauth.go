@@ -39,7 +39,7 @@ func (or *OauthRouter) Handle(r *gin.RouterGroup) *OauthRouter {
 		router.GET("/redirect/", or.controller.Redirect)
 		router.GET("/process/", or.controller.GetRedirectData(utils2.ProcessTargetAttach), or.controller.Process)
 
-		router.DELETE("/:id", or.api.AuthRequired, or.controller.Delete)
+		router.DELETE("/:id", or.api.AuthRequired, or.api.WithUser(false), or.controller.Delete)
 	}
 
 	authenticated := r.Group("/", or.api.AuthRequired, or.api.WithUser(false))
