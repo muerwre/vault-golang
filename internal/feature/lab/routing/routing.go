@@ -2,17 +2,17 @@ package routing
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/muerwre/vault-golang/db"
-	"github.com/muerwre/vault-golang/feature/lab/controller"
-	"github.com/muerwre/vault-golang/utils"
+	"github.com/muerwre/vault-golang/internal/db"
+	"github.com/muerwre/vault-golang/internal/feature/lab/controller"
+	"github.com/muerwre/vault-golang/pkg"
 )
 
 type LabRouter struct {
 	lab controller.LabController
-	api utils.AppApi
+	api pkg.AppApi
 }
 
-func (fr *LabRouter) Init(api utils.AppApi, db db.DB) *LabRouter {
+func (fr *LabRouter) Init(api pkg.AppApi, db db.DB) *LabRouter {
 	fr.api = api
 	fr.lab = *new(controller.LabController).Init(db)
 	return fr

@@ -1,8 +1,9 @@
 package request
 
 import (
-	"github.com/muerwre/vault-golang/db/models"
 	"time"
+
+	"github.com/muerwre/vault-golang/internal/db/models"
 )
 
 type NodePostRequest struct {

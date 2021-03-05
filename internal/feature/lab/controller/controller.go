@@ -1,13 +1,15 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/muerwre/vault-golang/db"
-	"github.com/muerwre/vault-golang/feature/lab/request"
-	"github.com/muerwre/vault-golang/feature/lab/response"
-	"github.com/muerwre/vault-golang/feature/lab/usecase"
-	"github.com/muerwre/vault-golang/utils/codes"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/muerwre/vault-golang/internal/db"
+	"github.com/muerwre/vault-golang/internal/feature/lab/request"
+	"github.com/muerwre/vault-golang/internal/feature/lab/response"
+	"github.com/muerwre/vault-golang/internal/feature/lab/usecase"
+	"github.com/muerwre/vault-golang/pkg/codes"
 )
 
 type LabController struct {

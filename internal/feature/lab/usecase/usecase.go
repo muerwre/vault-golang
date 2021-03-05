@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	"github.com/muerwre/vault-golang/db"
-	"github.com/muerwre/vault-golang/db/models"
-	"github.com/muerwre/vault-golang/db/repository"
+	"github.com/muerwre/vault-golang/internal/db"
+	"github.com/muerwre/vault-golang/internal/db/models"
+	"github.com/muerwre/vault-golang/internal/db/repository"
 	"time"
 )
 

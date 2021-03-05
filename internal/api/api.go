@@ -2,21 +2,23 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/muerwre/vault-golang/app"
-	"github.com/muerwre/vault-golang/db"
-	flowRouting "github.com/muerwre/vault-golang/feature/flow/routing"
-	metaRouting "github.com/muerwre/vault-golang/feature/meta/routing"
-	nodeRouting "github.com/muerwre/vault-golang/feature/node/routing"
-	notificationRouting "github.com/muerwre/vault-golang/feature/notification/routing"
-	oauthRouting "github.com/muerwre/vault-golang/feature/oauth/routing"
-	searchRouting "github.com/muerwre/vault-golang/feature/search/routing"
-	staticRouting "github.com/muerwre/vault-golang/feature/static/routing"
-	statsRouting "github.com/muerwre/vault-golang/feature/stats/routing"
-	tagRouting "github.com/muerwre/vault-golang/feature/tag/routing"
-	uploadRouting "github.com/muerwre/vault-golang/feature/upload/routing"
-	userRouting "github.com/muerwre/vault-golang/feature/user/routing"
-	"github.com/muerwre/vault-golang/service/mail"
-	"github.com/muerwre/vault-golang/service/notification/controller"
+
+	"github.com/muerwre/vault-golang/internal/app"
+	"github.com/muerwre/vault-golang/internal/db"
+	flowRouting "github.com/muerwre/vault-golang/internal/feature/flow/routing"
+	labRouting "github.com/muerwre/vault-golang/internal/feature/lab/routing"
+	metaRouting "github.com/muerwre/vault-golang/internal/feature/meta/routing"
+	nodeRouting "github.com/muerwre/vault-golang/internal/feature/node/routing"
+	notificationRouting "github.com/muerwre/vault-golang/internal/feature/notification/routing"
+	oauthRouting "github.com/muerwre/vault-golang/internal/feature/oauth/routing"
+	searchRouting "github.com/muerwre/vault-golang/internal/feature/search/routing"
+	staticRouting "github.com/muerwre/vault-golang/internal/feature/static/routing"
+	statsRouting "github.com/muerwre/vault-golang/internal/feature/stats/routing"
+	tagRouting "github.com/muerwre/vault-golang/internal/feature/tag/routing"
+	uploadRouting "github.com/muerwre/vault-golang/internal/feature/upload/routing"
+	userRouting "github.com/muerwre/vault-golang/internal/feature/user/routing"
+	"github.com/muerwre/vault-golang/internal/service/mail"
+	"github.com/muerwre/vault-golang/internal/service/notification/controller"
 )
 
 type API struct {

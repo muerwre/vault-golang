@@ -1,6 +1,6 @@
 package constants
 
-import "github.com/muerwre/vault-golang/utils"
+import "github.com/muerwre/vault-golang/pkg"
 
 const BorisNodeId = 696
 const MaxCommentLength = 4096 * 2
@@ -21,6 +21,7 @@ const (
 	NodeFlowDisplayQuadro     string = "quadro"
 )
 
-var FlowNodeTypes = &utils.EnumStringArray{NodeTypeImage, NodeTypeVideo, NodeTypeText, NodeTypeAudio}
-var LabNodeTypes = &utils.EnumStringArray{NodeTypeText}
-var NodeFlowDisplay = &utils.EnumStringArray{NodeFlowDisplaySingle, NodeFlowDisplayVertical, NodeFlowDisplayHorizontal, NodeFlowDisplayQuadro}
+var FlowNodeTypes = &pkg.EnumStringArray{NodeTypeImage, NodeTypeVideo,
+	NodeTypeText, NodeTypeAudio}
+var LabNodeTypes = &pkg.EnumStringArray{NodeTypeText}
+var NodeFlowDisplay = &pkg.EnumStringArray{NodeFlowDisplaySingle, NodeFlowDisplayVertical, NodeFlowDisplayHorizontal, NodeFlowDisplayQuadro}

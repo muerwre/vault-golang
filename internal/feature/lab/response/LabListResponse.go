@@ -1,8 +1,8 @@
 package response
 
 import (
-	"github.com/muerwre/vault-golang/db/models"
-	"github.com/muerwre/vault-golang/feature/node/response"
+	"github.com/muerwre/vault-golang/internal/db/models"
+	"github.com/muerwre/vault-golang/internal/feature/node/response"
 )
 
 type LabListResponse struct {

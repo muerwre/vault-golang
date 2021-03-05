@@ -1,4 +1,4 @@
-package utils
+package pkg
 
 type EnumStringArray []string
 
