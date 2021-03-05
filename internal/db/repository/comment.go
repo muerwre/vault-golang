@@ -28,12 +28,13 @@ func (cr CommentRepository) LoadCommentWithUserAndPhoto(id uint) (*models.Commen
 }
 
 func (cr CommentRepository) Delete(comment *models.Comment) error {
+	now := time.Now()
+	comment.DeletedAt = &now
 	return cr.db.Delete(comment).Error
 }
 
 func (cr CommentRepository) UnDelete(comment *models.Comment) error {
-	now := time.Now()
-	comment.DeletedAt = &now
+	comment.DeletedAt = nil
 	return cr.db.Model(comment).Unscoped().
 		Where("id = ?", comment.ID).
 		Update("deletedAt", nil).Error
