@@ -1,0 +1,61 @@
+package validation
+
+import (
+	"errors"
+	constants2 "github.com/muerwre/vault-golang/internal/feature/node/constants"
+	constants3 "github.com/muerwre/vault-golang/internal/feature/upload/constants"
+
+	"github.com/muerwre/vault-golang/internal/db/models"
+	"github.com/muerwre/vault-golang/pkg/codes"
+)
+
+var NodeValidators = map[string]func(n *models.Node) error{
+	constants2.NodeTypeImage: ImageNodeValidator,
+	constants2.NodeTypeAudio: AudioNodeValidator,
+	constants2.NodeTypeText:  TextNodeValidator,
+	constants2.NodeTypeVideo: VideoNodeValidator,
+}
+
+// ImageNodeValidator validates node of type image
+func ImageNodeValidator(n *models.Node) error {
+	if n.FirstFileOfType(constants3.FileTypeImage) < 0 {
+		return errors.New(codes.TooShirt)
+	}
+
+	return nil
+}
+
+// TextNodeValidator validates node of type text
+func TextNodeValidator(n *models.Node) error {
+	if len(n.Blocks) == 0 {
+		return errors.New(codes.TooShirt)
+	}
+
+	if n.FirstBlockOfType(models.BlockTypeText) < 0 {
+		return errors.New(codes.TooShirt)
+	}
+
+	return nil
+}
+
+// VideoNodeValidator validates node of type video
+func VideoNodeValidator(n *models.Node) error {
+	if len(n.Blocks) == 0 {
+		return errors.New(codes.TooShirt)
+	}
+
+	if n.FirstBlockOfType(models.BlockTypeVideo) < 0 {
+		return errors.New(codes.TooShirt)
+	}
+
+	return nil
+}
+
+// AudioNodeValidator validates node of type audio
+func AudioNodeValidator(n *models.Node) error {
+	if n.FirstFileOfType(constants3.FileTypeAudio) < 0 {
+		return errors.New(codes.TooShirt)
+	}
+
+	return nil
+}
