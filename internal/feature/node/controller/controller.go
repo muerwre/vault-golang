@@ -165,7 +165,7 @@ func (nc *NodeController) LockComment(c *gin.Context) {
 
 	nc.node.UpdateNodeCommentedAt(uint(nid))
 
-	c.JSON(http.StatusOK, gin.H{"deteled_at": &comment.DeletedAt})
+	c.JSON(http.StatusOK, gin.H{"deleted_at": &comment.DeletedAt})
 }
 
 // PostComment - /node/:id/comment saving and creating comments
