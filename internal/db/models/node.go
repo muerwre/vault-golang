@@ -62,7 +62,7 @@ type Node struct {
 	Likes       []*User        `gorm:"many2many:like;jointable_foreignkey:nodeId;association_jointable_foreignkey:userId;" json:"-"`
 	Views       []*NodeView    `json:"-"`
 	CommentedAt time.Time      `json:"commented_at" gorm:"column:commented_at"`
-	Flow        NodeFlow       `json:"flow" gorm:"column:flow"`
+	Flow        NodeFlow       `json:"flow" gorm:"column:flow;type:longtext;"`
 	IsLiked     bool           `json:"is_liked" gorm:"-" sql:"-"`
 	LikeCount   int            `json:"like_count" gorm:"-" sql:"-"`
 }
