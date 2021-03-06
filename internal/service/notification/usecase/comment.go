@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (n NotificationServiceUsecase) OnCommentCreate(item dto.NotificationDto) {
+func (n NotificationServiceUsecase) CreateUserNotificationsOnCommentCreate(item dto.NotificationDto) {
 	c, err := n.node.GetCommentByIdWithDeleted(item.ItemId)
 
 	if err != nil {
@@ -30,13 +30,13 @@ func (n NotificationServiceUsecase) OnCommentCreate(item dto.NotificationDto) {
 		}
 
 		if err := n.notification.Create(notification); err != nil {
-			logrus.Warnf("Can't perform OnCommentCreate: %s", err.Error())
+			logrus.Warnf("Can't perform CreateUserNotificationsOnCommentCreate: %s", err.Error())
 		}
 	}
 }
 
-func (n NotificationServiceUsecase) OnCommentDelete(item dto.NotificationDto) {
+func (n NotificationServiceUsecase) ClearUserNotificationsOnCommentDelete(item dto.NotificationDto) {
 	if err := n.notification.DeleteByTypeAndId(models.NotificationTypeComment, item.ItemId); err != nil {
-		logrus.Warnf("Can't perform OnCommentDelete notification: %s", err.Error())
+		logrus.Warnf("Can't perform ClearUserNotificationsOnCommentDelete notification: %s", err.Error())
 	}
 }

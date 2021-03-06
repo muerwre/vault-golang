@@ -33,13 +33,13 @@ func (n *NotificationService) Listen() {
 
 			switch item.Type {
 			case constants.NotifierTypeNodeCreate, constants.NotifierTypeNodeRestore:
-				n.notification.OnNodeCreate(*item)
+				n.notification.CreateUserNotificationsOnNodeCreate(*item)
 			case constants.NotifierTypeNodeDelete:
-				n.notification.OnNodeDelete(*item)
+				n.notification.ClearUserNotificationsOnNodeDelete(*item)
 			case constants.NotifierTypeCommentCreate, constants.NotifierTypeCommentRestore:
-				n.notification.OnCommentCreate(*item)
+				n.notification.CreateUserNotificationsOnCommentCreate(*item)
 			case constants.NotifierTypeCommentDelete:
-				n.notification.OnCommentDelete(*item)
+				n.notification.ClearUserNotificationsOnCommentDelete(*item)
 			default:
 				logrus.WithField("item", item).Warnf("Got unknown notification of type %s", item.Type)
 			}
