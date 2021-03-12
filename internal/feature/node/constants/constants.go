@@ -23,5 +23,6 @@ const (
 
 var FlowNodeTypes = &pkg.EnumStringArray{NodeTypeImage, NodeTypeVideo,
 	NodeTypeText, NodeTypeAudio}
-var LabNodeTypes = &pkg.EnumStringArray{NodeTypeText}
+var LabNodeTypes = &pkg.EnumStringArray{NodeTypeImage, NodeTypeVideo,
+	NodeTypeText, NodeTypeAudio}
 var NodeFlowDisplay = &pkg.EnumStringArray{NodeFlowDisplaySingle, NodeFlowDisplayVertical, NodeFlowDisplayHorizontal, NodeFlowDisplayQuadro}

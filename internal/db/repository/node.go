@@ -450,7 +450,11 @@ func (nr NodeRepository) GetLabNodes(after time.Time, limit int) ([]models.Node,
 	nodes := &[]models.Node{}
 	count := 0
 
-	q := utils2.WhereIsLabNode(nr.db.Model(&nodes).Order("updated_at DESC").Where("updated_at <= ?", after))
+	q := utils2.WhereIsLabNode(
+		nr.db.Model(&nodes).
+			Order("updated_at DESC").
+			Where("updated_at <= ?", after),
+	)
 
 	if err := q.Limit(limit).Preload("User").Preload("User.Photo").Find(&nodes).Error; err != nil {
 		return nil, 0, err
