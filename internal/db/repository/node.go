@@ -352,10 +352,15 @@ func (nr NodeRepository) GetDiffRecent(limit uint, exclude []uint) ([]models.Nod
 	q := utils2.WhereIsFlowNode(nr.db.Preload("User").Preload("User.Photo").Model(&models.Node{}))
 	r := &[]models.Node{}
 
+	if len(exclude) > 0 {
+		q = q.Where("id NOT IN (?)", exclude)
+	}
+
 	err := q.Order("commented_at DESC, created_at DESC").
-		Where("commented_at IS NOT NULL AND id NOT IN (?)", exclude).
+		Where("commented_at IS NOT NULL").
 		Limit(limit).
-		Find(&r).Error
+		Find(&r).
+		Error
 
 	return *r, err
 }

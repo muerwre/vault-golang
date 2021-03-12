@@ -77,6 +77,6 @@ func (ou OauthUsecase) GetSocialsOfUser(user *models.User) ([]*models.Social, er
 	return ou.oauth.OfUser(user.ID)
 }
 
-func (ou OauthUsecase) DeleteSocialByUserProviderAndId(user *models.User, provider string, id string) error {
-	return ou.oauth.DeleteOfUser(user.ID, provider, id)
+func (ou OauthUsecase) DeleteSocialByUserProviderAndId(uid uint, provider string, id string) error {
+	return ou.oauth.DeleteOfUser(uid, provider, id)
 }

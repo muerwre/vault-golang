@@ -57,7 +57,7 @@ func (oc OAuthController) Redirect(c *gin.Context) {
 }
 
 // GetRedirectData is a middleware, that fetches oauth data from provider and passes it further
-func (oc OAuthController) GetRedirectData(target string) gin.HandlerFunc {
+func (oc OAuthController) GetRedirectData() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		provider := c.MustGet("Provider").(*utils2.OAuthConfig)
 		code := c.Query("code")
@@ -202,7 +202,12 @@ func (oc OAuthController) Login(c *gin.Context) {
 		IsActivated: "1",
 	}
 
-	oc.user.CreateUser(user)
+	if err = oc.user.CreateUser(user); err != nil {
+		logrus.Warnf("Can't create social record:\nclaim: %+v\nuser:%+v\n%s", claim, user, err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
+		return
+	}
+
 	social, err := oc.oauth.CreateSocialFromClaim(*claim, user)
 	if err != nil {
 		logrus.Warnf("Can't create social record:\nclaim: %+v\nuser:%+v\n%s", claim, user, err.Error())
@@ -241,12 +246,12 @@ func (oc OAuthController) List(c *gin.Context) {
 }
 
 func (oc OAuthController) Delete(c *gin.Context) {
-	u := c.MustGet("User").(*models.User)
+	uid := c.MustGet("UID").(uint)
 	id := c.Param("id")
 	provider := c.Param("provider")
 
-	if err := oc.oauth.DeleteSocialByUserProviderAndId(u, provider, id); err != nil {
-		logrus.Warnf("Can't delete social record for user:\nuser: %+v\nprovider: %s\nid: %s", u, provider, id)
+	if err := oc.oauth.DeleteSocialByUserProviderAndId(uid, provider, id); err != nil {
+		logrus.Warnf("Can't delete social record for user:\nuid: %d\nprovider: %s\nid: %s\n%s", uid, provider, id, err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": codes.CantSaveUser})
 		return
 	}

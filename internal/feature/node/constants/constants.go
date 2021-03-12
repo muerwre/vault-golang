@@ -3,7 +3,7 @@ package constants
 import "github.com/fatih/structs"
 
 const BorisNodeId = 696
-const MaxCommentLength = 1024 * 2
+const MaxCommentLength = 4096 * 2
 const MaxNodeTitleLength = 256
 
 type FlowNodeTypes struct {
