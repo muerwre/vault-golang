@@ -18,7 +18,7 @@ func (uc *LabUsecase) Init(db db.DB) *LabUsecase {
 
 func (uc LabUsecase) GetList(after *time.Time, limit int) ([]models.Node, int, error) {
 	a := time.Now()
-	if after != nil {
+	if !after.IsZero() {
 		a = *after
 	}
 

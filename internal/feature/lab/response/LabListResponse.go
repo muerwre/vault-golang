@@ -2,22 +2,17 @@ package response
 
 import (
 	"github.com/muerwre/vault-golang/internal/db/models"
-	"github.com/muerwre/vault-golang/internal/feature/node/response"
 )
 
 type LabListResponse struct {
-	Nodes []response.FlowResponseNode `json:"nodes"`
-	Count int                         `json:"count"`
+	Nodes []models.Node `json:"nodes"`
+	Count int           `json:"count"`
 }
 
 func (r *LabListResponse) Init(nodes []models.Node, count int) *LabListResponse {
-	list := make([]response.FlowResponseNode, len(nodes))
+	// TODO: make map to LabNodeResponse
 
-	for k, n := range nodes {
-		list[k] = *new(response.FlowResponseNode).Init(n)
-	}
-
-	r.Nodes = list
+	r.Nodes = nodes
 	r.Count = count
 
 	return r
