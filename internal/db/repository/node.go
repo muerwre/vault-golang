@@ -102,19 +102,19 @@ func (nr NodeRepository) GetNodeTypeCount(t string) int {
 }
 
 func (nr NodeRepository) GetImagesCount() int {
-	return nr.GetNodeTypeCount(constants2.NODE_TYPES.IMAGE)
+	return nr.GetNodeTypeCount(constants2.NodeTypeImage)
 }
 
 func (nr NodeRepository) GetAudiosCount() int {
-	return nr.GetNodeTypeCount(constants2.NODE_TYPES.AUDIO)
+	return nr.GetNodeTypeCount(constants2.NodeTypeAudio)
 }
 
 func (nr NodeRepository) GetVideosCount() int {
-	return nr.GetNodeTypeCount(constants2.NODE_TYPES.VIDEO)
+	return nr.GetNodeTypeCount(constants2.NodeTypeVideo)
 }
 
 func (nr NodeRepository) GetTextsCount() int {
-	return nr.GetNodeTypeCount(constants2.NODE_TYPES.TEXT)
+	return nr.GetNodeTypeCount(constants2.NodeTypeText)
 }
 
 func (nr NodeRepository) GetCommentsCount() (count int) {
@@ -444,4 +444,23 @@ func (nr NodeRepository) GetWithTags(id uint) (*models.Node, error) {
 	node := &models.Node{}
 	err := nr.db.Preload("Tags").First(&node, "id = ?", id).Error
 	return node, err
+}
+
+func (nr NodeRepository) GetLabNodes(after time.Time, limit int) ([]models.Node, int, error) {
+	nodes := &[]models.Node{}
+	count := 0
+
+	q := utils2.WhereIsLabNode(
+		nr.db.Model(&nodes).
+			Order("updated_at DESC").
+			Where("updated_at <= ?", after),
+	)
+
+	if err := q.Limit(limit).Preload("User").Preload("User.Photo").Find(&nodes).Error; err != nil {
+		return nil, 0, err
+	}
+
+	q.Count(&count)
+
+	return *nodes, count, nil
 }

@@ -2,9 +2,11 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/muerwre/vault-golang/internal/app"
 	"github.com/muerwre/vault-golang/internal/db"
 	flowRouting "github.com/muerwre/vault-golang/internal/feature/flow/routing"
+	labRouting "github.com/muerwre/vault-golang/internal/feature/lab/routing"
 	metaRouting "github.com/muerwre/vault-golang/internal/feature/meta/routing"
 	nodeRouting "github.com/muerwre/vault-golang/internal/feature/node/routing"
 	notificationRouting "github.com/muerwre/vault-golang/internal/feature/notification/routing"
@@ -38,6 +40,7 @@ type API struct {
 	search             *searchRouting.SearchRouter
 	tag                *tagRouting.TagRouter
 	notificationRouter *notificationRouting.NotificationRouter
+	lab                *labRouting.LabRouter
 }
 
 // TODO: remove it? Or made it error response
@@ -83,6 +86,7 @@ func (a *API) Init() *gin.Engine {
 	a.oauth = new(oauthRouting.OauthRouter).Init(a, a.db, a.Config).Handle(r.Group("/oauth"))
 	a.tag = new(tagRouting.TagRouter).Init(a, a.db, a.Config).Handle(r.Group("/tag"))
 	a.notificationRouter = new(notificationRouting.NotificationRouter).Init(a, a.db).Handle(r.Group("/notifications"))
+	a.lab = new(labRouting.LabRouter).Init(a, a.db).Handle(r.Group("/lab"))
 
 	// TODO: do the same for:
 	a.stats = &statsRouting.StatsRouter{}

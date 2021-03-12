@@ -90,11 +90,11 @@ func (s NodeFlow) Value() (driver.Value, error) {
 }
 
 func (n Node) IsFlowType() bool {
-	return constants2.FLOW_NODE_TYPES.Contains(n.Type)
+	return constants2.FlowNodeTypes.Contains(n.Type)
 }
 
 func (n Node) CanBeCommented() bool {
-	return n.Type == constants2.NODE_TYPES.BORIS || n.IsFlowType()
+	return n.Type == constants2.NodeTypeBoris || n.IsFlowType()
 }
 
 func (n Node) CanBeTaggedBy(user *User) bool {
@@ -117,10 +117,10 @@ func (n Node) CanBeHeroedBy(u *User) bool {
 // CanHasFile - checks if node can has file of type
 func (n Node) CanHasFile(f File) bool {
 	switch n.Type {
-	case constants2.NODE_TYPES.IMAGE:
+	case constants2.NodeTypeImage:
 		return f.Type == constants3.FileTypeImage
 
-	case constants2.NODE_TYPES.AUDIO:
+	case constants2.NodeTypeAudio:
 		return f.Type == constants3.FileTypeAudio || f.Type == constants3.FileTypeImage
 
 	default:
@@ -131,9 +131,9 @@ func (n Node) CanHasFile(f File) bool {
 // CanHasBlock - checks if node can has block of type
 func (n Node) CanHasBlock(b NodeBlock) bool {
 	switch n.Type {
-	case constants2.NODE_TYPES.TEXT:
+	case constants2.NodeTypeText:
 		return b.Type == BlockTypeText
-	case constants2.NODE_TYPES.VIDEO:
+	case constants2.NodeTypeVideo:
 		return b.Type == BlockTypeVideo
 	default:
 		return false
@@ -194,7 +194,7 @@ func (n Node) FirstFileOfType(t string) int {
 
 // UpdateDescription - generates node brief description from node's body
 func (n *Node) UpdateDescription() {
-	if n.Type == constants2.NODE_TYPES.TEXT {
+	if n.Type == constants2.NodeTypeText {
 		textBlock := n.Blocks[n.FirstBlockOfType(BlockTypeText)]
 
 		if len(textBlock.Text) > 64 {
@@ -206,7 +206,7 @@ func (n *Node) UpdateDescription() {
 
 // UpdateDescription - generates node thumbnail image from node's body
 func (n *Node) UpdateThumbnail() {
-	if n.Type == constants2.NODE_TYPES.IMAGE || n.Type == constants2.NODE_TYPES.AUDIO {
+	if n.Type == constants2.NodeTypeImage || n.Type == constants2.NodeTypeAudio {
 		i := n.FirstFileOfType(constants3.FileTypeImage)
 
 		if i >= 0 {
@@ -215,7 +215,7 @@ func (n *Node) UpdateThumbnail() {
 		}
 	}
 
-	if n.Type == constants2.NODE_TYPES.VIDEO {
+	if n.Type == constants2.NodeTypeVideo {
 		i := n.FirstBlockOfType(BlockTypeVideo)
 
 		if url := utils2.GetThumbFromUrl(n.Blocks[i].Url); url != "" {

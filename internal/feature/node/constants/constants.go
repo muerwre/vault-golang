@@ -1,71 +1,28 @@
 package constants
 
-import "github.com/fatih/structs"
+import "github.com/muerwre/vault-golang/pkg"
 
 const BorisNodeId = 696
 const MaxCommentLength = 4096 * 2
 const MaxNodeTitleLength = 256
 
-type FlowNodeTypes struct {
-	IMAGE string
-	VIDEO string
-	TEXT  string
-	AUDIO string
-}
+const (
+	NodeTypeImage string = "image"
+	NodeTypeVideo string = "video"
+	NodeTypeAudio string = "audio"
+	NodeTypeText  string = "text"
+	NodeTypeBoris string = "boris"
+)
 
-type NodeTypes struct {
-	IMAGE string
-	VIDEO string
-	TEXT  string
-	BORIS string
-	AUDIO string
-}
+const (
+	NodeFlowDisplaySingle     string = "single"
+	NodeFlowDisplayVertical   string = "vertical"
+	NodeFlowDisplayHorizontal string = "horizontal"
+	NodeFlowDisplayQuadro     string = "quadro"
+)
 
-type NodeFlowDisplay struct {
-	SINGLE     string
-	VERTICAL   string
-	HORIZONTAL string
-	QUADRO     string
-}
-
-var FLOW_NODE_TYPES = FlowNodeTypes{
-	IMAGE: "image",
-	VIDEO: "video",
-	TEXT:  "text",
-	AUDIO: "audio",
-}
-
-var NODE_TYPES = NodeTypes{
-	IMAGE: "image",
-	VIDEO: "video",
-	AUDIO: "audio",
-	TEXT:  "text",
-	BORIS: "boris",
-}
-
-var NODE_FLOW_DISPLAY = NodeFlowDisplay{
-	SINGLE:     "single",
-	VERTICAL:   "vertical",
-	HORIZONTAL: "horizontal",
-	QUADRO:     "quadro",
-}
-
-func (f NodeFlowDisplay) Contains(t string) bool {
-	for _, a := range structs.Map(f) {
-		if a == t {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (f FlowNodeTypes) Contains(t string) bool {
-	for _, a := range structs.Map(f) {
-		if a == t {
-			return true
-		}
-	}
-
-	return false
-}
+var FlowNodeTypes = &pkg.EnumStringArray{NodeTypeImage, NodeTypeVideo,
+	NodeTypeText, NodeTypeAudio}
+var LabNodeTypes = &pkg.EnumStringArray{NodeTypeImage, NodeTypeVideo,
+	NodeTypeText, NodeTypeAudio}
+var NodeFlowDisplay = &pkg.EnumStringArray{NodeFlowDisplaySingle, NodeFlowDisplayVertical, NodeFlowDisplayHorizontal, NodeFlowDisplayQuadro}
