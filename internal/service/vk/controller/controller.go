@@ -40,7 +40,7 @@ func (s VkNotificationService) Watch(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			s.log.Warn("VkNotificationService stopped")
+			s.log.Info("VkNotificationService stopped")
 			return
 		case <-time.After(time.Minute * time.Duration(s.config.Delay)):
 			continue
