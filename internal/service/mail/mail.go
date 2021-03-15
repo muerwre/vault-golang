@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"context"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"strings"
@@ -18,16 +19,18 @@ type MailerConfig struct {
 }
 
 type MailService struct {
-	config *MailerConfig
+	config MailerConfig
 	dialer *gomail.Dialer
+	log    *logrus.Logger
 	open   bool
 	closer gomail.SendCloser
 
 	Chan chan *gomail.Message
 }
 
-func (ml *MailService) Init(c *MailerConfig) *MailService {
+func (ml *MailService) Init(c MailerConfig, log *logrus.Logger) *MailService {
 	ml.config = c
+	ml.log = log
 	ml.dialer = gomail.NewDialer(c.Host, c.Port, c.User, c.Password)
 
 	ml.Chan = make(chan *gomail.Message, 10)
@@ -35,24 +38,28 @@ func (ml *MailService) Init(c *MailerConfig) *MailService {
 	return ml
 }
 
-func (ml *MailService) Listen() {
-	logrus.Info("MailService routine started")
-	logrus.Infof("Smtp relay via %s:%d", ml.config.Host, ml.config.Port)
+func (ml *MailService) Listen(ctx context.Context) {
+	ml.log.Info("MailService routine started")
+	ml.log.Infof("Smtp relay via %s:%d", ml.config.Host, ml.config.Port)
 
 	ml.open = false
 	var err error
 
 	for {
 		select {
+		case <-ctx.Done():
+			close(ml.Chan)
+			ml.log.Info("MailService stopped")
+			return
 		case m, ok := <-ml.Chan:
 			if !ok {
-				logrus.Warnf("MailService channel closed")
+				ml.log.Warnf("MailService channel closed")
 				return
 			}
 
 			if !ml.open {
 				if ml.closer, err = ml.dialer.Dial(); err != nil {
-					logrus.Warnf(err.Error())
+					ml.log.Warnf(err.Error())
 					continue
 				}
 
@@ -60,7 +67,7 @@ func (ml *MailService) Listen() {
 			}
 
 			if err := gomail.Send(ml.closer, m); err != nil {
-				logrus.Warnf("MailService can't send mail: %s", err.Error())
+				ml.log.Warnf("MailService can't send mail: %s", err.Error())
 			}
 
 		case <-time.After(30 * time.Second):
@@ -99,8 +106,4 @@ func (ml MailService) CreateMessage(to string, subj string, text string, html st
 
 func (ml MailService) Send(m *gomail.Message) {
 	ml.Chan <- m
-}
-
-func (ml MailService) Done() {
-	close(ml.Chan)
 }

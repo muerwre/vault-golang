@@ -4,6 +4,8 @@ import (
 	"github.com/muerwre/vault-golang/internal/db"
 	"github.com/muerwre/vault-golang/internal/service/mail"
 	"github.com/muerwre/vault-golang/internal/service/notification/controller"
+	controller2 "github.com/muerwre/vault-golang/internal/service/vk/controller"
+	"github.com/sirupsen/logrus"
 )
 
 type App struct {
@@ -11,10 +13,14 @@ type App struct {
 	DB       *db.DB
 	Mailer   *mail.MailService
 	Notifier *controller.NotificationService
+	Vk       *controller2.VkNotificationService
+	Logger   *logrus.Logger
 }
 
 func New() (app *App, err error) {
-	app = &App{}
+	app = &App{
+		Logger: logrus.New(),
+	}
 
 	if app.Config, err = InitConfig(); err != nil {
 		return nil, err
@@ -24,25 +30,18 @@ func New() (app *App, err error) {
 		return nil, err
 	}
 
-	app.Notifier = new(controller.NotificationService).Init(*app.DB)
+	app.Notifier = new(controller.NotificationService).Init(*app.DB, app.Logger)
 
-	if app.Config.SmtpHost != "" {
-		app.Mailer = new(mail.MailService).Init(&mail.MailerConfig{
-			Host:     app.Config.SmtpHost,
-			Port:     app.Config.SmtpPort,
-			User:     app.Config.SmtpUser,
-			Password: app.Config.SmtpPassword,
-			From:     app.Config.SmtpFrom,
-		})
+	if app.Config.Mail.Host != "" {
+		app.Mailer = new(mail.MailService).Init(app.Config.Mail, app.Logger)
 	}
+
+	app.Vk = controller2.New(app.Config.Notifications.Vk, *app.DB, app.Logger)
 
 	return app, err
 }
 
 func (a *App) Close() error {
-	a.Notifier.Done()
-	a.Mailer.Done()
 	a.DB.Close()
-
 	return nil
 }
