@@ -3,16 +3,22 @@ package controller
 import (
 	"context"
 	"github.com/muerwre/vault-golang/internal/db"
-	"github.com/muerwre/vault-golang/internal/service/notification/constants"
 	"github.com/muerwre/vault-golang/internal/service/notification/dto"
 	"github.com/muerwre/vault-golang/internal/service/notification/usecase"
+	"github.com/muerwre/vault-golang/internal/service/vk/controller"
 	"github.com/sirupsen/logrus"
 )
+
+type NotificationConsumer interface {
+	Consume(notification *dto.NotificationDto) error
+	Name() string
+}
 
 type NotificationService struct {
 	Chan         chan *dto.NotificationDto
 	notification usecase.NotificationServiceUsecase
 	log          *logrus.Logger
+	consumers    []NotificationConsumer
 }
 
 func (n *NotificationService) Init(db db.DB, log *logrus.Logger) *NotificationService {
@@ -20,6 +26,10 @@ func (n *NotificationService) Init(db db.DB, log *logrus.Logger) *NotificationSe
 	n.notification = *new(usecase.NotificationServiceUsecase).Init(db)
 	n.log = log
 
+	n.consumers = []NotificationConsumer{
+		NewUserNotificationConsumer(db, log),
+		controller.NewVkNotificationConsumer(db, log),
+	}
 	return n
 }
 
@@ -38,17 +48,10 @@ func (n *NotificationService) Listen(ctx context.Context) {
 				return
 			}
 
-			switch item.Type {
-			case constants.NotifierTypeNodeCreate, constants.NotifierTypeNodeRestore:
-				n.notification.CreateUserNotificationsOnNodeCreate(*item)
-			case constants.NotifierTypeNodeDelete:
-				n.notification.ClearUserNotificationsOnNodeDelete(*item)
-			case constants.NotifierTypeCommentCreate, constants.NotifierTypeCommentRestore:
-				n.notification.CreateUserNotificationsOnCommentCreate(*item)
-			case constants.NotifierTypeCommentDelete:
-				n.notification.ClearUserNotificationsOnCommentDelete(*item)
-			default:
-				logrus.WithField("item", item).Warnf("Got unknown notification of type %s", item.Type)
+			for _, v := range n.consumers {
+				if err := v.Consume(item); err != nil {
+					logrus.Warnf("Failed to consume at %s: %+v", v.Name(), err)
+				}
 			}
 		}
 	}

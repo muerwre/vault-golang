@@ -6,19 +6,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (n NotificationServiceUsecase) CreateUserNotificationsOnCommentCreate(item dto.NotificationDto) {
+func (n NotificationServiceUsecase) CreateUserNotificationsOnCommentCreate(item dto.NotificationDto) error {
 	c, err := n.node.GetCommentByIdWithDeleted(item.ItemId)
 
 	if err != nil {
 		logrus.Warnf("Comment with id %s not found", item.ItemId)
-		return
+		return err
 	}
 
 	recipients, err := n.node.GetNodeWatchers(*c.NodeID)
 
 	if err != nil {
 		logrus.Warnf("Can't get watchers for node %d", c.NodeID)
-		return
+		return err
 	}
 
 	for _, v := range recipients {
@@ -33,10 +33,15 @@ func (n NotificationServiceUsecase) CreateUserNotificationsOnCommentCreate(item 
 			logrus.Warnf("Can't perform CreateUserNotificationsOnCommentCreate: %s", err.Error())
 		}
 	}
+
+	return nil
 }
 
-func (n NotificationServiceUsecase) ClearUserNotificationsOnCommentDelete(item dto.NotificationDto) {
+func (n NotificationServiceUsecase) ClearUserNotificationsOnCommentDelete(item dto.NotificationDto) error {
 	if err := n.notification.DeleteByTypeAndId(models.NotificationTypeComment, item.ItemId); err != nil {
 		logrus.Warnf("Can't perform ClearUserNotificationsOnCommentDelete notification: %s", err.Error())
+		return err
 	}
+
+	return nil
 }

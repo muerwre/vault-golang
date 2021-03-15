@@ -6,12 +6,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (n NotificationServiceUsecase) CreateUserNotificationsOnNodeCreate(item dto.NotificationDto) {
+func (n NotificationServiceUsecase) CreateUserNotificationsOnNodeCreate(item dto.NotificationDto) error {
 	recipients, err := n.notificationSettings.GetFlowWatchers()
 
 	if err != nil {
 		logrus.Warnf("Can't get watchers for node %d", item.ItemId)
-		return
+		return err
 	}
 
 	for _, v := range recipients {
@@ -26,10 +26,15 @@ func (n NotificationServiceUsecase) CreateUserNotificationsOnNodeCreate(item dto
 			logrus.Warnf("Can't perform CreateUserNotificationsOnNodeCreate: %s", err.Error())
 		}
 	}
+
+	return nil
 }
 
-func (n NotificationServiceUsecase) ClearUserNotificationsOnNodeDelete(item dto.NotificationDto) {
+func (n NotificationServiceUsecase) ClearUserNotificationsOnNodeDelete(item dto.NotificationDto) error {
 	if err := n.notification.DeleteByTypeAndId(models.NotificationTypeNode, item.ItemId); err != nil {
 		logrus.Warnf("Can't perform ClearUserNotificationsOnNodeDelete: %s", err.Error())
+		return err
 	}
+
+	return nil
 }

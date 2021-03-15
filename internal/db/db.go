@@ -25,6 +25,7 @@ type DB struct {
 	Comment              *repository2.CommentRepository
 	MessageView          *repository2.MessageViewRepository
 	NotificationSettings *repository2.NotificationSettingsRepository
+	AppNotification      *repository2.AppNotificationRepository
 }
 
 func New() (*DB, error) {
@@ -62,6 +63,7 @@ func New() (*DB, error) {
 		&models.NodeWatch{},
 		&models.Notification{},
 		&models.NotificationSettings{},
+		&models.AppNotification{},
 	)
 
 	return &DB{
@@ -79,5 +81,6 @@ func New() (*DB, error) {
 		MessageView:          new(repository2.MessageViewRepository).Init(db),
 		Notification:         new(repository2.NotificationRepository).Init(db),
 		NotificationSettings: new(repository2.NotificationSettingsRepository).Init(db),
+		AppNotification:      new(repository2.AppNotificationRepository).Init(db),
 	}, nil
 }
