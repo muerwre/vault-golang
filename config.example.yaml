@@ -6,9 +6,6 @@ Vk:
   ClientId: 123456
   ClientSecret: SECRET_API_KEY_FROM_VK
   CallbackUrl: http://localhost:7777/oauth/vkontakte/process/
-  GroupPostingEnabled: false
-  GroupApiKey: some_key_from_api_tab
-  GroupId: 123456
 API:
   Debug: false # debug api calls
   TlsFiles: []
@@ -32,3 +29,8 @@ Google:
 JWT:
   Secret: CHANGE_ME!!!
 Debug: false # die on errors
+Notifications:
+  Vk:
+    Enabled: true
+    ApiKey: e048e83950d5e8ef1067d3cce40c87931f930eea6273213622b97f490ff6d64cfa4d67205525c3adabf05
+    Group: 46909317
