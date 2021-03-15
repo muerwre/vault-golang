@@ -6,6 +6,9 @@ Vk:
   ClientId: 123456
   ClientSecret: SECRET_API_KEY_FROM_VK
   CallbackUrl: http://localhost:7777/oauth/vkontakte/process/
+  GroupPostingEnabled: false
+  GroupApiKey: some_key_from_api_tab
+  GroupId: 123456
 API:
   Debug: false # debug api calls
   TlsFiles: []
