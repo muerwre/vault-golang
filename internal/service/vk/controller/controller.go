@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"github.com/muerwre/vault-golang/internal/db"
+	"github.com/muerwre/vault-golang/pkg/vk"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -11,6 +12,7 @@ type VkNotificationService struct {
 	config VkNotificationsConfig
 	db     db.DB
 	log    *logrus.Logger
+	vk     *vk.Vk
 }
 
 // New returns new instance of VkNotificationService
@@ -22,6 +24,7 @@ func (s *VkNotificationService) init(config VkNotificationsConfig, db db.DB, log
 	s.config = config
 	s.db = db
 	s.log = log
+	s.vk = vk.NewVk(config.ApiKey, config.GroupId, log)
 
 	return s
 }
@@ -33,6 +36,8 @@ func (s VkNotificationService) Watch(ctx context.Context) {
 	}
 
 	s.log.Info("VkNotificationService started")
+
+	s.vk.CreatePost(ctx, "Hello 23", "https://vault48.org/", nil)
 
 	for {
 		select {

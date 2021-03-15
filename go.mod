@@ -3,6 +3,7 @@ module github.com/muerwre/vault-golang
 go 1.13
 
 require (
+	github.com/SevereCloud/vksdk/v2 v2.9.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dhowden/tag v0.0.0-20200412032933-5d76b8eaae27 // indirect
 	github.com/disintegration/imaging v1.6.2
