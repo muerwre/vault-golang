@@ -37,8 +37,6 @@ func (s VkNotificationService) Watch(ctx context.Context) {
 
 	s.log.Info("VkNotificationService started")
 
-	s.vk.CreatePost(ctx, "Hello 23", "https://vault48.org/", nil)
-
 	for {
 		select {
 		case <-ctx.Done():
