@@ -32,5 +32,7 @@ Debug: false # die on errors
 Notifications:
   Vk:
     Enabled: true
+    # User api key, should be fetched with appId, which is not of web type
+    # https://oauth.vk.com/authorize?client_id=appId&display=page&redirect_uri=https://oauth.vk.com/blank.html&scope=offline,photos,wall,groups&response_type=token&v=5.65
     ApiKey: e048e83950d5e8ef1067d3cce40c87931f930eea6273213622b97f490ff6d64cfa4d67205525c3adabf05
     Group: 46909317
