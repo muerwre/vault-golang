@@ -36,3 +36,6 @@ Notifications:
     # https://oauth.vk.com/authorize?client_id=appId&display=page&redirect_uri=https://oauth.vk.com/blank.html&scope=offline,photos,wall,groups&response_type=token&v=5.65
     ApiKey: e048e83950d5e8ef1067d3cce40c87931f930eea6273213622b97f490ff6d64cfa4d67205525c3adabf05
     Group: 46909317
+    CooldownMins: 30 # How minutes to wait before publishing
+    PurgeAfterDays: 7 # Days, after unsent notification will be purged
+    UrlPrefix: https://staging.vault48.org

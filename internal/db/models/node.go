@@ -6,6 +6,8 @@ import (
 	utils2 "github.com/muerwre/vault-golang/internal/feature/meta/utils"
 	constants2 "github.com/muerwre/vault-golang/internal/feature/node/constants"
 	constants3 "github.com/muerwre/vault-golang/internal/feature/upload/constants"
+	"path"
+	"strings"
 	"time"
 )
 
@@ -246,4 +248,10 @@ func (n *Node) SortFiles() {
 	}
 
 	n.Files = files
+}
+
+// GetThumbnailPath returns thumb absolute path for uploadPath
+func (n *Node) GetThumbnailPath(uploadPath string) string {
+	p := strings.Replace(n.Thumbnail, "REMOTE_CURRENT:", uploadPath, 1)
+	return path.Clean(p)
 }

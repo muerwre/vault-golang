@@ -21,15 +21,23 @@ type NotificationService struct {
 	consumers    []NotificationConsumer
 }
 
-func (n *NotificationService) Init(db db.DB, log *logrus.Logger) *NotificationService {
+type NotificationsConfig struct {
+	Vk controller.VkNotificationsConfig
+}
+
+func (n *NotificationService) Init(db db.DB, log *logrus.Logger, config NotificationsConfig) *NotificationService {
 	n.Chan = make(chan *dto.NotificationDto, 255)
 	n.notification = *new(usecase.NotificationServiceUsecase).Init(db)
 	n.log = log
 
 	n.consumers = []NotificationConsumer{
 		NewUserNotificationConsumer(db, log),
-		controller.NewVkNotificationConsumer(db, log),
 	}
+
+	if config.Vk.Enabled {
+		n.consumers = append(n.consumers, controller.NewVkNotificationConsumer(db, log))
+	}
+
 	return n
 }
 

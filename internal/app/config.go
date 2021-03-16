@@ -3,14 +3,11 @@ package app
 import (
 	"github.com/muerwre/vault-golang/internal/service/jwt"
 	"github.com/muerwre/vault-golang/internal/service/mail"
+	controller2 "github.com/muerwre/vault-golang/internal/service/notification/controller"
 	"github.com/muerwre/vault-golang/internal/service/vk/controller"
 	"github.com/spf13/viper"
 	"path/filepath"
 )
-
-type NotificationsConfig struct {
-	Vk controller.VkNotificationsConfig
-}
 
 type Config struct {
 	Debug              bool
@@ -30,7 +27,7 @@ type Config struct {
 	GoogleClientId     string
 	GoogleClientSecret string
 	GoogleCallbackUrl  string
-	Notifications      NotificationsConfig
+	Notifications      controller2.NotificationsConfig
 	Mail               mail.MailerConfig
 }
 
@@ -53,12 +50,16 @@ func InitConfig() (*Config, error) {
 		GoogleClientId:     viper.GetString("Google.ClientId"),
 		GoogleClientSecret: viper.GetString("Google.ClientSecret"),
 		GoogleCallbackUrl:  viper.GetString("Google.CallbackUrl"),
-		Notifications: NotificationsConfig{
+		Notifications: controller2.NotificationsConfig{
 			Vk: controller.VkNotificationsConfig{
-				Enabled: viper.GetBool("Notifications.Vk.Enabled"),
-				ApiKey:  viper.GetString("Notifications.Vk.ApiKey"),
-				GroupId: viper.GetUint("Notifications.Vk.GroupId"),
-				Delay:   viper.GetUint("Notifications.Vk.Delay"),
+				Enabled:        viper.GetBool("Notifications.Vk.Enabled"),
+				ApiKey:         viper.GetString("Notifications.Vk.ApiKey"),
+				GroupId:        viper.GetUint("Notifications.Vk.GroupId"),
+				Delay:          viper.GetUint("Notifications.Vk.Delay"),
+				CooldownMins:   viper.GetUint("Notifications.Vk.CooldownMins"),
+				PurgeAfterDays: viper.GetUint("Notifications.Vk.PurgeAfterDays"),
+				UrlPrefix:      viper.GetString("Notifications.Vk.UrlPrefix"),
+				UploadPath:     filepath.Clean(viper.GetString("Uploads.Path")),
 			},
 		},
 		Mail: mail.MailerConfig{

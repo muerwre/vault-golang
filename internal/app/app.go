@@ -30,7 +30,7 @@ func New() (app *App, err error) {
 		return nil, err
 	}
 
-	app.Notifier = new(controller.NotificationService).Init(*app.DB, app.Logger)
+	app.Notifier = new(controller.NotificationService).Init(*app.DB, app.Logger, app.Config.Notifications)
 
 	if app.Config.Mail.Host != "" {
 		app.Mailer = new(mail.MailService).Init(app.Config.Mail, app.Logger)

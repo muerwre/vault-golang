@@ -3,8 +3,10 @@ package vk
 import (
 	"context"
 	"github.com/SevereCloud/vksdk/v2/api"
+	"github.com/SevereCloud/vksdk/v2/object"
 	"github.com/sirupsen/logrus"
-	"io"
+	"os"
+	"strconv"
 	"strings"
 )
 
@@ -25,23 +27,40 @@ func NewVk(token string, gid uint, log *logrus.Logger) *Vk {
 	}
 }
 
-func (v Vk) CreatePost(ctx context.Context, msg string, url string, thumbnail *io.Reader) error {
+func (v Vk) CreatePost(ctx context.Context, msg string, u string, thumbnail string) error {
 	files := ""
 
-	if thumbnail != nil {
-		// TODO: upload photo here
-		files = ""
+	if thumbnail != "" {
+		f, err := os.Open(thumbnail)
+		if err == nil {
+			resp, err := v.api.UploadPhotoGroup(int(v.GroupId), 166682397, f)
+			if err == nil && len(resp) > 0 {
+				files = getPhotoSource(resp[0], v.GroupId)
+			}
+		}
+
 	}
 
 	req := api.Params{
 		"message":            strings.Join([]string{msg}, " "),
-		"attachment":         strings.Join([]string{files, url}, ","),
+		"attachments":        strings.Join([]string{files}, ","),
 		"owner_id":           int32(v.GroupId) * -1,
 		"from_group":         "1",
 		"mute_notifications": "1",
 	}
 
-	_, err := v.api.WallPost(req)
+	resp, err := v.api.WallPost(req)
+
+	v.log.Infof("%+v, %s", resp, u)
 
 	return err
+}
+
+func getPhotoSource(resp object.PhotosPhoto, gid uint) string {
+	return strings.Join([]string{
+		"photo",
+		strconv.Itoa(resp.OwnerID),
+		"_",
+		strconv.Itoa(resp.ID),
+	}, "")
 }

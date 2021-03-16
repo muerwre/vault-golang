@@ -32,7 +32,7 @@ func (c VkNotificationConsumer) Name() string {
 func (c VkNotificationConsumer) Consume(item *dto.NotificationDto) error {
 	switch item.Type {
 	case constants.NotifierTypeNodeCreate, constants.NotifierTypeNodeRestore:
-		if err := c.db.AppNotification.Create(AppId, item.ItemId, models.NotificationTypeNode); err != nil {
+		if err := c.db.AppNotification.Create(AppId, item.ItemId, models.NotificationTypeNode, item.CreatedAt); err != nil {
 			return err
 		}
 		break
