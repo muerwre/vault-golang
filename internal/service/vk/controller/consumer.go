@@ -37,7 +37,7 @@ func (c VkNotificationConsumer) Consume(item *dto.NotificationDto) error {
 		}
 		break
 	case constants.NotifierTypeNodeDelete:
-		if err := c.db.AppNotification.FindAndDelete(AppId, item.ItemId, models.NotificationTypeNode); err != nil {
+		if err := c.db.AppNotification.FindAndDeleteUnsent(AppId, item.ItemId, models.NotificationTypeNode); err != nil {
 			return err
 		}
 		break
