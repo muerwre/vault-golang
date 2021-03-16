@@ -49,9 +49,7 @@ func (v Vk) CreatePost(ctx context.Context, msg string, u string, thumbnail stri
 		"mute_notifications": "1",
 	}
 
-	resp, err := v.api.WallPost(req)
-
-	v.log.Infof("%+v, %s", resp, u)
+	_, err := v.api.WallPost(req)
 
 	return err
 }
